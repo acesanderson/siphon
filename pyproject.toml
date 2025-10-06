@@ -9,6 +9,7 @@ description = "An evolution of Leviathan - flexible media to LLM context convert
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "anthropic>=0.57.1",
+    "conduit",
     "chromadb",
     "database-clients",
     "fastapi",
@@ -31,6 +32,7 @@ dependencies = [
     "requests",
     "rerankers",
     "rich",
+    "siphonserver",
     "sentence-transformers",
     "siphonserver",
     "tiktoken>=0.9.0",
@@ -125,8 +127,9 @@ split-on-trailing-comma = true
 
 # ── uv sources (local/editable deps) ───────────────────────────────────────────
 [tool.uv.sources]
-database-clients = { path = "../database-clients", editable = true }
 siphonserver = { path = "../siphonserver-project", editable = true }
+database-clients = { path = "../database-clients", editable = true }
+conduit = { path = "../conduit-project", editable = true }
 
 # ── entry points ───────────────────────────────────────────────────────────────
 [project.scripts]
@@ -137,6 +140,6 @@ peek = "siphon.scripts.peek_cli:main"
 flatten = "siphon.scripts.flatten_cli:main"
 youtube = "siphon.scripts.youtube_cli:main"
 ocr = "siphon.scripts.ocr_cli:main"
-research = "siphon.scripts.research_cli:main"
+survey = "siphon.scripts.research_cli:main"
 snapshot = "siphon.collections.query.snapshot:main"
 obs = "siphon.scripts.obsidian_cli:main"

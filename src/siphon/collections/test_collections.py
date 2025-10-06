@@ -2,7 +2,7 @@
 import pytest
 from siphon.collections.corpus.siphon_corpus import CorpusFactory
 from siphon.data.type_definitions.source_type import SourceType
-
+from dbclients import get_postgres_client
 
 # =============================================================================
 # LEVEL 1: Basic Infrastructure (from previous tests)
@@ -152,12 +152,12 @@ def test_empty_corpus_query_handling():
 
 
 # =============================================================================
-# LEVEL 4: Basic Monadic Chaining
+# LEVEL 4: Basic Monadic Conduiting
 # =============================================================================
 
 
-def test_simple_filter_chain():
-    """Chain one filter operation"""
+def test_simple_filter_conduit():
+    """Conduit one filter operation"""
     corpus = CorpusFactory.from_library()
 
     results = corpus.query().filter_by_source_type(SourceType.ARTICLE).to_list()
@@ -167,7 +167,7 @@ def test_simple_filter_chain():
 
 
 def test_filter_plus_limit():
-    """Chain filter and limit operations"""
+    """Conduit filter and limit operations"""
     corpus = CorpusFactory.from_library()
 
     results = corpus.query().filter_by_source_type(SourceType.DOC).limit(3).to_list()
@@ -195,11 +195,11 @@ def test_monadic_returns_new_instances():
     assert type(limited_query).__name__ == "siphonQuery"
 
 
-def test_chaining_preserves_state():
-    """Chained operations should accumulate correctly"""
+def test_conduiting_preserves_state():
+    """Conduited operations should accumulate correctly"""
     corpus = CorpusFactory.from_library()
 
-    # This chain should apply both filter and limit
+    # This conduit should apply both filter and limit
     results = (
         corpus.query().filter_by_source_type(SourceType.ARTICLE).limit(2).to_list()
     )

@@ -4,8 +4,8 @@ test_sources = [
     "https://docs.google.com/document/d/1yr44NsdKTU-pD73foyA0MXpgJFYyitTDLJ9GXe3eIPc/edit?tab=t.0",
     "https://www.youtube.com/watch?v=tv_Kry7STio",
     "https://youtu.be/dQw4w9WgXcQ",
-    "https://github.com/acesanderson/Chain",
-    "https://github.com/acesanderson/Chain/blob/main/README.md",
+    "https://github.com/acesanderson/Conduit",
+    "https://github.com/acesanderson/Conduit/blob/main/README.md",
     "/home/fishhouses/Brian_Code/Siphon/README.md",
     "https://www.404media.co/the-ai-slop-fight-between-iran-and-israel/",
     "    https://docs.google.com/spreadsheets/d/123/edit  ",  # Test whitespace
@@ -31,5 +31,5 @@ print("Google Sheets: drive://sheet/1xSokeHrhsqEt7XL2J3NtkU1oRGvd5vgNM5HdY-8W2WQ
 print("Google Slides: drive://slide/1vcBhiBht-WDYNc9ONZEnXUBrdHXfOXVB5IRdowQbSxI") 
 print("Google Docs:   drive://doc/1yr44NsdKTU-pD73foyA0MXpgJFYyitTDLJ9GXe3eIPc")
 print("YouTube:       youtube://tv_Kry7STio")
-print("GitHub repo:   github://acesanderson/Chain")
-print("GitHub file:   github://acesanderson/Chain/README.md") t
+print("GitHub repo:   github://acesanderson/Conduit")
+print("GitHub file:   github://acesanderson/Conduit/README.md") t

@@ -28,14 +28,14 @@ class TextSyntheticData(SyntheticData):
         rendered_prompts: list[str] = cls._render_prompts(
             context=context, prompt_templates=prompt_templates
         )
-        # Run async chains
-        from Chain import AsyncChain, ModelAsync
+        # Run async conduits
+        from conduit.batch import AsyncConduit, ModelAsync
         from rich.console import Console
 
         ModelAsync._console = Console()
         model = ModelAsync(model_str)
-        chain = AsyncChain(model=model)
-        responses = chain.run(prompt_strings=rendered_prompts)
+        conduit = AsyncConduit(model=model)
+        responses = conduit.run(prompt_strings=rendered_prompts)
         # Create the TextSyntheticData instance
         title = responses[0].message.content.strip()
         description = responses[1].message.content.strip()

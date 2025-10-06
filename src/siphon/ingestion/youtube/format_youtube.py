@@ -10,10 +10,10 @@ def format_youtube(transcript: str, preferred_model: str = "claude") -> str:
     """
     This function takes a raw transcript and formats it.
     """
-    from Chain import Model, Prompt, Chain
+    from conduit.sync import Model, Prompt, Conduit
 
     model = Model(preferred_model)
     prompt = Prompt(format_prompt_file.read_text())
-    chain = Chain(prompt=prompt, model=model)
-    response = chain.run(input_variables={"transcript": transcript}, verbose=True)
+    conduit = Conduit(prompt=prompt, model=model)
+    response = conduit.run(input_variables={"transcript": transcript}, verbose=True)
     return str(response.content)

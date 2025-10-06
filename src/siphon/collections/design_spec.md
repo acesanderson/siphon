@@ -1,7 +1,7 @@
 ### The Flow
 - You start with a corpus: Either from your database (DatabaseCorpus) or from some files you loaded (InMemoryCorpus)
 - You create a query: Call corpus.query() to get a SiphonQuery object that wraps your corpus
-- You chain operations: query.filter_by_source_type(YouTube).filter_by_content("AI").limit(10)
+- You conduit operations: query.filter_by_source_type(YouTube).filter_by_content("AI").limit(10)
 
 ### EVENTUAL IMPLEMENTATIONS --
 - databasecorpus to have more methods implemented; for now we go to InMemory immediately after querying
@@ -21,7 +21,7 @@ research_corpus = research_query.to_corpus()
 youtube_corpus = corpusfactory.from_library()\
    .filter_by_source_type(sourcetype.youtube)
 
-# example 3: complex query chain
+# example 3: complex query conduit
 strategic_content = siphonquery(corpusfactory.from_library())\
    .filter_by_date_range(last_30_days)\
    .semantic_search("strategic planning")\

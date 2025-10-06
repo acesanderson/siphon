@@ -1,4 +1,4 @@
-from siphon.data.extensions import extensions
+from siphon.data.type_definitions.extensions import Extensions as extensions
 from pydantic import BaseModel, Field
 import re, base64
 from pathlib import Path

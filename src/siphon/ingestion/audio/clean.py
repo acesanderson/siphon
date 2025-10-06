@@ -1,4 +1,4 @@
-from Chain import Prompt, Model, Chain
+from conduit.sync import Prompt, Model, Conduit
 from pathlib import Path
 
 dir_path = Path(__file__).parent
@@ -24,8 +24,8 @@ def clean_transcript(formatted_transcript: str) -> str:
     # Load the prompt template
     prompt = Prompt(prompt_file.read_text())
     model = Model("gemini2.5")
-    chain = Chain(model=model, prompt=prompt)
-    response = chain.run(input_variables={"transcript": formatted_transcript})
+    conduit = Conduit(model=model, prompt=prompt)
+    response = conduit.run(input_variables={"transcript": formatted_transcript})
     return str(response.content).strip()
 
 

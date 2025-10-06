@@ -35,7 +35,6 @@ We then have a `CorpusFactory` that provides methods to create the appropriate c
 
 from siphon.data.processed_content import ProcessedContent
 from siphon.data.type_definitions.source_type import SourceType
-from siphon.database.postgres.PGRES_connection import get_db_connection
 from psycopg2.extras import RealDictCursor
 from typing import override
 from collections.abc import Iterator
@@ -68,7 +67,7 @@ class SiphonCorpus(ABC):
     @abstractmethod
     def __contains__(self, content: ProcessedContent) -> bool: ...
 
-    # Query Interface (returns new corpus for chaining)
+    # Query Interface (returns new corpus for conduiting)
     @abstractmethod
     def filter_by_source_type(self, source_type: SourceType) -> "SiphonCorpus": ...
 
@@ -327,101 +326,104 @@ class DatabaseCorpus(SiphonCorpus):
 
     """
 
-    def __init__(self, db_connection=get_db_connection):
-        """
-        Initialize a database-backed corpus.
+    raise NotImplementedError("DatabaseCorpus is not yet implemented.")
 
-        Args:
-            db_connection_func: contextlib.contextmanager to get a database connection
-        """
-        self.db_connection = db_connection
-
-    @override
-    def __len__(self) -> int:
-        """Return the number of items in the corpus."""
-        with self.db_connection() as conn, conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM processed_content")
-            count = cursor.fetchone()[0]
-        return count
-
-    # Collection Management
-    @override
-    def add(self, content: ProcessedContent) -> None:
-        raise NotImplementedError()
-
-    @override
-    def remove(self, content: ProcessedContent) -> None:
-        raise NotImplementedError()
-
-    @override
-    def remove_by_uri(self, uri: str) -> bool:
-        raise NotImplementedError()
-
-    # Iteration & Access
-    @override
-    def __iter__(self):
-        with (
-            self.db_connection() as conn,
-            conn.cursor(cursor_factory=RealDictCursor) as cursor,
-        ):
-            cursor.execute("SELECT * FROM processed_content")
-            while True:
-                rows = cursor.fetchmany(1000)  # Batch of 1000
-                if not rows:
-                    break
-                for row in rows:
-                    yield ProcessedContent.model_validate_from_cache(row["data"])
-
-    @override
-    def __contains__(self, content: ProcessedContent) -> bool:
-        raise NotImplementedError()
-
-    # Query Interface (returns new DatabaseCorpus with modified SQL)
-    @override
-    def filter_by_source_type(self, source_type: SourceType) -> "DatabaseCorpus":
-        raise NotImplementedError()
-
-    @override
-    def filter_by_date_range(self, start_date, end_date) -> "DatabaseCorpus":
-        raise NotImplementedError()
-
-    @override
-    def filter_by_tags(self, tags: list[str]) -> "DatabaseCorpus":
-        raise NotImplementedError()
-
-    # Database-specific methods
-    def _get_all_processed_content(self) -> "list[ProcessedContent]":
-        from siphon.database.postgres.PGRES_processed_content import get_all_siphon
-
-        return get_all_siphon()
-
-    # Metadata & Views
-    @override
-    def snapshot(self):
-        from siphon.collections.query.snapshot import generate_snapshot
-
-        generate_snapshot()
-
-    @override
-    def get_source_type_counts(self) -> dict[SourceType, int]: ...
-
-    @override
-    def is_empty(self) -> bool: ...
-
-    @override
-    def query(self) -> "SiphonQuery":
-        """
-        Create a SiphonQuery instance for this corpus.
-        For now, this immediately goes to InMemoryCorpus.
-        As database grows and performance degrades, we can implement more queries within DatabaseCorpus and move logic to database layer, at which point this would return self.
-
-        """
-        from siphon.collections.query.siphon_query import SiphonQuery
-
-        processed_content_list = self._get_all_processed_content()
-        corpus = InMemoryCorpus(source="DatabaseCorpus", corpus=processed_content_list)
-
-        return SiphonQuery(corpus)
+    # def __init__(self, db_connection=get_db_connection):
+    #     """
+    #     Initialize a database-backed corpus.
+    #
+    #     Args:
+    #         db_connection_func: contextlib.contextmanager to get a database connection
+    #     """
+    #     self.db_connection = db_connection
+    #
+    # @override
+    # def __len__(self) -> int:
+    #     """Return the number of items in the corpus."""
+    #     with self.db_connection() as conn, conn.cursor() as cursor:
+    #         cursor.execute("SELECT COUNT(*) FROM processed_content")
+    #         count = cursor.fetchone()[0]
+    #     return count
+    #
+    # # Collection Management
+    # @override
+    # def add(self, content: ProcessedContent) -> None:
+    #     raise NotImplementedError()
+    #
+    # @override
+    # def remove(self, content: ProcessedContent) -> None:
+    #     raise NotImplementedError()
+    #
+    # @override
+    # def remove_by_uri(self, uri: str) -> bool:
+    #     raise NotImplementedError()
+    #
+    # # Iteration & Access
+    # @override
+    # def __iter__(self):
+    #     with (
+    #         self.db_connection() as conn,
+    #         conn.cursor(cursor_factory=RealDictCursor) as cursor,
+    #     ):
+    #         cursor.execute("SELECT * FROM processed_content")
+    #         while True:
+    #             rows = cursor.fetchmany(1000)  # Batch of 1000
+    #             if not rows:
+    #                 break
+    #             for row in rows:
+    #                 yield ProcessedContent.model_validate_from_cache(row["data"])
+    #
+    # @override
+    # def __contains__(self, content: ProcessedContent) -> bool:
+    #     raise NotImplementedError()
+    #
+    # # Query Interface (returns new DatabaseCorpus with modified SQL)
+    # @override
+    # def filter_by_source_type(self, source_type: SourceType) -> "DatabaseCorpus":
+    #     raise NotImplementedError()
+    #
+    # @override
+    # def filter_by_date_range(self, start_date, end_date) -> "DatabaseCorpus":
+    #     raise NotImplementedError()
+    #
+    # @override
+    # def filter_by_tags(self, tags: list[str]) -> "DatabaseCorpus":
+    #     raise NotImplementedError()
+    #
+    # # Database-specific methods
+    # def _get_all_processed_content(self) -> "list[ProcessedContent]":
+    #     from siphon.database.postgres.PGRES_processed_content import get_all_siphon
+    #
+    #     return get_all_siphon()
+    #
+    # # Metadata & Views
+    # @override
+    # def snapshot(self):
+    #     from siphon.collections.query.snapshot import generate_snapshot
+    #
+    #     generate_snapshot()
+    #
+    # @override
+    # def get_source_type_counts(self) -> dict[SourceType, int]: ...
+    #
+    # @override
+    # def is_empty(self) -> bool: ...
+    #
+    # @override
+    # def query(self) -> "SiphonQuery":
+    #     """
+    #     Create a SiphonQuery instance for this corpus.
+    #     For now, this immediately goes to InMemoryCorpus.
+    #     As database grows and performance degrades, we can implement more queries within DatabaseCorpus and move logic to database layer, at which point this would return self.
+    #
+    #     """
+    #     from siphon.collections.query.siphon_query import SiphonQuery
+    #
+    #     processed_content_list = self._get_all_processed_content()
+    #     corpus = InMemoryCorpus(source="DatabaseCorpus", corpus=processed_content_list)
+    #
+    #     return SiphonQuery(corpus)
+    #
 
 
 class CorpusFactory:

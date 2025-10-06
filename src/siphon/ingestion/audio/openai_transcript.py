@@ -16,7 +16,7 @@ openai_client = OpenAI(api_key=api_key)
 def get_openai_transcript(audio_file: str | Path):
     """
     Use the transcriptions API endpoint.
-    We didn't implement this in Chain since it's really tied to a transcription use case.
+    We didn't implement this in Conduit since it's really tied to a transcription use case.
     """
     if isinstance(audio_file, str):
         audio_file = Path(audio_file)

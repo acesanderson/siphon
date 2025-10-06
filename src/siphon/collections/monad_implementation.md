@@ -1,11 +1,11 @@
-The pandas-style chaining syntax is indeed a form of the **monad pattern**, specifically what's often called the **fluent interface** or **method chaining** pattern. In functional programming terms, it's a monad-like structure.
+The pandas-style conduiting syntax is indeed a form of the **monad pattern**, specifically what's often called the **fluent interface** or **method conduiting** pattern. In functional programming terms, it's a monad-like structure.
 
 ## **What Makes It Monad-Like**
 
-The key insight is that each method returns a new query object (or the same one modified), allowing you to chain operations:
+The key insight is that each method returns a new query object (or the same one modified), allowing you to conduit operations:
 
 ```python
-# Each method returns a SiphonQuery, so you can chain
+# Each method returns a SiphonQuery, so you can conduit
 query = (SiphonQuery(corpus)
     .filter_by_source_type(SourceType.YOUTUBE)  # Returns SiphonQuery
     .filter_by_date_range(start, end)           # Returns SiphonQuery  
@@ -59,7 +59,7 @@ class SiphonQuery:
         return results
     
     def _copy(self) -> 'SiphonQuery':
-        """Create a copy for immutable chaining."""
+        """Create a copy for immutable conduiting."""
         new_query = SiphonQuery(self.corpus)
         new_query._filters = self._filters.copy()
         new_query._search_terms = self._search_terms.copy()
@@ -296,7 +296,7 @@ trending_topics = interesting_stuff.extract_trending_topics().execute()
 key_people = interesting_stuff.extract_people().rank_by_mentions().execute()
 action_items = interesting_stuff.extract_action_items().prioritize().execute()
 
-# Or chain them together
+# Or conduit them together
 full_analysis = (interesting_stuff
     .semantic_cluster()
     .extract_key_insights_per_cluster()

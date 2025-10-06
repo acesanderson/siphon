@@ -1,4 +1,4 @@
-from Chain.message.convert_image import convert_image_file
+from conduit.message.convert_image import convert_image_file
 from pathlib import Path
 
 # Import our centralized logger - no configuration needed here!

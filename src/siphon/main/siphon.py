@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from Chain.message.imagemessage import ImageMessage
+    from conduit.message.imagemessage import ImageMessage
 
 logger = get_logger(__name__)
 

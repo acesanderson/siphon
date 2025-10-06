@@ -58,7 +58,7 @@ Please provide an assesment of the quality of the generated data, reviewing each
 
 
 def analyze_output(output: dict, content, model: str = "gemini2.5") -> str:
-    from Chain import Prompt, Model, Chain
+    from conduit.sync import Prompt, Model, Conduit
     import json
 
     model_outputs = json.dumps(output, indent=2)
@@ -66,8 +66,8 @@ def analyze_output(output: dict, content, model: str = "gemini2.5") -> str:
     input_variables = {"model_outputs": model_outputs, "content": content_str}
     model_obj = Model(model)
     prompt = Prompt(prompt_str)
-    chain = Chain(model=model_obj, prompt=prompt)
-    response = chain.run(input_variables=input_variables)
+    conduit = Conduit(model=model_obj, prompt=prompt)
+    response = conduit.run(input_variables=input_variables)
     return str(response.content)
 
 

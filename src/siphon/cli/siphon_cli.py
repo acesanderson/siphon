@@ -25,7 +25,7 @@ logger = configure_logging(
 
 
 if TYPE_CHECKING:
-    from Chain.message.imagemessage import ImageMessage
+    from conduit.message.imagemessage import ImageMessage
 
 
 def grab_image_from_clipboard() -> tuple | None:
@@ -69,7 +69,7 @@ def create_image_message(
     role = "user"
     text_content = combined_query
 
-    from Chain.message.imagemessage import ImageMessage
+    from conduit.message.imagemessage import ImageMessage
 
     imagemessage = ImageMessage(
         role=role,

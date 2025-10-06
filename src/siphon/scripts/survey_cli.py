@@ -23,11 +23,12 @@ NOTE: we exclude Python and Jinja2 files by default, as they are not relevant to
 """
 
 from pathlib import Path
-from Chain import Chain, AsyncChain, Model, ModelAsync, Prompt, ChainCache, Verbosity
+from conduit.sync import Conduit, Model, Prompt, Verbosity, ConduitCache
+from conduit.batch import AsyncConduit, ModelAsync
 import argparse
 
-Model._chain_cache = ChainCache()
-ModelAsync._chain_cache = ChainCache()
+Model._conduit_cache = ConduitCache()
+ModelAsync._conduit_cache = ConduitCache()
 
 prompt1 = """
 Extract all content relevant to the following contextual focus:
@@ -101,7 +102,7 @@ def research_directory(contextual_focus: str, paths: list[Path | str]) -> str:
     # Coerce paths to Path objects if they are strings
     paths = [Path(p) if isinstance(p, str) else p for p in paths]
 
-    # First chain
+    # First conduit
     prompt = Prompt(prompt1)
 
     # generate async input variables
@@ -115,13 +116,13 @@ def research_directory(contextual_focus: str, paths: list[Path | str]) -> str:
             }
         )
 
-    # Second chain
+    # Second conduit
     model = ModelAsync("gemini")
-    chain = AsyncChain(
+    conduit = AsyncConduit(
         model=model,
         prompt=prompt,
     )
-    responses = chain.run(
+    responses = conduit.run(
         input_variables_list=input_variables_list,
         verbose=Verbosity.SUMMARY,
     )
@@ -129,8 +130,8 @@ def research_directory(contextual_focus: str, paths: list[Path | str]) -> str:
     # Combine responses into a single summary
     model = Model("gemini2.5")
     prompt = Prompt(prompt2)
-    chain = Chain(model=model, prompt=prompt)
-    response = chain.run(
+    conduit = Conduit(model=model, prompt=prompt)
+    response = conduit.run(
         input_variables={
             "contextual_focus": contextual_focus,
             "summaries": "\n\n".join([str(r.content) for r in responses]),

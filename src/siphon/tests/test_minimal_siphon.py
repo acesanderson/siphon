@@ -10,10 +10,10 @@ from siphon.main.siphon import siphon
 from siphon.tests.fixtures.assets import sample_assets
 import pytest
 
-# Import Chain so we can set a cache.
-from Chain import Model, ChainCache
+# Import Conduit so we can set a cache.
+from conduit.sync import Model, ConduitCache
 
-Model._chain_cache = ChainCache(db_path=".test_minimal_cache.db")
+Model._conduit_cache = ConduitCache(db_path=".test_minimal_cache.db")
 
 # Create our list of source types
 immediately_usable_types = """
