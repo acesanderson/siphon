@@ -601,6 +601,7 @@ dependencies = [
     { name = "pymongo" },
     { name = "pytest" },
     { name = "requests" },
+    { name = "rich" },
 ]
 
 [package.metadata]
@@ -610,6 +611,7 @@ requires-dist = [
     { name = "pymongo", specifier = ">=4.14.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "requests", specifier = ">=2.32.5" },
+    { name = "rich" },
 ]
 
 [[package]]
@@ -2995,6 +2997,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "chromadb" },
+    { name = "conduit" },
     { name = "database-clients" },
     { name = "fastapi" },
     { name = "google-genai" },
@@ -3033,6 +3036,7 @@ dependencies = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.57.1" },
     { name = "chromadb" },
+    { name = "conduit", editable = "../conduit-project" },
     { name = "database-clients", editable = "../database-clients" },
     { name = "fastapi" },
     { name = "google-genai" },
@@ -3074,6 +3078,7 @@ source = { editable = "../siphonserver-project" }
 dependencies = [
     { name = "conduit" },
     { name = "fastapi" },
+    { name = "psycopg2-binary" },
     { name = "pytest" },
     { name = "rich" },
     { name = "siphon" },
@@ -3084,10 +3089,11 @@ dependencies = [
 requires-dist = [
     { name = "conduit", editable = "../conduit-project" },
     { name = "fastapi", specifier = ">=0.116.1" },
+    { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "rich", specifier = ">=14.1.0" },
     { name = "siphon", editable = "." },
-    { name = "uvicorn", specifier = ">=0.35.0" },
+    { name = "uvicorn" },
 ]
 
 [[package]]

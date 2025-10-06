@@ -9,6 +9,7 @@ description = "An evolution of Leviathan - flexible media to LLM context convert
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "anthropic>=0.57.1",
+    "conduit",
     "chromadb",
     "database-clients",
     "fastapi",
@@ -127,6 +128,7 @@ split-on-trailing-comma = true
 [tool.uv.sources]
 siphonserver = { path = "../siphonserver-project", editable = true }
 database-clients = { path = "../database-clients", editable = true }
+conduit = { path = "../conduit-project", editable = true }
 
 # ── entry points ───────────────────────────────────────────────────────────────
 [project.scripts]
