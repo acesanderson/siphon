@@ -9,3 +9,4 @@ sourdough/
 *.pdf
 *.txt
 /__pycache__/
+uv.lock
