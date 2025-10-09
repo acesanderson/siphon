@@ -1,6 +1,6 @@
 # Siphon
 
-Siphon transforms any content source into structured, searchable, LLM-ready knowledge while you retain complete control over your data. Built for the age of AI agents, designed for minds that work in parallel.
+Transform any content source into structured, searchable, LLM-ready knowledge while retaining complete control over your data. Built for the age of AI agents, designed for minds that work in parallel.
 
 ## Philosophy
 
@@ -26,43 +26,51 @@ siphon podcast.m4a
 siphon competitive-analysis.pptx
 
 # Get what you need
-siphon document.pdf --return_type s    # Summary for quick scanning
-siphon audio.mp3 --return_type c       # Full context for LLM input
+siphon document.pdf -r s    # Summary for quick scanning
+siphon audio.mp3 -r c       # Full context for LLM input
+siphon --last               # Retrieve last processed item
 ```
 
 Every source becomes a **ProcessedContent** object with:
 - **Raw LLM context** — Clean, structured text ready for any AI model
 - **AI-generated enrichments** — Searchable titles, descriptions, and summaries
-- **Source-specific metadata** — YouTube view counts, GitHub stars, document authors
+- **Source-specific metadata** — YouTube view counts, GitHub stars, document modification times
 - **Persistent caching** — Process once, access instantly
 
 ## The Siphon Advantage
 
 ### Universal Ingestion Engine
-11 source types supported out of the box:
+11 source types supported:
 
-| **Content Type** | **Examples** | **What You Get** |
-|------------------|--------------|------------------|
-| **Documents** | `.pdf`, `.docx`, `.pptx`, `.xlsx` | MarkItDown processing with preserved structure |
-| **Audio/Video** | `.mp3`, `.wav`, `.m4a`, `.mp4` | Transcription + speaker diarization |
-| **Code** | GitHub repos, local projects | Flattened XML structure for LLM analysis |
-| **Web Content** | Articles, YouTube videos | Clean text + rich metadata |
-| **Visual** | `.jpg`, `.png`, images | OCR + AI-powered descriptions |
+| **Content Type** | **Examples** | **Processing** |
+|------------------|--------------|----------------|
+| **Documents** | `.pdf`, `.docx`, `.pptx`, `.xlsx` | MarkItDown conversion with structure preservation |
+| **Audio/Video** | `.mp3`, `.wav`, `.m4a`, `.mp4` | Whisper transcription + pyannote diarization |
+| **Code** | GitHub repos, local directories | XML flattening for LLM analysis |
+| **Web Content** | Articles, YouTube videos | Clean text extraction + metadata |
+| **Images** | `.jpg`, `.png`, `.gif` | Vision model descriptions (local or cloud) |
+| **Text** | `.md`, `.txt`, `.py`, `.json` | Direct ingestion with checksums |
 
-### Intelligent Caching
-PostgreSQL-backed cache with SQLite fallback ensures you never process the same content twice:
+### Intelligent Caching System
+PostgreSQL primary cache with SQLite fallback ensures resilience:
 
 ```bash
 siphon important-doc.pdf        # First run: full processing
-siphon important-doc.pdf        # Subsequent runs: instant retrieval
+siphon important-doc.pdf        # Instant retrieval from cache
 ```
 
+The fallback system automatically:
+- Detects PostgreSQL availability
+- Falls back to SQLite when needed
+- Queues items for sync when connection restored
+- Provides cache statistics and monitoring
+
 ### Research Synthesis
-Multi-document analysis powered by async LLM processing:
+Multi-document analysis with async LLM processing:
 
 ```bash
-research_cli.py "Datadog's AI strategy" --dir ./competitive-intel/
-# Analyzes entire directory, extracts relevant insights, synthesizes findings
+survey_cli.py "Company's AI strategy" --dir ./competitive-intel/
+# Analyzes directory, extracts relevant insights, synthesizes findings
 ```
 
 ## Quick Start
@@ -71,7 +79,7 @@ research_cli.py "Datadog's AI strategy" --dir ./competitive-intel/
 ```bash
 pip install -e .
 
-# System dependencies for audio processing
+# Audio processing dependencies
 brew install portaudio ffmpeg  # macOS
 # OR
 sudo apt-get install portaudio19-dev ffmpeg  # Ubuntu
@@ -79,191 +87,418 @@ sudo apt-get install portaudio19-dev ffmpeg  # Ubuntu
 
 ### Environment Setup
 ```bash
-export POSTGRES_PASSWORD="your_postgres_password"
-export GITHUB_TOKEN="your_github_token"
-export OPENAI_API_KEY="your_openai_key"  # Optional: for cloud processing
+export POSTGRES_PASSWORD="your_password"
+export GITHUB_TOKEN="your_token"           # For GitHub repos
+export OPENAI_API_KEY="your_key"           # Optional: cloud processing
+export YOUTUBE_API_KEY="your_key"          # Optional: YouTube playlists
 ```
 
 ### Basic Usage
 
 ```bash
-# Process a document (local processing by default)
+# Process content
 siphon strategy-doc.pdf
-
-# Get YouTube transcript with metadata
 siphon "https://youtube.com/watch?v=abc123"
+siphon "https://github.com/company/repo"
 
-# Analyze GitHub repository
-siphon "https://github.com/company/important-repo"
+# Control output format
+siphon doc.pdf -r s         # Summary only
+siphon doc.pdf -r c         # Full context
+siphon doc.pdf -r u         # URI only
+siphon doc.pdf --pretty     # Rich terminal display
 
-# Audio transcription with speaker identification
-siphon meeting-recording.m4a        # Local processing (secure by default)
-siphon meeting-recording.m4a --llm  # Cloud processing (when explicitly opted-in)
+# Cache options
+siphon doc.pdf -c u         # Uncached (don't save)
+siphon doc.pdf -c r         # Recache (force reprocess)
+siphon doc.pdf -c c         # Cached (default)
 
-# Research synthesis across multiple sources
-research_cli.py "competitive AI positioning" --dir ./research-docs/
+# Tagging
+siphon doc.pdf -t "strategy,Q1,competitive"
+
+# Get last processed
+siphon --last
 ```
 
-## Data Security & Privacy
+## Architecture
 
-### Local-First Architecture
-Siphon processes sensitive content locally by default:
-- **Local LLMs** — Use Ollama, LM Studio, or other local inference engines
-- **On-premises processing** — Audio transcription, document parsing, and analysis run locally
-- **No cloud uploads** — Proprietary data never leaves your infrastructure unless explicitly opted-in
-
-### Cloud Processing (Opt-In Only)
-For non-sensitive content, cloud LLMs can be enabled:
-```bash
-# Explicit opt-in required for cloud processing
-siphon public-content.pdf --llm
-siphon youtube-video.mp4 --llm  # OK for public content
+### Core Pipeline
+```
+Source → URI → Context → SyntheticData → ProcessedContent → Cache
 ```
 
-### Data Classification
-Built-in safeguards for handling different data types:
-- **Proprietary documents** — Always processed locally
-- **Public content** — User choice of local or cloud processing
-- **Personal content** — Local processing recommended
-- **Encrypted storage** — All cached content encrypted at rest
+**1. URI Layer** (`src/siphon/uri/`)
+- Factory pattern for source identification
+- 11 URI subclasses (TextURI, YouTubeURI, GitHubURI, etc.)
+- Checksum-based deduplication for file sources
+- Consistent URI format across all types
+
+**2. Context Layer** (`src/siphon/context/`)
+- Source-specific content extraction
+- 11 Context subclasses matching URI types
+- Metadata preservation per source type
+- Validation and error handling
+
+**3. Synthetic Data Layer** (`src/siphon/synthetic_data/`)
+- AI-generated enrichments (title, description, summary)
+- Async batch processing via Conduit
+- Jinja2 templates for source-specific prompts
+- Local or cloud LLM support
+
+**4. Storage Layer** (`src/siphon/database/`)
+- PostgreSQL primary cache with JSONB storage
+- SQLite fallback with automatic sync queue
+- Vector embeddings for semantic search (pgvector)
+- Cache statistics and monitoring
+
+### Key Modules
+
+**CLI** (`src/siphon/cli/`)
+- `siphon_cli.py` — Main command-line interface
+- `cli_params.py` — Pydantic-validated parameters
+- `implicit_input.py` — Clipboard and stdin detection
+
+**Data Models** (`src/siphon/data/`)
+- `processed_content.py` — Final output format
+- `uri.py` — Base URI class
+- `context.py` — Base context class
+- `synthetic_data.py` — AI enrichment base class
+
+**Ingestion** (`src/siphon/ingestion/`)
+- Source-specific retrieval logic
+- `audio/` — Whisper + diarization pipeline
+- `github/` — Repository flattening
+- `youtube/` — Transcript + metadata extraction
+- `image/` — Vision model descriptions
+
+**Enrichment** (`src/siphon/enrich/`)
+- Title, description, and summary generation
+- Adaptive summary lengths based on content size
+- Model selection (local or cloud)
+
+**Collections** (`src/siphon/collections/`)
+- Corpus management system
+- Query interface (filtering, sorting, pagination)
+- Snapshot generation for visualization
+
+### Database Architecture
+
+PostgreSQL schema:
+```sql
+CREATE TABLE processed_content (
+    id SERIAL PRIMARY KEY,
+    uri_key TEXT UNIQUE NOT NULL,
+    data JSONB NOT NULL,
+    description_embedding vector(384),
+    summary_embedding vector(384),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+Indexes:
+- B-tree on `uri_key` for cache lookups
+- GIN on `data` for JSONB queries
+- HNSW on embeddings for vector search
 
 ## Advanced Workflows
 
-### Competitive Intelligence Pipeline
+### Competitive Intelligence
 ```bash
-# Gather intelligence sources (local processing for proprietary data)
-siphon competitor-earnings-call.mp3        # Local transcription
-siphon industry-analysis.pdf               # Local processing
-siphon https://youtube.com/watch?v=product-demo --llm  # Public content, cloud OK
+# Ingest sources
+siphon competitor-earnings.mp3
+siphon industry-report.pdf
+siphon https://youtube.com/watch?v=product-demo
 
-# Synthesize insights (local LLM recommended for strategic analysis)
-research_cli.py "competitive AI strategy and market positioning"
+# Synthesize findings
+survey_cli.py "AI strategy and positioning" --dir ./intel/
 ```
 
-### Meeting Intelligence
+### GitHub Repository Analysis
 ```bash
-# Process all-hands recording (always local for internal meetings)
-siphon all-hands-january.m4a
+# Flatten repository to XML
+flatten_cli.py https://github.com/owner/repo > repo.xml
 
-# Get quick summary
-siphon all-hands-january.m4a --return_type s
-
-# Use full context for follow-up analysis
-siphon strategy-followup.docx
-# Both automatically cached and ready for cross-referencing
+# Process for LLM context
+siphon https://github.com/owner/repo
 ```
 
-## Architecture: Built for Scale
-
-### Factory Pattern Design
-Every source type implements a consistent interface:
-- **URI parsing** — Unified identification system
-- **Context extraction** — Source-specific processing logic  
-- **Metadata enrichment** — Relevant metadata per source type
-- **Synthetic data generation** — AI-powered titles, descriptions, summaries
-
-### Database Strategy
-- **PostgreSQL** — Primary cache with full-text search and JSONB queries
-- **SQLite fallback** — Offline operation when PostgreSQL unavailable
-- **Automatic sync** — Seamless failover and recovery
-
-### Processing Pipeline
-```
-Source → URI → Context → Synthetic Data → ProcessedContent → Cache
-```
-
-Every step is modular, testable, and extensible.
-
-## The Sourdough Vision
-
-*"Like sourdough starter, knowledge needs regular feeding and maintenance to stay alive and valuable."*
-
-**Coming soon:** Auto-maintaining knowledge bases that:
-- **Continuously curate** relevant content for specific research topics
-- **Intelligent pruning** — Remove outdated information, retain evergreen insights  
-- **Contextual summarization** — Always-current strategic snapshots
-- **User feedback loops** — Learn your priorities through interaction
-
-Example sourdough starter: Maintain a living intelligence base on "Datadog's AI strategy" that automatically incorporates new earnings calls, product announcements, and competitive moves.
-
-## Integration Ecosystem
-
-### CLI Power User
+### Audio/Video Processing
 ```bash
-# Pipe to your LLM tools
-siphon document.pdf --return_type c | llm "summarize key decisions"
+# Local transcription (Whisper + diarization)
+siphon meeting.mp3
 
-# Batch processing
-find ./docs -name "*.pdf" -exec siphon {} \;
+# Cloud transcription (OpenAI)
+siphon meeting.mp3 -C
+
+# Play audio files
+play_cli.py recording.mp3
+
+# Record new audio
+record_cli.py
 ```
 
-### Python API
+### Image Analysis
+```bash
+# OCR text extraction
+ocr_cli.py screenshot.png
+
+# AI description
+siphon diagram.png
+
+# View in terminal
+peek_cli.py image.jpg
+```
+
+### YouTube Operations
+```bash
+# Single video
+siphon "https://youtube.com/watch?v=xyz"
+
+# Entire playlist (combined transcript)
+youtube_cli.py "https://youtube.com/playlist?list=PLxxx"
+
+# Channel video list
+youtube_cli.py "https://youtube.com/@channelname"
+```
+
+## Python API
+
 ```python
-from Siphon import siphon
-from Siphon.cli.cli_params import CLIParams
+from siphon import siphon
+from siphon.cli.cli_params import CLIParams
 
-# Programmatic processing
-content = siphon(CLIParams(source="important-doc.pdf"))
-print(f"Title: {content.title}")
-print(f"Summary: {content.summary}")
+# Basic usage
+content = siphon("document.pdf")
 
-# Access raw context for LLM prompts
-llm_context = content.context
+# With parameters
+params = CLIParams(
+    source="document.pdf",
+    cache_options="c",
+    cloud=False,
+    tags=["strategy", "Q1"]
+)
+content = siphon(params)
+
+# Access processed content
+print(content.title)
+print(content.summary)
+print(content.context)
+
+# Pretty display
+content.pretty_print()
+
+# Access metadata
+print(content.uri.sourcetype)
+print(content.created_at)
 ```
 
-### FastAPI Server
-Deploy Siphon as a service for audio/video processing, image analysis, and content enrichment.
+### Database Operations
+```python
+from siphon.database.postgres.PGRES_processed_content import (
+    get_cached_content,
+    cache_processed_content,
+    get_all_siphon,
+    search_cached_content
+)
 
-## Production Features
+# Retrieve cached content
+content = get_cached_content("text:///path/to/file.md")
 
-### Security & Privacy
-- **Local processing by default** — Keep sensitive data on your infrastructure
-- **Explicit cloud opt-in** — Use `--llm` flag only when appropriate for non-sensitive content
-- **Comprehensive caching** — Never re-process the same content
-- **Encrypted storage** — All cached data encrypted at rest
-- **Audit logging** — Track all processing operations and data flows
+# Cache new content
+uri_key = cache_processed_content(processed_content)
 
-### Observability
-- **Comprehensive logging** — Track all processing operations
-- **Cache statistics** — Monitor storage usage and hit rates
-- **Fallback monitoring** — Visibility into offline operation
+# Search
+results = search_cached_content(
+    source_type="YouTube",
+    title_query="machine learning",
+    limit=10
+)
 
-### Extensibility
-Adding new source types is straightforward:
-1. Implement `URI`, `Context`, and `SyntheticData` classes
-2. Add source-specific processing logic
-3. Register with the factory system
+# Get statistics
+from siphon.database.postgres.PGRES_processed_content import get_cache_stats
+stats = get_cache_stats()
+```
 
-## Why This Matters
+### Collections API
+```python
+from siphon.collections.corpus.siphon_corpus import CorpusFactory
 
-We're building toward a future where:
-- **Agents handle routine work** — You focus on strategy and creativity
-- **Context is everything** — The right information at the right time drives decisions
-- **Knowledge compounds** — Your accumulated insights become your competitive advantage
-- **You own your data** — No vendor lock-in, no privacy compromises
+# Create corpus
+corpus = CorpusFactory.from_library()
 
-Siphon prepares you for this future by making knowledge retention effortless and recall instantaneous.
+# Query interface
+results = (
+    corpus.query()
+    .filter_by_source_type(SourceType.ARTICLE)
+    .filter_by_content("AI strategy")
+    .order_by_date(ascending=False)
+    .limit(10)
+    .to_list()
+)
 
-## Contributing
+# Semantic search
+similar = (
+    corpus.query()
+    .semantic_search("machine learning tutorials", k=5)
+    .to_list()
+)
 
-Siphon is designed for extensibility. Whether you're adding support for new content types, improving AI processing, or building workflow integrations, we welcome contributions.
+# Generate snapshot
+corpus.snapshot()
+```
 
-Key areas for development:
-- **New source types** — Slack, email, Notion, etc.
-- **Enhanced AI processing** — Better summarization, entity extraction, topic modeling
-- **Integration layers** — MCP servers, agent frameworks, workflow tools
+## Command-Line Tools
 
-## License
+### Core Tools
+- `siphon` — Main ingestion and retrieval
+- `flatten_cli.py` — Convert repos/directories to XML
+- `survey_cli.py` — Multi-document research synthesis
 
-MIT License — Use it, modify it, own it.
+### Audio Tools
+- `record_cli.py` — Record audio with CLI interface
+- `play_cli.py` — Play audio files
+- `ocr_cli.py` — Extract text from images
 
----
+### Visual Tools
+- `peek_cli.py` — Display images in terminal (chafa)
 
-*Transform any content into structured knowledge. Build your personal intelligence infrastructure. Prepare for the agent future.*
+### YouTube Tools
+- `youtube_cli.py` — Process playlists and channels
 
-**Ready to own your knowledge?**
+### Utility Tools
+- `obsidian_cli.py` — Fetch date range from Obsidian vault
+- `test_sourcetype.py` — Debug individual source types
+
+## Database Management
+
+### Cache Operations
+```bash
+# View cache snapshot
+python -m siphon.database.sqlite.snapshot_sqlite3
+
+# PostgreSQL snapshot
+python -m siphon.collections.query.snapshot
+
+# Manual sync (SQLite → PostgreSQL)
+python -m siphon.database.sqlite.manual_sync
+
+# Get fallback statistics
+python -c "from siphon.database.postgres.PGRES_processed_content import get_fallback_stats; print(get_fallback_stats())"
+```
+
+### Cache Flags
+- `-c c` (default) — Use cache if available
+- `-c u` — Uncached, don't save to cache
+- `-c r` — Recache, force reprocessing
+
+## Configuration
+
+### Required Environment Variables
+```bash
+POSTGRES_PASSWORD      # PostgreSQL authentication
+```
+
+### Optional Environment Variables
+```bash
+GITHUB_TOKEN          # GitHub API access
+OPENAI_API_KEY        # Cloud LLM processing
+YOUTUBE_API_KEY       # YouTube playlist/channel operations
+OBSIDIAN_VAULT        # Obsidian vault path
+```
+
+### Database Configuration
+PostgreSQL connection managed via `dbclients` package:
+- Database: `siphon`
+- User: System username
+- Host: Auto-detected (localhost, 10.0.0.82, or 68.47.92.102)
+- Port: 5432
+
+SQLite fallback:
+- Location: `~/.siphon/fallback_cache.db`
+- Auto-created on first use
+
+## Testing
 
 ```bash
-pip install -e .
-siphon your-first-document.pdf
+# Run all tests
+pytest
+
+# Specific test suites
+pytest src/siphon/tests/test_uri.py
+pytest src/siphon/tests/test_context.py
+pytest src/siphon/tests/test_integration.py
+
+# Test specific source type
+python src/siphon/scripts/test_sourcetype.py Text
 ```
+
+## Extending Siphon
+
+### Adding New Source Types
+
+1. **Define in SourceType enum** (`src/siphon/data/type_definitions/source_type.py`)
+```python
+class SourceType(str, Enum):
+    MYNEWTYPE = "MyNewType"
+```
+
+2. **Create URI class** (`src/siphon/uri/classes/mynewtype_uri.py`)
+```python
+class MyNewTypeURI(URI):
+    sourcetype: SourceType = SourceType.MYNEWTYPE
+    
+    @classmethod
+    def identify(cls, source: str) -> bool:
+        # Detection logic
+        pass
+    
+    @classmethod
+    def from_source(cls, source: str) -> "MyNewTypeURI":
+        # URI creation logic
+        pass
+```
+
+3. **Create Context class** (`src/siphon/context/classes/mynewtype_context.py`)
+```python
+class MyNewTypeContext(Context):
+    sourcetype: SourceType = SourceType.MYNEWTYPE
+    
+    @classmethod
+    def from_uri(cls, uri: URI) -> "MyNewTypeContext":
+        # Content extraction logic
+        pass
+```
+
+4. **Create SyntheticData class** (`src/siphon/synthetic_data/classes/mynewtype_synthetic_data.py`)
+```python
+class MyNewTypeSyntheticData(TextSyntheticData):
+    sourcetype: SourceType = SourceType.MYNEWTYPE
+    # Inherits from TextSyntheticData unless custom logic needed
+```
+
+5. **Add prompt templates** (`src/siphon/prompts/synthetic_data/`)
+- `mynewtype_title.jinja2`
+- `mynewtype_description.jinja2`
+- `mynewtype_summary.jinja2`
+
+## Dependencies
+
+### Core Dependencies
+- `pydantic` — Data validation
+- `psycopg2` — PostgreSQL client
+- `rich` — Terminal formatting
+- `jinja2` — Template rendering
+- `conduit` — LLM abstraction (local project)
+
+### Ingestion Dependencies
+- `newspaper3k` — Article extraction
+- `youtube-transcript-api` — YouTube transcripts
+- `yt-dlp` — YouTube metadata
+- `markitdown` — Document conversion
+- `PyGithub` — GitHub API
+- `requests` — HTTP client
+
+### Audio/Video Dependencies
+- `torch` — PyTorch for ML models
+- `transformers` — Whisper transcription
+- `pyannote
