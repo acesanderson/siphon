@@ -11,7 +11,7 @@ dependencies = [
     "anthropic>=0.57.1",
     "conduit",
     "chromadb",
-    "database-clients",
+    "dbclients",
     "fastapi",
     "google-genai",
     "instructor>=1.9.2",
@@ -128,7 +128,7 @@ split-on-trailing-comma = true
 # ── uv sources (local/editable deps) ───────────────────────────────────────────
 [tool.uv.sources]
 siphonserver = { path = "../siphonserver-project", editable = true }
-database-clients = { path = "../database-clients", editable = true }
+dbclients = { path = "../dbclients-project", editable = true }
 conduit = { path = "../conduit-project", editable = true }
 
 # ── entry points ───────────────────────────────────────────────────────────────
