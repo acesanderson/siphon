@@ -6,6 +6,7 @@ from siphon.data.context import Context
 from siphon.data.type_definitions.source_type import SourceType
 from siphon.data.synthetic_data import SyntheticData
 from typing import override
+import re
 
 
 class TextSyntheticData(SyntheticData):
@@ -40,6 +41,8 @@ class TextSyntheticData(SyntheticData):
         title = responses[0].message.content.strip()
         description = responses[1].message.content.strip()
         summary = responses[2].message.content.strip()
+        # Retrieve the actual summary, and only the summary, it is between <summary></summary> tags
+        summary = cls._extract_summary(summary)
         return cls(
             title=title,
             description=description,
@@ -74,6 +77,13 @@ class TextSyntheticData(SyntheticData):
             if stem == syntheticdataprompt["stem"].lower():
                 return syntheticdataprompt
         raise ValueError(f"No prompt templates found for context type {stem}.")
+
+    @classmethod
+    def _extract_summary(cls, text: str):
+        match = re.search(r"<summary>(.*?)</summary>", text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return text  # or return None if no match found
 
     @classmethod
     def _render_prompts(cls, context: Context, prompt_templates: dict) -> list[str]:
