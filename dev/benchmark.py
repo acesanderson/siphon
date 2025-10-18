@@ -49,6 +49,7 @@ for index, (url, duration) in enumerate(videos):
             processed.append(
                 {"title": title, "duration": duration, "url": url, "processed": pc}
             )
+            sleep(15)  # brief pause between videos
             break  # success → exit retry loop
 
         except IpBlocked as e:
