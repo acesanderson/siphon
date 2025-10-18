@@ -54,6 +54,7 @@ def main():
     parser.add_argument(
         "target",
         type=str,
+        nargs="?",
         help="GitHub URL, directory path, or '.' for current directory",
     )
     # Docs generation args
@@ -69,11 +70,13 @@ def main():
         action="store_true",
         help="Generate project README.",
     )
+    # Add verbose flag, Literal["t", "v", "c"]
     parser.add_argument(
         "-v",
         "--verbose",
-        action="store_true",
-        help="Enable verbose readme. Default is terse.",
+        nargs="?",
+        choices=["t", "v", "c"],
+        help="Enable verbose readme. Options: 't' (terse, default), 'v' (verbose), 'c' (critique'.",
     )
     parser.add_argument(
         "-p",
@@ -120,11 +123,14 @@ def main():
         else:
             print("No previous response found.", file=sys.stderr)
         return
+
+    # Here we definitely need output
+    assert output is not None, "No target repo provided."
     # Handle --docs flag to generate README
     if args.docs:
         from siphon.scripts.flatten.generate_docs import generate_docs
 
-        prompt_type = "verbose" if args.verbose else "terse"
+        prompt_type = args.verbose
         response = generate_docs(xml_string=output, prompt_type=prompt_type)
         assert isinstance(response, Response), (
             f"Expected Response object from generate_docs, got {type(response)}"

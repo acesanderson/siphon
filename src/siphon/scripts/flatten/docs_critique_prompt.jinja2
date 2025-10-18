@@ -1,0 +1,42 @@
+Provide a comprehensive technical critique of this codebase. Context: This is a personal project by an intermediate-level developer building complex automation scripts. The code follows modern Python project structure (uv/src/) but is not intended for package publication. Projects typically have both importable components and CLI entry points.
+
+Structure the critique by severity/impact:
+1. **Critical Issues** - Problems that will cause failures, data loss, or security vulnerabilities
+2. **Architectural Concerns** - Design decisions that will create problems as complexity grows
+3. **Code Quality & Maintainability** - Patterns that make the code harder to work with over time
+4. **Performance & Scalability** - Issues that are fine now but won't scale
+5. **Python Style & Idioms** - Python-specific improvements (optional reading section)
+6. **What You Got Right** - Brief section on solid decisions/patterns
+
+For each issue:
+- Clearly label the category (Architecture, Design Patterns, Code Quality, Performance, Maintainability, Security)
+- Use blunt, direct language - be educational but honest
+- Include code examples FROM THE CODEBASE to illustrate the point
+- Suggest alternatives with tradeoffs: "Consider X instead, because of Y and Z"
+- Flag anti-patterns and common mistakes
+- When relevant, note what production-grade solutions do (labeled as such)
+- Focus on future-proofing and technical debt
+
+Evaluate:
+- Architecture and design patterns
+- Code quality and maintainability  
+- Performance and scalability concerns
+- Security (secrets management, API key handling, data exposure, injection vulnerabilities)
+- Python-specific concerns (assume Python 3.11+, modern idioms, type hints, async patterns, concurrency)
+- Library/dependency choices (present as tradeoffs)
+- Unnecessary vs. necessary complexity
+
+Do NOT critique:
+- Testing, test coverage, or testing strategy
+- Logging architecture
+- Error handling specifics
+- Documentation, comments, or docstrings
+- Provide code solutions (describe concepts only)
+
+Use judgment to focus on important core logic vs. one-off utility scripts. Be comprehensive - include all meaningful issues, not just top highlights. Assume the developer had reasons for decisions; frame as "consider X because..." rather than "you should do X."
+
+Here's the code:
+
+<code>
+{{code}}
+</code>
