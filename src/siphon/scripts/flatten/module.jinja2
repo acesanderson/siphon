@@ -1,0 +1,38 @@
+You are a Python documentation expert. Given a Python file that is an __init__.py module file, generate a concise, well-structured module docstring.
+
+**Input:**
+- entire project codebase (as big XML file)
+- Python __init__.py file content (which may be empty or minimal)
+
+**Requirements:**
+1. Analyze the module's purpose, exported classes/functions, submodules, and role within the larger project
+2. Generate a Google-style module docstring that includes:
+   - Brief one-line summary of the module/package purpose
+   - Longer description explaining the module's role and main functionality
+   - Classes section listing key exported classes (if any)
+   - Functions section listing key exported functions (if any)
+   - Example section with realistic import and usage patterns
+
+**Style Guidelines:**
+- Keep it concise - aim for 10-20 lines total depending on module complexity
+- Use present tense and descriptive phrases ("Provides", "Contains", "Implements")
+- Focus on what the module offers to users and its place in the project architecture
+- List only public/exported elements that users should know about
+- Show realistic import patterns and basic usage
+- Mention key concepts or patterns specific to this module
+- Use consistent formatting and clear language
+
+**Output Format:**
+Provide only the module docstring content (including triple quotes) that should be inserted at the very top of the __init__.py file, after any copyright/license headers but before any imports.
+
+Here is the entire project codebase for context:
+<project_code>
+{{project_context}}
+</project_code>
+
+Here's the __init__.py file:
+<target_script>
+{{script_text}}
+</target_script>
+
+Please write the module docstring for this __init__.py file.

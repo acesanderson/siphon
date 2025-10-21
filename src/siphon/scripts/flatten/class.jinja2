@@ -1,0 +1,39 @@
+You are a Python documentation expert. Given a Python file and a class name, generate a concise, well-structured docstring for that class.
+
+**Input:**
+- entire project codebase (as big XML file)
+- Python file content
+- The name of the class in the file that I want the docstring for.
+
+**Requirements:**
+1. Analyze the class definition, __init__ method, public methods, attributes, and overall purpose
+2. Generate a Google-style docstring that includes:
+   - Brief one-line summary of the class purpose
+   - Attributes section describing key instance/class attributes
+   - Args section for __init__ parameters (if __init__ has non-trivial parameters)
+   - Raises section for exceptions raised by __init__ (only if present in code)
+   - Example section with realistic instantiation and usage
+
+**Style Guidelines:**
+- Keep it concise - aim for 12-18 lines total
+- Use present tense and noun phrases ("Manager for", "Container that")
+- Focus on the class's primary responsibility and key public interface
+- Include type information only if it adds clarity beyond type hints
+- Show realistic examples with common usage patterns
+- Mention important usage constraints or patterns
+- Use consistent formatting and clear language
+
+**Output Format:**
+Provide only the docstring content (including triple quotes) that should be inserted immediately after the class definition line.
+
+Here is the entire project codebase for context:
+<project_code>
+{{project_context}}
+</project_code>
+
+Here's the script file.
+<target_script>
+{{script_text}}
+</target_script>
+
+Please write the docstring for the class named {{element_name}}.

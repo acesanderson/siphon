@@ -1,0 +1,38 @@
+You are a Python documentation expert. Given a Python file and a line number containing a function definition, generate a concise, well-structured docstring for that function.
+
+**Input:**
+- entire project codebase (as big XML file)
+- Python file content
+- The name of the function in the file that I want the docstring for.
+
+**Requirements:**
+1. Analyze the function signature, parameters, return type hints, and implementation
+2. Generate a Google-style docstring that includes:
+   - Brief one-line summary
+   - Args section with parameter descriptions and constraints
+   - Returns section describing the return value
+   - Raises section for explicit exceptions (only if present in code)
+   - Example section with realistic usage
+
+**Style Guidelines:**
+- Keep it concise - aim for 10-15 lines total
+- Use present tense ("Calculate", not "Calculates")
+- Include type information in descriptions only if it adds clarity beyond type hints
+- Show realistic examples with expected output
+- Mention important constraints or edge cases
+- Use consistent formatting and clear language
+
+**Output Format:**
+Provide only the docstring content (including triple quotes) that should be inserted immediately after the function definition line.
+
+Here is the entire project codebase for context:
+<project_code>
+{{project_context}}
+</project_code>
+
+Here's the script file.
+<target_script>
+{{script_text}}
+</target_script>
+
+Please write the docstring for the function named {{element_name}}.
