@@ -10,3 +10,5 @@ sourdough/
 *.txt
 /__pycache__/
 uv.lock
+src/siphon/scripts/flatten/previous_response.json
+

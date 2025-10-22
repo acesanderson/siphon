@@ -16,7 +16,7 @@ class PipelineTracer:
             )
 
         self.enabled = enabled
-        self.console = Console()
+        self.console = Console(stderr=True)
         self.step_count = 0
 
     def trace_step(self, step_name: str, obj: Any, obj_type: str = None):
