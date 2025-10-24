@@ -16,7 +16,7 @@ dependencies = [
     "google-genai",
     "instructor>=1.9.2",
     "lxml[html-clean]>=6.0.0",
-    "markitdown[all]",
+    "markitdown",
     "newspaper3k",
     "ollama",
     "openai",
@@ -32,9 +32,7 @@ dependencies = [
     "requests",
     "rerankers",
     "rich",
-    "siphonserver",
     "sentence-transformers",
-    "siphonserver",
     "tiktoken>=0.9.0",
     "tinydb>=4.8.2",
     "torch",
@@ -127,7 +125,6 @@ split-on-trailing-comma = true
 
 # ── uv sources (local/editable deps) ───────────────────────────────────────────
 [tool.uv.sources]
-siphonserver = { path = "../siphonserver-project", editable = true }
 dbclients = { path = "../dbclients-project", editable = true }
 conduit = { path = "../conduit-project", editable = true }
 
