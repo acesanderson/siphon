@@ -84,14 +84,14 @@ class SyntheticData(BaseModel):
     @classmethod
     def _from_context_remote(cls, context, cloud, model_str) -> "SyntheticDataUnion":
         """
-        Create SyntheticData by calling a remote service (e.g., siphonserver).
+        Create SyntheticData by calling a remote service (e.g., headwater).
         Fun fact: this turns into a call of the other method (_from_context_direct) on the server side.
         """
         _ = cloud  # currently unused, as model_str contains the model choice
         logger.info("Using local synthetic data generation")
         from headwater_api.client.headwater_client import HeadwaterClient
 
-        from headwater_api.classes.requests import SyntheticDataRequest
+        from headwater_api.classes import SyntheticDataRequest
 
         client = HeadwaterClient()
         request = SyntheticDataRequest(context=context, model=model_str)
