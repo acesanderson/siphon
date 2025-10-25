@@ -12,7 +12,16 @@ dependencies = [
     "chromadb",
     "dbclients",
     "fastapi",
+<<<<<<< HEAD
     "headwater_api",
+||||||| parent of 74cab11 (merge)
+    "google-genai",
+    "instructor>=1.9.2",
+=======
+    "google-genai",
+    "headwater_server",
+    "instructor>=1.9.2",
+>>>>>>> 74cab11 (merge)
     "lxml[html-clean]>=6.0.0",
     "markitdown",
     "newspaper3k",
@@ -29,6 +38,15 @@ dependencies = [
     "rerankers",
     "rich",
     "sentence-transformers",
+<<<<<<< HEAD
+||||||| parent of 74cab11 (merge)
+    "siphonserver",
+    "tiktoken>=0.9.0",
+    "tinydb>=4.8.2",
+=======
+    "tiktoken>=0.9.0",
+    "tinydb>=4.8.2",
+>>>>>>> 74cab11 (merge)
     "torch",
     "torchaudio",
     "torchvision",
@@ -119,6 +137,12 @@ split-on-trailing-comma = true
 
 # ── uv sources (local/editable deps) ───────────────────────────────────────────
 [tool.uv.sources]
+<<<<<<< HEAD
+||||||| parent of 74cab11 (merge)
+siphonserver = { path = "../siphonserver-project", editable = true }
+=======
+headwater_server = { path = "../headwater-server-project", editable = true }
+>>>>>>> 74cab11 (merge)
 dbclients = { path = "../dbclients-project", editable = true }
 conduit = { path = "../conduit-project", editable = true }
 headwater_api = { path = "../headwater-api-project", editable = true }
