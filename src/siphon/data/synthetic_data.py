@@ -89,10 +89,10 @@ class SyntheticData(BaseModel):
         """
         _ = cloud  # currently unused, as model_str contains the model choice
         logger.info("Using local synthetic data generation")
-        from siphonserver.client.siphonclient import SiphonClient
+        from headwater_api.client.headwater_client import HeadwaterClient
 
-        from siphonserver.server.api.requests import SyntheticDataRequest
+        from headwater_api.classes.requests import SyntheticDataRequest
 
-        client = SiphonClient()
+        client = HeadwaterClient()
         request = SyntheticDataRequest(context=context, model=model_str)
         return client.generate_synthetic_data(request)
