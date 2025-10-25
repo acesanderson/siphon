@@ -95,4 +95,4 @@ class SyntheticData(BaseModel):
 
         client = HeadwaterClient()
         request = SyntheticDataRequest(context=context, model=model_str)
-        return client.generate_synthetic_data(request)
+        return client.siphon.generate_synthetic_data(request)
