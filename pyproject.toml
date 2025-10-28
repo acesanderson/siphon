@@ -122,7 +122,7 @@ split-on-trailing-comma = true
 [tool.uv.sources]
 dbclients = { path = "../dbclients-project", editable = true }
 conduit = { path = "../conduit-project", editable = true }
-headwater_api = { path = "../headwater-api-project", editable = true }
+headwater_api = { path = "../headwater/headwater-api", editable = true }
 
 # ── entry points ───────────────────────────────────────────────────────────────
 [project.scripts]
