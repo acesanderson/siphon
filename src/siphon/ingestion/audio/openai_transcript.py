@@ -31,3 +31,11 @@ def get_openai_transcript(audio_file: str | Path):
                 model="whisper-1",
             )
     return transcript.text
+
+
+if __name__ == "__main__":
+    ASSETS_PATH = Path(__file__).parent.parent.parent.parent.parent / "assets"
+    EXAMPLE_AUDIO = ASSETS_PATH / "example.mp3"
+    transcript = get_openai_transcript(EXAMPLE_AUDIO)
+    print("Transcription Result:")
+    print(transcript)

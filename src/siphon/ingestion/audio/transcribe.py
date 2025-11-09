@@ -25,3 +25,11 @@ def transcribe(file_name: str | Path) -> str:
     logger.info(f"Transcribing file: {file_name}")
     result = transcriber(file_name)
     return result
+
+
+if __name__ == "__main__":
+    ASSETS_PATH = Path(__file__).parent.parent.parent.parent.parent / "assets"
+    EXAMPLE_AUDIO = ASSETS_PATH / "example.mp3"
+    transcript = transcribe(str(EXAMPLE_AUDIO))
+    print("Transcription Result:")
+    print(transcript)

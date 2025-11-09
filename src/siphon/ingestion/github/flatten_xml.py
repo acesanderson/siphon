@@ -27,7 +27,7 @@ EXCLUDE_PATTERNS = [
 ]
 
 # File extensions to include
-INCLUDE_EXTENSIONS = (".py", ".lua")  # ".md"
+INCLUDE_EXTENSIONS = (".py", ".lua", ".jinja2")  # ".md"
 
 
 def should_exclude_path(path: str) -> bool:
