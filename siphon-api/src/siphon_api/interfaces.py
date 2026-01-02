@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, Awaitable
 from siphon_api.models import SourceInfo, ContentData, EnrichedData
 from siphon_api.enums import SourceType
 
@@ -34,4 +34,4 @@ class EnricherStrategy(Protocol):
 
     source_type: SourceType
 
-    def enrich(self, content: ContentData, preferred_model: str) -> EnrichedData: ...
+    def enrich(self, content: ContentData, preferred_model: str) -> Awaitable[EnrichedData]: ...

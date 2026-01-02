@@ -6,20 +6,13 @@ from typing import override, Any
 from pathlib import Path
 import logging
 
-# Import necessary classes from conduit; consider lazy imports in future.
-from conduit.batch import (
-    AsyncConduit,
-    Prompt,
-    ModelAsync,
-    Response,
-    Verbosity,
-    ConduitCache,
-)
-from conduit.sync import Model
+# Import new Conduit async API
+from conduit.core.model.model_async import ModelAsync
+from conduit.domain.request.generation_params import GenerationParams
+from conduit.domain.config.conduit_options import ConduitOptions
+from conduit.config import settings as conduit_settings
+from conduit.core.prompt.prompt import Prompt
 
-# Set up cache
-cache = ConduitCache(name="siphon")
-ModelAsync.conduit_cache = cache
 # Set up logging
 logger = logging.getLogger(__name__)
 # Set root logger to silent
@@ -28,7 +21,6 @@ logging.getLogger().setLevel(logging.CRITICAL + 10)
 # Constants
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 PREFERRED_MODEL = settings.default_model
-VERBOSITY = Verbosity.COMPLETE
 
 
 class DocEnricher(EnricherStrategy):
@@ -39,16 +31,16 @@ class DocEnricher(EnricherStrategy):
     source_type: SourceType = SourceType.DOC
 
     def __init__(self):
-        from conduit.prompt.prompt_loader import PromptLoader
+        from conduit.core.prompt.prompt_loader import PromptLoader
 
         # Load prompts packaged with this module
         self.prompt_loader = PromptLoader(
             base_dir=PROMPTS_DIR,
         )
-        print(f"Loaded prompts: {self.prompt_loader.keys}")
+        logger.debug(f"Loaded prompts: {self.prompt_loader.keys}")
 
     @override
-    def enrich(
+    async def enrich(
         self, content: ContentData, preferred_model: str = PREFERRED_MODEL
     ) -> EnrichedData:
         logger.info("Routing Doc content based on MIME type")
@@ -56,45 +48,45 @@ class DocEnricher(EnricherStrategy):
 
         # Route to specialized prompt
         if mime_type.startswith("text/x-"):  # Code
-            return self._enrich_code(content, preferred_model)
+            return await self._enrich_code(content, preferred_model)
         elif "spreadsheet" in mime_type or mime_type == "text/csv":
-            return self._enrich_data(content, preferred_model)
+            return await self._enrich_data(content, preferred_model)
         elif "presentation" in mime_type:
-            return self._enrich_presentation(content, preferred_model)
+            return await self._enrich_presentation(content, preferred_model)
         else:  # Default: prose documents
-            return self._enrich_prose(content, preferred_model)
+            return await self._enrich_prose(content, preferred_model)
 
-    def _enrich_code(self, content: ContentData, preferred_model: str) -> EnrichedData:
+    async def _enrich_code(self, content: ContentData, preferred_model: str) -> EnrichedData:
         description_prompt = self.prompt_loader["code_description"]
         summary_prompt = self.prompt_loader["code_summary"]
-        return self._enrich_with_prompts(
+        return await self._enrich_with_prompts(
             content, description_prompt, summary_prompt, preferred_model
         )
 
-    def _enrich_data(self, content: ContentData, preferred_model: str) -> EnrichedData:
+    async def _enrich_data(self, content: ContentData, preferred_model: str) -> EnrichedData:
         description_prompt = self.prompt_loader["data_description"]
         summary_prompt = self.prompt_loader["data_summary"]
-        return self._enrich_with_prompts(
+        return await self._enrich_with_prompts(
             content, description_prompt, summary_prompt, preferred_model
         )
 
-    def _enrich_presentation(
+    async def _enrich_presentation(
         self, content: ContentData, preferred_model: str
     ) -> EnrichedData:
         description_prompt = self.prompt_loader["presentation_description"]
         summary_prompt = self.prompt_loader["presentation_summary"]
-        return self._enrich_with_prompts(
+        return await self._enrich_with_prompts(
             content, description_prompt, summary_prompt, preferred_model
         )
 
-    def _enrich_prose(self, content: ContentData, preferred_model: str) -> EnrichedData:
+    async def _enrich_prose(self, content: ContentData, preferred_model: str) -> EnrichedData:
         description_prompt = self.prompt_loader["prose_description"]
         summary_prompt = self.prompt_loader["prose_summary"]
-        return self._enrich_with_prompts(
+        return await self._enrich_with_prompts(
             content, description_prompt, summary_prompt, preferred_model
         )
 
-    def _enrich_with_prompts(
+    async def _enrich_with_prompts(
         self,
         content: ContentData,
         description_prompt: Prompt,
@@ -102,35 +94,46 @@ class DocEnricher(EnricherStrategy):
         preferred_model: str,
     ) -> EnrichedData:
         logger.info("Enriching Doc content with specialized prompts")
-        title_prompt = self.prompt_loader[
-            "title"
-        ]  # Title prompt is universal; takes description as input variable
-        # Start with description and summary
+        title_prompt = self.prompt_loader["title"]
+        
+        # Input variables for prompts
         input_variables = {"text": content.text, "metadata": content.metadata}
         source_type = SourceType.DOC
-        # Assemble prompt strings
-        prompt_strings = []
+        
+        # Render description and summary prompts
         description_prompt_str = description_prompt.render(input_variables)
-        logger.info(f"Generated description prompt")
         summary_prompt_str = summary_prompt.render(input_variables)
-        logger.info(f"Generated summary prompt")
-        prompt_strings.extend([description_prompt_str, summary_prompt_str])
-        # Run the chain
+        logger.info("Generated description and summary prompts")
+        
+        # Set up model and options
         model = ModelAsync(model=preferred_model)
-        conduit = AsyncConduit(model=model)
-        responses = conduit.run(prompt_strings=prompt_strings, verbose=VERBOSITY)
-        assert all(isinstance(r, Response) for r in responses), (
-            "All responses must be of type Response"
+        params = GenerationParams(model=preferred_model)
+        options = conduit_settings.default_conduit_options()
+        options.cache = conduit_settings.default_cache(project_name="siphon")
+        
+        # Run async calls for description and summary
+        import asyncio
+        description_task = model.query(
+            query_input=description_prompt_str, params=params, options=options
         )
-        description = str(responses[0].content)
-        summary = str(responses[1].content)
-        # Generate title from description; this is sync.
+        summary_task = model.query(
+            query_input=summary_prompt_str, params=params, options=options
+        )
+        
+        description_result, summary_result = await asyncio.gather(
+            description_task, summary_task
+        )
+        
+        description = str(description_result.content)
+        summary = str(summary_result.content)
+        
+        # Generate title from description
         title_prompt_str = title_prompt.render({"description": description})
-        model_sync = Model(model=preferred_model)
-        response = model_sync.query(query_input=title_prompt_str, verbose=VERBOSITY)
-        assert isinstance(response, Response), "Title response must be of type Response"
-        title = str(response.content)
-        logger.info(f"Generated title from description")
+        title_result = await model.query(
+            query_input=title_prompt_str, params=params, options=options
+        )
+        title = str(title_result.content)
+        logger.info("Generated title, description, and summary")
 
         # Construct enriched data
         enriched_data = EnrichedData(

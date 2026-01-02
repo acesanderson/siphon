@@ -1,3 +1,4 @@
+from __future__ import annotations
 from siphon_api.models import (
     ProcessedContent,
     SourceInfo,
@@ -15,7 +16,12 @@ from siphon_server.database.postgres.repository import ContentRepository
 from siphon_server.sources.registry import load_registry, generate_registry
 from siphon_server.config import load_settings
 from siphon_api.enums import SourceType
+from typing import TYPE_CHECKING
 import time
+
+if TYPE_CHECKING:
+    from siphon_api.enums import SourceType
+    from siphon_api.models import EnrichedData, ContentData, SourceInfo, PipelineClass
 
 import logging
 
@@ -147,7 +153,7 @@ class ContentEnricher:
                 enrichers.append(enricher)
         return enrichers
 
-    def execute(
+    async def execute(
         self, content_data: ContentData, preferred_model: str = PREFERRED_MODEL
     ) -> EnrichedData:
         logger.debug("Executing ContentEnricher.")
@@ -155,10 +161,10 @@ class ContentEnricher:
         for enricher in self.enrichers:
             if enricher.source_type == source_type:
                 logger.info(
-                    "Using enricher {enricher.__name__} for source type: {source_type}"
+                    f"Using enricher {enricher.__name__} for source type: {source_type}"
                 )
                 enricher_obj = enricher()
-                return enricher_obj.enrich(
+                return await enricher_obj.enrich(
                     content=content_data, preferred_model=preferred_model
                 )
 
@@ -181,7 +187,7 @@ class SiphonPipeline:
         self.extractor = ContentExtractor()
         self.enricher = ContentEnricher()
 
-    def process(
+    async def process(
         self,
         source: str,
         action: ActionType = ActionType.GULP,
@@ -242,7 +248,7 @@ class SiphonPipeline:
             return content_data
 
         # Step 4: Enrich with LLM
-        enriched_data = self.enricher.execute(content_data, preferred_model)
+        enriched_data = await self.enricher.execute(content_data, preferred_model)
         logger.info(f"Enriched data: {enriched_data}")
         if action == ActionType.ENRICH:
             return enriched_data

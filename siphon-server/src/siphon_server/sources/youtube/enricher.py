@@ -6,18 +6,12 @@ from typing import override, Any
 from pathlib import Path
 import logging
 
-# Import necessary classes from conduit; consider lazy imports in future.
-from conduit.batch import (
-    AsyncConduit,
-    ModelAsync,
-    Response,
-    Verbosity,
-    ConduitCache,
-)
+# Import new Conduit async API
+from conduit.core.model.model_async import ModelAsync
+from conduit.domain.request.generation_params import GenerationParams
+from conduit.domain.config.conduit_options import ConduitOptions
+from conduit.config import settings as conduit_settings
 
-# Set up cache
-cache = ConduitCache(name="siphon")
-ModelAsync.conduit_cache = cache
 # Set up logging
 logger = logging.getLogger(__name__)
 # Set root logger to silent
@@ -26,7 +20,6 @@ logging.getLogger().setLevel(logging.CRITICAL + 10)
 # Constants
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 PREFERRED_MODEL = settings.default_model
-VERBOSITY = Verbosity.COMPLETE
 
 
 class YouTubeEnricher(EnricherStrategy):
@@ -37,16 +30,16 @@ class YouTubeEnricher(EnricherStrategy):
     source_type: SourceType = SourceType.YOUTUBE
 
     def __init__(self):
-        from conduit.prompt.prompt_loader import PromptLoader
+        from conduit.core.prompt.prompt_loader import PromptLoader
 
         # Load prompts packaged with this module
         self.prompt_loader = PromptLoader(
             base_dir=PROMPTS_DIR,
         )
-        print(f"Loaded prompts: {self.prompt_loader.keys}")
+        logger.debug(f"Loaded prompts: {self.prompt_loader.keys}")
 
     @override
-    def enrich(
+    async def enrich(
         self, content: ContentData, preferred_model: str = PREFERRED_MODEL
     ) -> EnrichedData:
         logger.info("Enriching YouTube content")
@@ -54,22 +47,36 @@ class YouTubeEnricher(EnricherStrategy):
         source_type = SourceType.YOUTUBE
         title = self._generate_title(input_variables)  # This is already in metadata
         logger.info(f"Generated title: {title}")
-        # Assemble prompt strings
-        prompt_strings = []
-        description = self._generate_description_prompt(input_variables)
-        logger.info(f"Generated description: {description}")
-        summary = self._generate_summary_prompt(input_variables)
-        logger.info(f"Generated summary: {summary[:100]}...")
-        prompt_strings.extend([description, summary])
-        # Run the chain
+
+        # Generate description and summary concurrently
+        description_prompt = self._generate_description_prompt(input_variables)
+        summary_prompt = self._generate_summary_prompt(input_variables)
+
+        # Set up model and options
         model = ModelAsync(model=preferred_model)
-        conduit = AsyncConduit(model=model)
-        responses = conduit.run(prompt_strings=prompt_strings, verbose=VERBOSITY)
-        assert all(isinstance(r, Response) for r in responses), (
-            "All responses must be of type Response"
+        params = GenerationParams(model=preferred_model)
+        options = conduit_settings.default_conduit_options()
+        options.cache = conduit_settings.default_cache(project_name="siphon")
+
+        # Run async calls for description and summary
+        import asyncio
+
+        description_task = model.query(
+            query_input=description_prompt, params=params, options=options
         )
-        description = str(responses[0].content)
-        summary = str(responses[1].content)
+        summary_task = model.query(
+            query_input=summary_prompt, params=params, options=options
+        )
+
+        description_result, summary_result = await asyncio.gather(
+            description_task, summary_task
+        )
+
+        description = str(description_result.content)
+        summary = str(summary_result.content)
+
+        logger.info(f"Generated description and summary")
+
         # Construct enriched data
         enriched_data = EnrichedData(
             source_type=source_type,
@@ -98,3 +105,19 @@ class YouTubeEnricher(EnricherStrategy):
     def _generate_topics(self, input_variables: dict[str, Any]) -> list[str]: ...
 
     def _generate_entities(self, input_variables: dict[str, Any]) -> list[str]: ...
+
+
+if __name__ == "__main__":
+    from siphon_server.sources.youtube.parser import YouTubeParser
+    from siphon_server.sources.youtube.extractor import YouTubeExtractor
+
+    parser = YouTubeParser()
+    test_url = "https://www.youtube.com/watch?v=ksjzI-8Rz2w"
+    source_info = parser.parse(test_url)
+    extractor = YouTubeExtractor()
+    content_data = extractor.extract(source_info)
+    import asyncio
+
+    enricher = YouTubeEnricher()
+    enriched_data = asyncio.run(enricher.enrich(content_data))
+    print(enriched_data)

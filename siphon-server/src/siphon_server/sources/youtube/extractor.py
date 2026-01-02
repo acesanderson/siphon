@@ -192,13 +192,3 @@ class YouTubeExtractor(ExtractorStrategy):
         # Cache the transcript
         self._set_cached_transcript(video_id, transcript)
         return transcript
-
-
-if __name__ == "__main__":
-    from siphon_server.sources.youtube.parser import YouTubeParser
-
-    example_youtube_url = "https://www.youtube.com/watch?v=cqnOOjJ6IfA"
-    source_info = YouTubeParser().parse(example_youtube_url)
-    extractor = YouTubeExtractor()
-    content_data = extractor.extract(source_info)
-    print(content_data)
