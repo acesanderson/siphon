@@ -17,7 +17,7 @@ dependencies = [
     "siphon_api",
     "pydub",
     "sqlalchemy>=2.0.44",
-    "torch",
+    # "torch",
     "trafilatura[all]>=2.0.0",
     "xdg-base-dirs>=6.0.2",
     "youtube-transcript-api>=1.2.3",
