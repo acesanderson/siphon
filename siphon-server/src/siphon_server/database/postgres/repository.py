@@ -1,5 +1,13 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
+from datetime import datetime
+from typing import Literal
+
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
+
+from siphon_api.enums import SourceType
 from siphon_api.models import ProcessedContent
 from siphon_server.database.postgres.connection import SessionLocal
 from siphon_server.database.postgres.models import ProcessedContentORM
@@ -117,3 +125,113 @@ class ContentRepository:
                 .first()
             )
             return from_orm(orm_obj) if orm_obj else None
+
+    # Query methods for siphon query command
+    def search_by_text(
+        self,
+        query: str,
+        source_type: SourceType | None = None,
+        date_filter: tuple[Literal[">", "<", ">=", "<="], datetime] | None = None,
+        limit: int = 10,
+    ) -> list[ProcessedContent]:
+        """
+        Search for content by plaintext match in title OR description.
+
+        Performs case-insensitive SQL ILIKE search on title and description fields.
+        Returns ProcessedContent objects sorted by created_at descending (newest first).
+
+        Args:
+            query: Search text to match against title or description
+            source_type: Optional filter by SourceType
+            date_filter: Optional tuple of (operator, datetime) for date filtering
+            limit: Maximum number of results to return
+
+        Returns:
+            List of ProcessedContent objects matching the search criteria
+        """
+        with self._session() as db:
+            q = db.query(ProcessedContentORM)
+
+            # Text search in title OR description (case-insensitive)
+            if query:
+                search_pattern = f"%{query}%"
+                q = q.filter(
+                    or_(
+                        ProcessedContentORM.title.ilike(search_pattern),
+                        ProcessedContentORM.description.ilike(search_pattern),
+                    )
+                )
+
+            # Filter by source type
+            if source_type:
+                q = q.filter(ProcessedContentORM.source_type == source_type)
+
+            # Filter by date
+            if date_filter:
+                operator, date_value = date_filter
+                timestamp = int(date_value.timestamp())
+                match operator:
+                    case ">":
+                        q = q.filter(ProcessedContentORM.created_at > timestamp)
+                    case "<":
+                        q = q.filter(ProcessedContentORM.created_at < timestamp)
+                    case ">=":
+                        q = q.filter(ProcessedContentORM.created_at >= timestamp)
+                    case "<=":
+                        q = q.filter(ProcessedContentORM.created_at <= timestamp)
+
+            # Sort by created_at descending (newest first)
+            q = q.order_by(ProcessedContentORM.created_at.desc())
+
+            # Apply limit
+            q = q.limit(limit)
+
+            results = q.all()
+            return [from_orm(orm_obj) for orm_obj in results]
+
+    def list_all(
+        self,
+        source_type: SourceType | None = None,
+        date_filter: tuple[Literal[">", "<", ">=", "<="], datetime] | None = None,
+        limit: int = 10,
+    ) -> list[ProcessedContent]:
+        """
+        List all content sorted by created_at descending (newest first).
+
+        Args:
+            source_type: Optional filter by SourceType
+            date_filter: Optional tuple of (operator, datetime) for date filtering
+            limit: Maximum number of results to return
+
+        Returns:
+            List of ProcessedContent objects
+        """
+        with self._session() as db:
+            q = db.query(ProcessedContentORM)
+
+            # Filter by source type
+            if source_type:
+                q = q.filter(ProcessedContentORM.source_type == source_type)
+
+            # Filter by date
+            if date_filter:
+                operator, date_value = date_filter
+                timestamp = int(date_value.timestamp())
+                match operator:
+                    case ">":
+                        q = q.filter(ProcessedContentORM.created_at > timestamp)
+                    case "<":
+                        q = q.filter(ProcessedContentORM.created_at < timestamp)
+                    case ">=":
+                        q = q.filter(ProcessedContentORM.created_at >= timestamp)
+                    case "<=":
+                        q = q.filter(ProcessedContentORM.created_at <= timestamp)
+
+            # Sort by created_at descending (newest first)
+            q = q.order_by(ProcessedContentORM.created_at.desc())
+
+            # Apply limit
+            q = q.limit(limit)
+
+            results = q.all()
+            return [from_orm(orm_obj) for orm_obj in results]

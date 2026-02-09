@@ -1,6 +1,11 @@
-from typing import Callable, TypeVar, Generic
+from __future__ import annotations
+
+from typing import Callable, TypeVar, Generic, TYPE_CHECKING
+
 from siphon_api.models import ProcessedContent
-from siphon_client.client import SiphonClient
+
+if TYPE_CHECKING:
+    from siphon_client.client import SiphonClient
 
 T = TypeVar("T")
 
@@ -11,7 +16,7 @@ class Collection(Generic[T]):
     Inspired by pandas, LINQ, and functional programming.
     """
 
-    def __init__(self, items: list[T], client: SiphonClient):
+    def __init__(self, items: list[T], client: SiphonClient) -> None:
         self._items = items
         self._client = client
 
@@ -32,12 +37,12 @@ class Collection(Generic[T]):
             [item for item in self._items if predicate(item)], self._client
         )
 
-    def expand(self, query: str) -> "Collection[ProcessedContent]":
+    def expand(self, query: str) -> Collection[ProcessedContent]:
         """
         Semantic expansion - find related content.
         This makes a server call for semantic search.
         """
-        uris = [item.id for item in self._items]
+        uris = [item.uri for item in self._items]  # type: ignore[attr-defined]
         related = self._client.find_related(uris, query)
         return Collection(related, self._client)
 

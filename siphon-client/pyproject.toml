@@ -13,7 +13,10 @@ dependencies = [
     "headwater-client",
     "httpx",
     "pytest-watch>=4.2.0",
+    "python-dateutil>=2.8.2",
+    "rich>=14.2.0",
     "siphon-api",
+    "siphon-server",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -25,6 +28,7 @@ include = ["src/siphon_client/py.typed"]
 
 [tool.uv.sources]
 siphon_api = { path = "../siphon-api", editable = true }
+siphon_server = { path = "../siphon-server", editable = true }
 headwater_client = { path = "../../headwater/headwater-client", editable = true }
 
 [project.scripts]

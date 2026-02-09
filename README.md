@@ -1,243 +1,29 @@
-# Siphon
+Siphon is a multi-modal content ingestion and enrichment framework designed to transform unstructured input—including URLs (YouTube, generic web articles, Google Drive) and local files (PDFs, audio, source code, data)—into structured, LLM-ready context. The system is partitioned into three discrete packages: `siphon-api` for data contracts and protocols, `siphon_server` for orchestration and persistence, and `siphon_client` for CLI-driven consumption and monadic collection manipulation.
 
-A universal content ingestion pipeline that extracts, processes, and enriches data from any source.
+The core architecture utilizes a strategy-based pipeline managed by the `SiphonPipeline` orchestrator. The process follows a strictly defined lifecycle: a `ParserStrategy` resolves input strings into a canonical `SourceInfo` URI; an `ExtractorStrategy` retrieves raw text and metadata; and an `EnricherStrategy` generates high-density semantic descriptions and summaries via asynchronous LLM integration. The final output is a `ProcessedContent` aggregate, which is persisted in a PostgreSQL backend using SQLAlchemy ORM for long-term retrieval and caching.
 
-Siphon provides a robust server-side pipeline to handle various content types—such as web articles, YouTube videos, and local documents—and a simple client for interaction. It parses the source, extracts the core content, and uses an LLM to generate a title, description, and summary.
+### Technical Phases and Component Interaction
 
-## Quick Start
+1.  **Parsing:** The `SourceParser` iterates through a dynamically loaded registry of strategies (YouTube, Article, Doc, Audio, Drive). It normalizes URLs (removing tracking parameters, resolving IDNA/punycode) or computes SHA-256 hashes for local files to generate immutable URIs (e.g., `youtube:///video_id` or `doc:///extension/hash`).
+2.  **Extraction:** Content extraction is delegated to domain-specific libraries. `yt-dlp` and `youtube-transcript-api` handle video metadata and transcripts; `readabilipy` and `markdownify` process HTML articles; and Microsoft's `MarkItDown` handles office documents and PDFs. Audio extraction utilizes a multi-stage sub-pipeline involving `pydub` for WAV normalization and `openai/whisper-base` for transcription.
+3.  **Enrichment:** This phase uses the `Conduit` LLM wrapper to perform concurrent asynchronous queries. It renders Jinja2 templates for source-specific prompts (e.g., `code_description.jinja2`, `audio_summary.jinja2`) to generate semantic descriptions optimized for vector similarity search and human-readable executive summaries.
+4.  **Persistence:** The `ContentRepository` provides a transactional interface to PostgreSQL. It supports idempotent operations through URI-based lookups, preventing redundant LLM enrichment and extraction for previously processed content.
 
-This guide assumes you have Docker and Docker Compose installed. The quickest way to get Siphon running is by using the provided services.
+### Implementation Details
 
-**1. Run the Server**
+*   **Concurrency Model:** The server leverages `asyncio` for non-blocking I/O during LLM enrichment. Heavy ML workloads, specifically speaker diarization (`pyannote/audio`) and image generation (`flux`, `z-image`), are decoupled into isolated Docker-sidecar microservices. This prevents the main server from inheriting massive CUDA/PyTorch dependency stacks and allows for independent scaling of GPU-bound tasks.
+*   **Data Flow:** Transport objects are defined using Pydantic. `SiphonFile` handles raw byte payloads by base64-encoding data for JSON compatibility while maintaining mandatory SHA-256 checksum verification to ensure integrity across the network boundary.
+*   **Caching Strategy:** Siphon implements a multi-tier caching system. A primary PostgreSQL database stores the final `ProcessedContent` aggregate. Secondary SQLite-backed caches (`YouTubeTranscriptCache`, `ArticleCache`) store intermediate raw data to mitigate rate-limiting on external APIs and reduce latency for repeated extractions.
+*   **Worker Isolation:** The diarization and image generation workers use a launcher utility that manages the lifecycle of containerized sidecars. Communication is handled via internal HTTP calls to FastAPI endpoints within the containers, ensuring the host process remains lightweight.
 
-First, create a `.env` file in the project root for database credentials:
+### Rationale and Technical Context
 
-```bash
-# .env
-POSTGRES_USERNAME=user
-POSTGRES_PASSWORD=yoursecurepassword
-```
+*   **Strategy vs. Monolith:** The strategy pattern was chosen to allow new source types to be added by implementing three specific protocols (`Parser`, `Extractor`, `Enricher`) without modifying the core `SiphonPipeline` orchestrator.
+*   **Protocol-based URIs:** The use of canonical URIs (e.g., `article:///sha256/hash`) decouples the identity of the content from its original source URL, allowing for deduplication when the same content is accessed via different mirrors or normalized URL variations.
+*   **Worker Decoupling:** Previous iterations attempted to run `pyannote` and `whisper` within the main process, resulting in severe library version conflicts and excessive memory consumption. The current sidecar architecture isolates these environments, allowing for specific optimizations like Flash Attention or 8-bit quantization without affecting the main server.
 
-Then, launch the Siphon server and its PostgreSQL database:
+### Operational Context and Limitations
 
-```bash
-# This command is hypothetical as no docker-compose.yml was provided.
-# It represents the ideal one-click setup.
-docker-compose up -d
-```
-
-The Siphon API will be available at `http://localhost:8000`.
-
-**2. Install and Use the Client**
-
-Install the client in a virtual environment:
-
-```bash
-# From the siphon-client/ directory
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-Now, process any source with a single command:
-
-```bash
-siphon process "https://www.youtube.com/watch?v=6ctoS84iFCw"
-```
-
-## Core Features
-
-Siphon normalizes unstructured data from various sources into a consistent, enriched format.
-
-### Process Web Articles
-
-Extract the main content from a news article or blog post, stripping away ads and boilerplate.
-
-```bash
-siphon process "https://blog.sshh.io/p/how-i-use-every-claude-code-feature"
-```
-
-**Example Output:**
-
-```text
-Title: Mastering Claude: A Developer's Guide to AI-Powered Coding
-
-Description:
-A comprehensive guide on leveraging all of Claude's coding-related
-features, including prompt engineering, context management, and debugging
-strategies to enhance developer productivity.
-
-Summary:
-The article provides an in-depth walkthrough of the author's personal
-workflow for using Anthropic's Claude AI as a coding assistant. It
-covers techniques for providing effective context, such as using terminal
-commands like `tree` and `cat` to give the model a clear understanding of
-the project structure and relevant files. The author emphasizes an
-iterative approach to prompt engineering, starting broad and refining
-prompts based on the AI's output. Key use cases demonstrated include
-scaffolding new code, refactoring existing logic, writing documentation,
-and debugging complex issues. The guide serves as a practical handbook
-for developers looking to integrate Claude more deeply into their daily
-coding tasks to improve efficiency and code quality.
-```
-
-### Transcribe and Summarize YouTube Videos
-
-Provide a YouTube URL to get a full transcript, summary, and key metadata.
-
-```bash
-siphon process "https://www.youtube.com/watch?v=37f0ALZg-XI"
-```
-
-### Ingest Local Documents
-
-Process local files like PDFs, Word documents, and text files. Siphon extracts the text content and enriches it just like any online source.
-
-```bash
-siphon process "/path/to/your/research-paper.pdf"
-```
-
-## How It Works
-
-Siphon operates on a client-server model. The `siphon-server` contains all the complex logic, while the `siphon-client` acts as a lightweight interface for sending sources to the server.
-
-The server's core is a three-stage pipeline:
-
-1.  **Parse**: A `Parser` identifies the source type (e.g., YouTube, Article, Doc) from the input string (a URL or file path) and normalizes it into a canonical URI.
-2.  **Extract**: An `Extractor` takes the parsed source information, fetches the raw content (e.g., downloads the article text, gets the video transcript), and extracts key metadata.
-3.  **Enrich**: An `Enricher` sends the extracted text to a Large Language Model (LLM) to generate a clean title, a concise one-sentence description, and a detailed summary.
-
-The architecture is designed to be extensible. Adding a new source type (e.g., a GitHub repository) only requires implementing the three `Strategy` interfaces (`Parser`, `Extractor`, `Enricher`) in a new module.
-
-```text
-+----------------+      +-------------------------------------------------------------+
-|                |      | Siphon Server (FastAPI)                                     |
-|  Siphon Client |----->| +---------------------------------------------------------+ |
-| (CLI / Python) |      | | Siphon Pipeline                                         | |
-|                |      | |                                                         | |
-+----------------+      | |  Parse   ->   Extract   ->   Enrich                     | |
-|                |      | | (URL/Path)   (Content)      (LLM Summary)               | |
-|                |      | |                                                         | |
-|                |      | +------------------^------------------------------------+ |
-|                |      |                    | (Pluggable Source Modules)         | |
-|                |      | +------------------+------------------+------------------+ |
-|                |      | |     Article      |      YouTube     |       Doc        | |
-|                |      | +------------------+------------------+------------------+ |
-+----------------+      +---------------------------------|---------------------------+
-                                                  |
-                                                  v
-                                      +---------------------+
-                                      |     PostgreSQL      |
-                                      | (with pgvector)     |
-                                      +---------------------+
-```
-
-## Installation and Setup
-
-### Prerequisites
-
-*   Python 3.10+
-*   PostgreSQL 14+ (the `pgvector` extension is recommended)
-*   Access to an LLM provider compatible with the `conduit` library.
-
-### Server Setup
-
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/your-username/siphon.git
-    cd siphon/siphon-server
-    ```
-
-2.  **Set Environment Variables**
-    Create a `.env` file in the `siphon-server` directory. The application requires database credentials and may require API keys for external services.
-    ```bash
-    # .env
-    POSTGRES_USERNAME=user
-    POSTGRES_PASSWORD=yoursecurepassword
-
-    # Required for youtube-transcript-api to avoid rate-limiting
-    WEBSHARE_USERNAME=your_webshare_user
-    WEBSHARE_PASS=your_webshare_pass
-    ```
-
-3.  **Install Dependencies**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt # Assuming a requirements.txt exists
-    ```
-
-4.  **Initialize the Database**
-    Run the setup script to create the necessary tables in your PostgreSQL database.
-    ```bash
-    python -m siphon_server.database.postgres.setup
-    ```
-
-5.  **Run the Server**
-    ```bash
-    uvicorn siphon_server.server.app:app --host 0.0.0.0 --port 8000
-    ```
-
-### Client Setup
-
-1.  **Navigate to the Client Directory**
-    ```bash
-    cd ../siphon-client
-    ```
-
-2.  **Install the Client**
-    It is recommended to install the client in a separate virtual environment.
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -e .
-    ```
-
-## Usage
-
-### Command-Line Interface (CLI)
-
-The CLI is the primary way to interact with Siphon.
-
-| Command             | Description                                                               |
-| ------------------- | ------------------------------------------------------------------------- |
-| `siphon process`    | Process a new source. Accepts a URL or a local file path.                 |
-| `siphon query`      | Query content already stored in the database.                             |
-
-**`process` Options**
-
-| Option        | Description                                       |
-| ------------- | ------------------------------------------------- |
-| `--no-cache`  | Force reprocessing and ignore any cached results. |
-| `--server`    | Specify the Siphon server URL. Defaults to `http://localhost:8000`. |
-
-### Python Client
-
-The `SiphonClient` can be used directly in Python scripts for programmatic access.
-
-```python
-from siphon_client.client import SiphonClient
-
-# Initialize the client
-client = SiphonClient(base_url="http://localhost:8000")
-
-# Process a web article
-article_url = "https://example.blog/my-latest-post"
-try:
-    processed_article = client.process(article_url)
-    print(f"Title: {processed_article.title}")
-    print(f"Summary: {processed_article.summary}")
-
-except Exception as e:
-    print(f"An error occurred: {e}")
-
-# Process a local file
-local_pdf = "/path/to/document.pdf"
-try:
-    processed_pdf = client.process(local_pdf, use_cache=False)
-    print(f"Title: {processed_pdf.title}")
-
-except Exception as e:
-    print(f"An error occurred: {e}")
-
-```
+*   **Dependencies:** The system requires a PostgreSQL instance. Local file processing assumes a shared or local filesystem accessible to the server. ML workers require NVIDIA GPUs with appropriate VRAM (8GB+ for diarization, 16GB-32GB+ for Flux/HiDream image generation).
+*   **Footguns:** Local file ingestion uses absolute paths; moving files after ingestion breaks the `FILE_PATH` origin logic in the `SiphonRequest`. The `SourceParser` uses a 16-character truncation of SHA-256 for URI construction; while collisions are statistically improbable for typical document collections, it is a non-standard hash length.
+*   **Operational Requirements:** The `diarization_service` requires a `HUGGINGFACEHUB_API_TOKEN` with access to the `pyannote/speaker-diarization-3.1` model. YouTube extraction relies on proxies (Webshare) to avoid IP-based rate limiting during high-volume transcript retrieval.

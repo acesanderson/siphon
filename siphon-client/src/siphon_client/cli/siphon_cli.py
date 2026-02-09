@@ -20,6 +20,7 @@ import click
 import logging
 import json
 import os
+from siphon_client.cli.query import query
 
 # Set up logging
 log_level = int(os.getenv("PYTHON_LOG_LEVEL", "1"))
@@ -68,9 +69,9 @@ def siphon():
 @click.option(
     "--return-type",
     "-r",
-    type=click.Choice(["st", "u", "c", "m", "t", "d", "s", "pc"]),
+    type=click.Choice(["st", "u", "c", "m", "t", "d", "s", "id", "json"]),
     default="s",
-    help="Type to return: [st] source type, [u] URI, [c] content, [m] metadata, [t] title, [d] description, [s] summary, [pc] processed content.",
+    help="Type to return: [st] source type, [u] url, [c] content, [m] metadata, [t] title, [d] description, [s] summary, [id] uri, [json] full json.",
 )
 @click.option(
     "--no-cache",
@@ -80,7 +81,7 @@ def siphon():
 )
 def gulp(
     source: str,
-    return_type: Literal["st", "u", "c", "m", "t", "d", "s", "pc"],
+    return_type: Literal["st", "u", "c", "m", "t", "d", "s", "id", "json"],
     no_cache: bool,
 ):
     """
@@ -113,7 +114,7 @@ def gulp(
         case "st":
             output_string = payload.source_type
         case "u":
-            output_string = payload.uri
+            output_string = payload.source.original_source
         case "c":
             output_string = payload.text
         case "m":
@@ -125,7 +126,9 @@ def gulp(
             output_string = payload.description
         case "s":
             output_string = payload.summary
-        case "pc":
+        case "id":
+            output_string = payload.uri
+        case "json":
             output_json = payload.model_dump_json(indent=2)
         case _:
             raise ValueError(f"Unsupported return type: {return_type}")
@@ -269,6 +272,10 @@ def enrich(source: str, return_type: Literal["s", "d", "t"]):
             output_string = payload.title
 
     print_output(output_string)
+
+
+# Register the query command
+siphon.add_command(query)
 
 
 def main():
