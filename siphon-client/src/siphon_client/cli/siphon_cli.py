@@ -2,7 +2,6 @@
 Add a "test" option which uses a sample asset.
 """
 
-from headwater_client.client.headwater_client import HeadwaterClient
 from siphon_api.api.siphon_request import SiphonRequest, SiphonRequestParams
 from siphon_api.api.to_siphon_request import create_siphon_request
 from siphon_api.api.siphon_response import SiphonResponse
@@ -21,6 +20,7 @@ import logging
 import json
 import os
 from siphon_client.cli.query import query
+from siphon_client.cli.results import results
 
 # Set up logging
 log_level = int(os.getenv("PYTHON_LOG_LEVEL", "1"))
@@ -98,6 +98,7 @@ def gulp(
         request_params=params,
     )  # Note the double negative for no_cache
     logger.debug("Loading HeadwaterClient")
+    from headwater_client.client.headwater_client import HeadwaterClient
     client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
@@ -165,6 +166,7 @@ def parse(source: str, return_type: Literal["u", "st"]):
         request_params=params,
     )
     logger.debug("Loading HeadwaterClient")
+    from headwater_client.client.headwater_client import HeadwaterClient
     client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
@@ -208,6 +210,7 @@ def extract(source: str, return_type: Literal["c", "m", "to"]):
         request_params=params,
     )
     logger.debug("Loading HeadwaterClient")
+    from headwater_client.client.headwater_client import HeadwaterClient
     client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
@@ -255,6 +258,7 @@ def enrich(source: str, return_type: Literal["s", "d", "t"]):
         request_params=params,
     )
     logger.debug("Loading HeadwaterClient")
+    from headwater_client.client.headwater_client import HeadwaterClient
     client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
@@ -274,8 +278,9 @@ def enrich(source: str, return_type: Literal["s", "d", "t"]):
     print_output(output_string)
 
 
-# Register the query command
+# Register the query and results commands
 siphon.add_command(query)
+siphon.add_command(results)
 
 
 def main():

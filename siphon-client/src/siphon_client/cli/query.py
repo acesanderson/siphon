@@ -15,10 +15,13 @@ from dateutil import parser as date_parser
 from rich.table import Table
 
 from siphon_api.enums import SourceType
-from siphon_api.models import ProcessedContent
+from siphon_api.models import ProcessedContent, QueryHistory, QueryResultItem
 from siphon_client.cli.printer import Printer
+from siphon_client.cli.scratchpad import Scratchpad
 from siphon_client.client import SiphonClient
 from siphon_client.collections.collection import Collection
+from siphon_server.database.postgres.repository import QueryHistoryRepository
+import time
 
 
 # Mapping of CLI source type names to SourceType enum
@@ -29,6 +32,34 @@ SOURCE_TYPE_MAP = {
     "web": SourceType.ARTICLE,  # Note: "web" maps to ARTICLE
     "drive": SourceType.DRIVE,
 }
+
+
+def normalize_extension(extension: str | None) -> str | None:
+    """
+    Normalize file extension by removing leading dot and converting to lowercase.
+
+    Args:
+        extension: File extension with or without leading dot (e.g., ".pdf" or "pdf")
+
+    Returns:
+        Normalized extension without dot (e.g., "pdf"), or None if input is None
+
+    Examples:
+        >>> normalize_extension(".pdf")
+        "pdf"
+        >>> normalize_extension("PDF")
+        "pdf"
+        >>> normalize_extension("docx")
+        "docx"
+    """
+    if not extension:
+        return None
+
+    normalized = extension.lower().strip()
+    if normalized.startswith("."):
+        normalized = normalized[1:]
+
+    return normalized if normalized else None
 
 
 def parse_date_filter(
@@ -131,9 +162,52 @@ def output_data(printer: Printer, data: str) -> None:
         printer.print_markdown(data, add_rule=False)
 
 
+def save_query_history(
+    query_string: str,
+    source_type: str | None,
+    extension: str | None,
+    results: list[ProcessedContent],
+) -> None:
+    """
+    Save query execution to history database.
+
+    Args:
+        query_string: The search query
+        source_type: Source type filter
+        extension: Extension filter
+        results: List of ProcessedContent results
+    """
+    if not results:
+        return  # Don't save empty queries
+
+    # Convert results to QueryResultItem format
+    result_items = [
+        QueryResultItem(
+            uri=r.uri,
+            title=r.title,
+            source_type=r.source_type,
+            created_at=r.created_at,
+        )
+        for r in results
+    ]
+
+    # Create QueryHistory object
+    query_history = QueryHistory(
+        query_string=query_string,
+        source_type=source_type,
+        extension=extension,
+        executed_at=int(time.time()),
+        results=result_items,
+    )
+
+    # Save to database
+    repository = QueryHistoryRepository()
+    repository.save(query_history)
+
+
 def create_results_table(results: list[ProcessedContent]) -> Table:
     """
-    Create a Rich table from search results.
+    Create a Rich table from search results with numbered rows.
 
     Args:
         results: List of ProcessedContent objects
@@ -142,12 +216,12 @@ def create_results_table(results: list[ProcessedContent]) -> Table:
         Rich Table object
     """
     table = Table(title="Search Results", show_header=True, header_style="bold magenta")
-    table.add_column("ID", style="dim", width=20)
+    table.add_column("#", style="bold blue", width=4)
     table.add_column("Title", style="cyan", width=40)
     table.add_column("Type", style="green", width=10)
     table.add_column("Date", style="yellow", width=20)
 
-    for result in results:
+    for index, result in enumerate(results, start=1):
         # Format date
         date_obj = datetime.fromtimestamp(result.created_at)
         date_str = date_obj.strftime("%Y-%m-%d %H:%M")
@@ -155,11 +229,7 @@ def create_results_table(results: list[ProcessedContent]) -> Table:
         # Truncate title if too long
         title = result.title[:37] + "..." if len(result.title) > 40 else result.title
 
-        # Extract a short ID from URI
-        uri_parts = result.uri.split("/")
-        short_id = uri_parts[-1] if uri_parts else result.uri[:20]
-
-        table.add_row(short_id, title, result.source_type, date_str)
+        table.add_row(str(index), title, result.source_type, date_str)
 
     return table
 
@@ -205,9 +275,13 @@ def create_results_table(results: list[ProcessedContent]) -> Table:
 )
 @click.option(
     "--expand",
-    "-e",
     is_flag=True,
     help="Expand top result to find related content (requires semantic search)",
+)
+@click.option(
+    "--extension",
+    "-e",
+    help="Filter by file extension for document sources (e.g., pdf, docx, xlsx)",
 )
 @click.option(
     "--return-type",
@@ -227,6 +301,12 @@ def create_results_table(results: list[ProcessedContent]) -> Table:
     is_flag=True,
     help="Force raw output mode (no pretty formatting)",
 )
+@click.option(
+    "--get",
+    "-g",
+    type=int,
+    help="Retrieve item by number from previous query results",
+)
 def query(
     query_string: str,
     source_type: str | None,
@@ -236,9 +316,11 @@ def query(
     date: str | None,
     mode: str,
     expand: bool,
+    extension: str | None,
     return_type: str,
     open: bool,
     raw: bool,
+    get: int | None,
 ) -> None:
     """
     Search and retrieve ingested content from Siphon.
@@ -249,9 +331,45 @@ def query(
         siphon query --latest --return-type c
         siphon query --history --limit 20
         siphon query "machine learning" --date ">2024-01-01"
+        siphon query --type doc --extension pdf
+        siphon query --history -e .docx --limit 10
+        siphon query --get 2 -r s  # Get item #2 from last query
     """
     printer = Printer(raw=raw)
     client = SiphonClient()
+    scratchpad = Scratchpad()
+
+    # Handle --get flag (retrieve by index from scratchpad)
+    if get is not None:
+        uri = scratchpad.get(get)
+        if uri is None:
+            loaded_uris = scratchpad.load()
+            if not loaded_uris:
+                printer.print_pretty("[red]Error:[/red] Scratchpad is empty. Run a query first.")
+            else:
+                printer.print_pretty(
+                    f"[red]Error:[/red] Invalid index {get}. "
+                    f"Valid range: 1-{len(loaded_uris)}"
+                )
+            raise click.Abort()
+
+        result = client.get_by_uri(uri)
+        if not result:
+            printer.print_pretty(f"[red]Error:[/red] Content not found for URI: {uri}")
+            raise click.Abort()
+
+        # Handle --open flag
+        if open:
+            click.launch(result.source.original_source)
+            printer.print_pretty(
+                f"[green]Opened:[/green] {result.source.original_source}"
+            )
+            return
+
+        # Output based on return type
+        output = format_single_result(result, return_type)
+        output_data(printer, output)
+        return
 
     # Parse date filter
     date_filter = parse_date_filter(date) if date else None
@@ -261,6 +379,9 @@ def query(
 
     # Map CLI source type to enum
     source_type_enum = SOURCE_TYPE_MAP.get(source_type.lower()) if source_type else None
+
+    # Normalize extension
+    normalized_extension = normalize_extension(extension)
 
     try:
         # Determine which operation to perform
@@ -290,6 +411,7 @@ def query(
                     source_type=source_type_enum,
                     date_filter=date_filter,
                     limit=limit,
+                    extension=normalized_extension,
                 )
 
             results = collection.to_list()
@@ -297,6 +419,16 @@ def query(
             if not results:
                 printer.print_pretty("[yellow]No results found.[/yellow]")
                 return
+
+            # Save to query history and update scratchpad
+            if len(results) > 1:
+                scratchpad.save_from_results(results)
+                save_query_history(
+                    query_string=query_string if not history else "",
+                    source_type=source_type,
+                    extension=normalized_extension,
+                    results=results,
+                )
 
             # If single result or pipe mode, output raw data
             if len(results) == 1 or printer.emit_data:
@@ -317,6 +449,7 @@ def query(
                     source_type=source_type_enum,
                     date_filter=date_filter,
                     limit=limit,
+                    extension=normalized_extension,
                 )
 
             # Handle --expand flag
@@ -335,6 +468,16 @@ def query(
             if not results:
                 printer.print_pretty("[yellow]No results found.[/yellow]")
                 return
+
+            # Save to query history and update scratchpad
+            if len(results) > 1:
+                scratchpad.save_from_results(results)
+                save_query_history(
+                    query_string=query_string if not history else "",
+                    source_type=source_type,
+                    extension=normalized_extension,
+                    results=results,
+                )
 
             # Handle --open flag (opens first result)
             if open:

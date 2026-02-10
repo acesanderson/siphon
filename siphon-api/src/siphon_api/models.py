@@ -94,3 +94,38 @@ class ProcessedContent(BaseModel):
 PipelineClass = (
     ProcessedContent | ContentData | EnrichedData | SourceInfo
 )  # Hence our discriminator field 'kind'
+
+
+class QueryResultItem(BaseModel):
+    """
+    Lightweight result metadata for query history display.
+    Contains just enough information to render a table row.
+    """
+    uri: str
+    title: str
+    source_type: str
+    created_at: int
+
+
+class QueryHistory(BaseModel):
+    """
+    Query execution history record.
+
+    Stores query parameters and results for CLI recall functionality
+    (like terminal arrow-up). Enables `siphon results --history` and
+    `siphon results --get <id>`.
+    """
+
+    kind: Literal["QueryHistory"] = "QueryHistory"  # Discriminator
+
+    id: int | None = None  # None for new records, set after DB insert
+    query_string: str = ""
+    source_type: str | None = None
+    extension: str | None = None
+    executed_at: int
+    results: list[QueryResultItem] = Field(default_factory=list)
+
+    @property
+    def result_count(self) -> int:
+        """Number of results in this query."""
+        return len(self.results)

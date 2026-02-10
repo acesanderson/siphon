@@ -35,3 +35,28 @@ class ProcessedContentORM(Base):
     tags = Column(ARRAY(String), default=list)
     created_at = Column(Integer, nullable=False)
     updated_at = Column(Integer, nullable=False)
+
+
+class QueryHistoryORM(Base):
+    """
+    Query execution history for CLI recall functionality.
+
+    Stores query parameters and lightweight result metadata to enable
+    "arrow-up" style query history navigation via `siphon results`.
+    """
+    __tablename__ = "query_history"
+
+    # Primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Query description (for display in --history list)
+    query_string = Column(String, default="")
+    source_type = Column(String, nullable=True)
+    extension = Column(String, nullable=True)
+
+    # Timestamp (indexed for chronological ordering)
+    executed_at = Column(Integer, nullable=False, index=True)
+
+    # Results as JSONB
+    # Structure: [{"uri": "...", "title": "...", "source_type": "...", "created_at": ...}]
+    results = Column(JSONB, nullable=False)

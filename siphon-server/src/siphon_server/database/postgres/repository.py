@@ -8,10 +8,15 @@ from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
 from siphon_api.enums import SourceType
-from siphon_api.models import ProcessedContent
+from siphon_api.models import ProcessedContent, QueryHistory
 from siphon_server.database.postgres.connection import SessionLocal
-from siphon_server.database.postgres.models import ProcessedContentORM
-from siphon_server.database.postgres.converters import to_orm, from_orm
+from siphon_server.database.postgres.models import ProcessedContentORM, QueryHistoryORM
+from siphon_server.database.postgres.converters import (
+    to_orm,
+    from_orm,
+    query_history_to_orm,
+    query_history_from_orm,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -133,6 +138,7 @@ class ContentRepository:
         source_type: SourceType | None = None,
         date_filter: tuple[Literal[">", "<", ">=", "<="], datetime] | None = None,
         limit: int = 10,
+        extension: str | None = None,
     ) -> list[ProcessedContent]:
         """
         Search for content by plaintext match in title OR description.
@@ -145,6 +151,8 @@ class ContentRepository:
             source_type: Optional filter by SourceType
             date_filter: Optional tuple of (operator, datetime) for date filtering
             limit: Maximum number of results to return
+            extension: Optional filter by file extension (e.g., "pdf", "docx")
+                      Only applies to DOC source types with URIs like "doc:///pdf/hash"
 
         Returns:
             List of ProcessedContent objects matching the search criteria
@@ -165,6 +173,12 @@ class ContentRepository:
             # Filter by source type
             if source_type:
                 q = q.filter(ProcessedContentORM.source_type == source_type)
+
+            # Filter by extension (only for DOC type with doc:/// URIs)
+            if extension:
+                # Extension is embedded in URI as: doc:///extension/hash
+                extension_pattern = f"doc:///{extension}/%"
+                q = q.filter(ProcessedContentORM.uri.like(extension_pattern))
 
             # Filter by date
             if date_filter:
@@ -194,6 +208,7 @@ class ContentRepository:
         source_type: SourceType | None = None,
         date_filter: tuple[Literal[">", "<", ">=", "<="], datetime] | None = None,
         limit: int = 10,
+        extension: str | None = None,
     ) -> list[ProcessedContent]:
         """
         List all content sorted by created_at descending (newest first).
@@ -202,6 +217,8 @@ class ContentRepository:
             source_type: Optional filter by SourceType
             date_filter: Optional tuple of (operator, datetime) for date filtering
             limit: Maximum number of results to return
+            extension: Optional filter by file extension (e.g., "pdf", "docx")
+                      Only applies to DOC source types with URIs like "doc:///pdf/hash"
 
         Returns:
             List of ProcessedContent objects
@@ -212,6 +229,12 @@ class ContentRepository:
             # Filter by source type
             if source_type:
                 q = q.filter(ProcessedContentORM.source_type == source_type)
+
+            # Filter by extension (only for DOC type with doc:/// URIs)
+            if extension:
+                # Extension is embedded in URI as: doc:///extension/hash
+                extension_pattern = f"doc:///{extension}/%"
+                q = q.filter(ProcessedContentORM.uri.like(extension_pattern))
 
             # Filter by date
             if date_filter:
@@ -235,3 +258,86 @@ class ContentRepository:
 
             results = q.all()
             return [from_orm(orm_obj) for orm_obj in results]
+
+
+class QueryHistoryRepository:
+    """Repository for managing query history with automatic session handling."""
+
+    @contextmanager
+    def _session(self):
+        """Internal session context manager."""
+        db = SessionLocal()
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def save(self, query_history: QueryHistory) -> QueryHistory:
+        """
+        Save a query history record to the database.
+
+        Args:
+            query_history: QueryHistory domain model to save
+
+        Returns:
+            QueryHistory with assigned ID
+        """
+        with self._session() as db:
+            orm_obj = query_history_to_orm(query_history)
+            db.add(orm_obj)
+            db.commit()
+            db.refresh(orm_obj)
+            logger.info(f"Saved query history: id={orm_obj.id}")
+            return query_history_from_orm(orm_obj)
+
+    def get_latest(self) -> QueryHistory | None:
+        """
+        Get the most recently executed query.
+
+        Returns:
+            QueryHistory object or None if no queries exist
+        """
+        with self._session() as db:
+            orm_obj = (
+                db.query(QueryHistoryORM)
+                .order_by(QueryHistoryORM.executed_at.desc())
+                .first()
+            )
+            return query_history_from_orm(orm_obj) if orm_obj else None
+
+    def get_by_id(self, query_id: int) -> QueryHistory | None:
+        """
+        Get a query history record by ID.
+
+        Args:
+            query_id: The query ID to retrieve
+
+        Returns:
+            QueryHistory object or None if not found
+        """
+        with self._session() as db:
+            orm_obj = db.query(QueryHistoryORM).filter_by(id=query_id).first()
+            return query_history_from_orm(orm_obj) if orm_obj else None
+
+    def list_recent(self, limit: int = 20) -> list[QueryHistory]:
+        """
+        List recent queries in chronological order (newest first).
+
+        Args:
+            limit: Maximum number of queries to return
+
+        Returns:
+            List of QueryHistory objects
+        """
+        with self._session() as db:
+            results = (
+                db.query(QueryHistoryORM)
+                .order_by(QueryHistoryORM.executed_at.desc())
+                .limit(limit)
+                .all()
+            )
+            return [query_history_from_orm(orm_obj) for orm_obj in results]

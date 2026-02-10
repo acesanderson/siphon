@@ -34,6 +34,7 @@ class SiphonClient:
         source_type: SourceType | None = None,
         date_filter: tuple[Literal[">", "<", ">=", "<="], datetime] | None = None,
         limit: int = 10,
+        extension: str | None = None,
     ) -> Collection[ProcessedContent]:
         """
         Search for content using different search strategies.
@@ -44,6 +45,7 @@ class SiphonClient:
             source_type: Optional filter by source type
             date_filter: Optional tuple of (operator, datetime) for date filtering
             limit: Maximum number of results
+            extension: Optional filter by file extension (e.g., "pdf", "docx")
 
         Returns:
             Collection of ProcessedContent objects
@@ -58,6 +60,7 @@ class SiphonClient:
                     source_type=source_type,
                     date_filter=date_filter,
                     limit=limit,
+                    extension=extension,
                 )
                 return Collection(results, self)
 
@@ -78,6 +81,7 @@ class SiphonClient:
         source_type: SourceType | None = None,
         date_filter: tuple[Literal[">", "<", ">=", "<="], datetime] | None = None,
         limit: int = 10,
+        extension: str | None = None,
     ) -> Collection[ProcessedContent]:
         """
         List all content sorted by creation date (newest first).
@@ -86,6 +90,7 @@ class SiphonClient:
             source_type: Optional filter by source type
             date_filter: Optional tuple of (operator, datetime) for date filtering
             limit: Maximum number of results
+            extension: Optional filter by file extension (e.g., "pdf", "docx")
 
         Returns:
             Collection of ProcessedContent objects
@@ -94,6 +99,7 @@ class SiphonClient:
             source_type=source_type,
             date_filter=date_filter,
             limit=limit,
+            extension=extension,
         )
         return Collection(results, self)
 
@@ -105,6 +111,18 @@ class SiphonClient:
             The latest ProcessedContent, or None if no content exists
         """
         return self.repository.get_last_processed_content()
+
+    def get_by_uri(self, uri: str) -> ProcessedContent | None:
+        """
+        Get content by its URI.
+
+        Args:
+            uri: The content URI (e.g., "doc:///pdf/hash123")
+
+        Returns:
+            ProcessedContent if found, None otherwise
+        """
+        return self.repository.get(uri)
 
     def find_related(
         self,

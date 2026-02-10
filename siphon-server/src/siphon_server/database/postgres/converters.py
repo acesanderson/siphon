@@ -1,8 +1,15 @@
 # pyright: basic
 
-from siphon_api.models import ProcessedContent, SourceInfo, ContentData, EnrichedData
+from siphon_api.models import (
+    ProcessedContent,
+    SourceInfo,
+    ContentData,
+    EnrichedData,
+    QueryHistory,
+    QueryResultItem,
+)
 from siphon_api.enums import SourceType
-from siphon_server.database.postgres.models import ProcessedContentORM
+from siphon_server.database.postgres.models import ProcessedContentORM, QueryHistoryORM
 
 
 def to_orm(pc: ProcessedContent) -> ProcessedContentORM:
@@ -50,4 +57,28 @@ def from_orm(orm: ProcessedContentORM) -> ProcessedContent:
         tags=orm.tags or [],
         created_at=orm.created_at,
         updated_at=orm.updated_at,
+    )
+
+
+def query_history_to_orm(qh: QueryHistory) -> QueryHistoryORM:
+    """Convert QueryHistory domain model to ORM model."""
+    return QueryHistoryORM(
+        id=qh.id,
+        query_string=qh.query_string,
+        source_type=qh.source_type,
+        extension=qh.extension,
+        executed_at=qh.executed_at,
+        results=[item.model_dump() for item in qh.results],  # Pydantic to dict
+    )
+
+
+def query_history_from_orm(orm: QueryHistoryORM) -> QueryHistory:
+    """Convert QueryHistoryORM to domain model."""
+    return QueryHistory(
+        id=orm.id,
+        query_string=orm.query_string,
+        source_type=orm.source_type,
+        extension=orm.extension,
+        executed_at=orm.executed_at,
+        results=[QueryResultItem(**item) for item in orm.results],  # Dict to Pydantic
     )
