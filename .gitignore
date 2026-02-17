@@ -23,3 +23,6 @@ siphon-server/src/siphon_server/sources/drive/pipeline/client_secret.json
 siphon-server/src/siphon_server/sources/drive/pipeline/.service_credentials.json
 siphon-server/src/siphon_server/sources/drive/pipeline/sheets_token.json
 *_token.json
+*.mp3
+*.mp4
+*.wav

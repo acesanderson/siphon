@@ -42,3 +42,9 @@ def retrieve_audio(audio_path: Path) -> str:
 
     logger.info("[AUDIO PIPELINE] Audio processing pipeline completed successfully")
     return formatted
+
+
+if __name__ == "__main__":
+    audio_path = Path(__file__).parent / "occupation.mp3"
+    result = retrieve_audio(audio_path)
+    print(result)
