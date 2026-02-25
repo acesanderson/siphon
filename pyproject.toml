@@ -4,6 +4,7 @@ markers = [
     "extractor: Extractor strategy tests",
     "enricher: Enricher strategy tests",
     "integration: Full pipeline integration tests",
+    "e2e: End-to-end tests requiring all services (diarization, GPU, LLM)",
     "slow: Tests that take >1 second",
 ]
 
