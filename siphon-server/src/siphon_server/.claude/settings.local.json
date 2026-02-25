@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(uv run:*)",
+      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/python:*)"
+    ]
+  }
+}
