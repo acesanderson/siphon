@@ -1,29 +1,19 @@
+from __future__ import annotations
 import pytest
+from pathlib import Path
 
-@pytest.fixture
-def sample_audio_url():
-    """Reusable test URL for Audio"""
-    # TODO: Add realistic example URL
-    return "https://example.com/audio/sample"
+EXAMPLES_DIR = Path(__file__).parent.parent.parent.parent / "examples"
 
 
 @pytest.fixture
-def mock_audio_client():
-    """Mock client for Audio API"""
-    # TODO: Implement mock client
-    class MockAudioClient:
-        def fetch(self, identifier):
-            return {"content": "mock content", "metadata": {}}
-    
-    return MockAudioClient()
+def aieng_mp3() -> Path:
+    path = EXAMPLES_DIR / "aieng.mp3"
+    assert path.exists(), f"Example MP3 not found: {path}"
+    return path
 
 
 @pytest.fixture
-def mock_llm():
-    """Mock LLM for enrichment tests"""
-    # TODO: Implement LLM mock with canned responses
-    class MockLLM:
-        def generate(self, prompt):
-            return "Mock summary"
-    
-    return MockLLM()
+def bersin_mp3() -> Path:
+    path = EXAMPLES_DIR / "bersin_on_coursera.mp3"
+    assert path.exists(), f"Example MP3 not found: {path}"
+    return path
