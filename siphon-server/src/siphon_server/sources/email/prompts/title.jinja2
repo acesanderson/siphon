@@ -1,0 +1,41 @@
+You are generating a **concise title** from a semantic description.
+
+### Input
+- Description: A dense paragraph capturing the document's core purpose, key concepts, and distinguishing details
+
+### Objective
+Generate a **5-10 word title** that:
+- Extracts the most specific, searchable concepts from the description
+- Front-loads primary topic or functionality
+- Includes key technologies, frameworks, or domain terms
+- Captures the document type if evident (Guide, Analysis, Training, etc.)
+- Is scannable and human-readable
+
+**Guidelines:**
+- Read the description carefully - it's already condensed
+- Pull out: main subject + key qualifier + context
+- Avoid generic starts: "A Guide to...", "Document about..."
+- Use title case
+- Target 5-10 words (12 maximum)
+- No quotes, no periods
+
+**Examples:**
+
+Description: "FastAPI application implementing RESTful content ingestion pipeline with three strategy patterns: YouTubeParser for video URL extraction using yt-dlp, DocParser for file hash-based URI construction via SHA-256..."
+Title: **FastAPI Content Ingestion Pipeline with Strategy Patterns**
+
+Description: "Customer transaction dataset spanning January-December 2024 with 47,293 rows, schema includes customer_id, transaction_date, amount_usd across 8 product categories and 12 US regions..."
+Title: **Customer Transactions 2024 by Region and Category**
+
+Description: "Quarterly board presentation analyzing revenue growth strategy through market expansion, includes competitive analysis comparing Q3 performance against industry benchmarks..."
+Title: **Q3 Board Review: Revenue Growth Strategy Analysis**
+
+Description: "Python module implementing OAuth2 authentication using requests library, with TokenManager class for refresh token handling and Redis-based rate limiting..."
+Title: **OAuth2 Authentication Module with Redis Rate Limiting**
+
+### Output
+Return ONLY the title, nothing else. No explanation.
+
+<description>
+{{description}}
+</description>

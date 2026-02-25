@@ -47,6 +47,9 @@ class ArticleParser(ParserStrategy):
                 "drive.google.com",
                 "docs.google.com",
                 "sheets.google.com",
+                "mail.google.com",
+                "github.com",
+                "arxiv.org",
             ]
         )
 
