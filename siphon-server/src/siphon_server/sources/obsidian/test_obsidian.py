@@ -21,7 +21,8 @@ def test_parser(note_path: str):
     if result:
         info = parser.parse(note_path)
         assert info.uri.startswith("obsidian:///")
-        assert info.hash is not None
+        # URI is the filename stem, not a hash
+        assert info.uri == f"obsidian:///{p.stem}"
         print("Parser test passed")
         print(info.model_dump_json(indent=2))
     else:
@@ -47,11 +48,16 @@ def test_extractor(note_path: str):
 
     info = parser.parse(note_path)
     content = extractor.extract(info)
-    assert content.text, "concatenated notes should not be empty"
-    assert "root_note" in content.metadata
-    assert "note_count" in content.metadata
+    assert content.text, "note text should not be empty"
+    assert "note_path" in content.metadata
+    assert "vault_root" in content.metadata
+    assert "wikilinks" in content.metadata
+    assert isinstance(content.metadata["wikilinks"], list)
+    # All wikilinks should be obsidian:/// URIs
+    for link in content.metadata["wikilinks"]:
+        assert link.startswith("obsidian:///"), f"bad wikilink URI: {link}"
     print("Extractor test passed")
-    print(f"Note count: {content.metadata['note_count']}")
+    print(f"Wikilinks found: {len(content.metadata['wikilinks'])}")
     print(content.text[:500])
 
 

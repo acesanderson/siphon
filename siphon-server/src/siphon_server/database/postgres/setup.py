@@ -34,5 +34,19 @@ def create_tables():
     logger.info("Tables created successfully!")
 
 
+def ensure_indexes():
+    """Ensure all indexes exist on an already-provisioned database (idempotent)."""
+    from sqlalchemy import text
+
+    with engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_pc_metadata_gin "
+            "ON processed_content USING gin (content_metadata)"
+        ))
+        conn.commit()
+    logger.info("Indexes verified.")
+
+
 if __name__ == "__main__":
     create_tables()
+    ensure_indexes()

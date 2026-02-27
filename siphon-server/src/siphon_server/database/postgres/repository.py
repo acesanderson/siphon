@@ -18,6 +18,7 @@ from siphon_server.database.postgres.converters import (
     query_history_from_orm,
 )
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,40 @@ class ContentRepository:
                 .first()
             )
             return from_orm(orm_obj) if orm_obj else None
+
+    def delete(self, uri: str) -> bool:
+        """Delete content by URI. Returns True if deleted, False if not found."""
+        with self._session() as db:
+            deleted = (
+                db.query(ProcessedContentORM)
+                .filter_by(uri=uri)
+                .delete(synchronize_session=False)
+            )
+            return deleted > 0
+
+    def get_all_uris_by_source_type(self, source_type: SourceType) -> list[str]:
+        """Return all URIs for a given source type."""
+        with self._session() as db:
+            rows = (
+                db.query(ProcessedContentORM.uri)
+                .filter(ProcessedContentORM.source_type == source_type.value)
+                .all()
+            )
+            return [row.uri for row in rows]
+
+    def get_backlinks(self, uri: str) -> list[ProcessedContent]:
+        """Find all records whose wikilinks metadata contains the given URI."""
+        with self._session() as db:
+            results = (
+                db.query(ProcessedContentORM)
+                .filter(
+                    ProcessedContentORM.content_metadata.contains(
+                        {"wikilinks": [uri]}
+                    )
+                )
+                .all()
+            )
+            return [from_orm(r) for r in results]
 
     # Query methods for siphon query command
     def search_by_text(

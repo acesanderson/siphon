@@ -29,8 +29,14 @@ SOURCE_TYPE_MAP = {
     "youtube": SourceType.YOUTUBE,
     "doc": SourceType.DOC,
     "audio": SourceType.AUDIO,
-    "web": SourceType.ARTICLE,  # Note: "web" maps to ARTICLE
+    "article": SourceType.ARTICLE,
     "drive": SourceType.DRIVE,
+    "arxiv": SourceType.ARXIV,
+    "email": SourceType.EMAIL,
+    "github": SourceType.GITHUB,
+    "image": SourceType.IMAGE,
+    "obsidian": SourceType.OBSIDIAN,
+    "video": SourceType.VIDEO,
 }
 
 
@@ -240,7 +246,7 @@ def create_results_table(results: list[ProcessedContent]) -> Table:
     "--type",
     "-t",
     "source_type",
-    type=click.Choice(["youtube", "doc", "audio", "web", "drive"], case_sensitive=False),
+    type=click.Choice(["youtube", "doc", "audio", "article", "drive", "arxiv", "email", "github", "image", "obsidian", "video"], case_sensitive=False),
     help="Filter by source type",
 )
 @click.option(

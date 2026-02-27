@@ -1,13 +1,17 @@
 # pyright: basic
 # ^^^ because of SQLAlchemy dynamic attributes
 
-from sqlalchemy import Column, Integer, String, Text, ARRAY
+from sqlalchemy import Column, Index, Integer, String, Text, ARRAY
 from sqlalchemy.dialects.postgresql import JSONB
 from siphon_server.database.postgres.connection import Base
 
 
 class ProcessedContentORM(Base):
     __tablename__ = "processed_content"
+    __table_args__ = (
+        # GIN index enables fast containment queries on wikilinks and other metadata
+        Index("ix_pc_metadata_gin", "content_metadata", postgresql_using="gin"),
+    )
 
     # Primary key: integer for internal DB operations
     id = Column(Integer, primary_key=True, autoincrement=True)

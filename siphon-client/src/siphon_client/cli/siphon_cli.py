@@ -21,6 +21,8 @@ import json
 import os
 from siphon_client.cli.query import query
 from siphon_client.cli.results import results
+from siphon_client.cli.traverse import traverse
+from siphon_client.cli.sync import sync
 
 # Set up logging
 log_level = int(os.getenv("PYTHON_LOG_LEVEL", "1"))
@@ -278,9 +280,11 @@ def enrich(source: str, return_type: Literal["s", "d", "t"]):
     print_output(output_string)
 
 
-# Register the query and results commands
+# Register commands
 siphon.add_command(query)
 siphon.add_command(results)
+siphon.add_command(traverse)
+siphon.add_command(sync)
 
 
 def main():

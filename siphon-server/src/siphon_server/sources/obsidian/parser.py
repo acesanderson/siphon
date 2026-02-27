@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
 from typing import override
 
@@ -39,11 +38,10 @@ class ObsidianParser(ParserStrategy):
     @override
     def parse(self, source: str) -> SourceInfo:
         p = Path(source).resolve()
-        canonical = str(p)
-        h = hashlib.sha256(canonical.encode()).hexdigest()[:16]
+        stem = p.stem
         return SourceInfo(
             source_type=self.source_type,
-            uri=f"obsidian:///{h}",
+            uri=f"obsidian:///{stem}",
             original_source=source,
-            hash=h,
+            hash=None,
         )

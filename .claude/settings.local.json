@@ -6,7 +6,9 @@
       "Bash(export DIRENV_LOG_FORMAT=\"\" && cd /Users/bianders/Brian_Code/siphon/siphon-server-refactor/siphon-server && /Users/bianders/.local/bin/uv run pytest tests/audio/ -m parser -v --no-header 2>&1)",
       "Bash(/opt/homebrew/bin/uv run:*)",
       "Bash(/Users/bianders/Brian_Code/siphon/siphon-server-refactor/siphon-server/.venv/bin/pytest:*)",
-      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/pytest:*)"
+      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/pytest:*)",
+      "Bash(tail:*)",
+      "Bash(python3:*)"
     ]
   }
 }

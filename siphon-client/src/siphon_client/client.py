@@ -124,6 +124,51 @@ class SiphonClient:
         """
         return self.repository.get(uri)
 
+    def traverse(
+        self,
+        uri: str,
+        depth: int = 1,
+        backlinks: bool = False,
+    ) -> Collection[ProcessedContent]:
+        """
+        Traverse the wikilink graph from a given URI.
+
+        Args:
+            uri: Starting URI (e.g. "obsidian:///My Note")
+            depth: How many hops to follow (default 1 = root + direct neighbors)
+            backlinks: If True, find all nodes that link TO uri instead
+
+        Returns:
+            Collection of reachable ProcessedContent objects.
+            Broken links (URI not in DB) are silently skipped.
+        """
+        if backlinks:
+            results = self.repository.get_backlinks(uri)
+            return Collection(results, self)
+
+        visited: set[str] = set()
+        current_level = [uri]
+        all_results: list[ProcessedContent] = []
+
+        for _ in range(depth + 1):
+            if not current_level:
+                break
+            next_level: list[str] = []
+            for u in current_level:
+                if u in visited:
+                    continue
+                visited.add(u)
+                node = self.repository.get(u)
+                if node is None:
+                    continue  # broken link — skip gracefully
+                all_results.append(node)
+                for linked_uri in node.content.metadata.get("wikilinks", []):
+                    if linked_uri not in visited:
+                        next_level.append(linked_uri)
+            current_level = next_level
+
+        return Collection(all_results, self)
+
     def find_related(
         self,
         uris: list[str],
