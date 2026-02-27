@@ -2,13 +2,15 @@
 Siphon sync command - bulk ingest an Obsidian vault into Siphon.
 
 Vault walking and change detection happen client-side. All actual processing
-(extract → enrich → embed → store) goes through HeadwaterClient so the full
-server-side pipeline runs, including embeddings.
+(extract → enrich → embed → store) goes through HeadwaterAsyncClient so the full
+server-side pipeline runs, including embeddings. Requests are dispatched concurrently
+up to --concurrency (default 10) simultaneous in-flight requests.
 
 Reads vault path from --vault flag or ~/.config/siphon/config.toml (key: vault).
 """
 from __future__ import annotations
 
+import asyncio
 import tomllib
 from dataclasses import dataclass
 from dataclasses import field
@@ -118,11 +120,41 @@ def _install_hook(vault_path: Path, printer: Printer) -> None:
     printer.print_pretty(f"[green]Installed:[/green] {hook_path}")
 
 
-def _run_sync(vault_path: Path, dry_run: bool, printer: Printer) -> SyncStats:
-    from siphon_api.api.siphon_request import SiphonRequest
+async def _process_note(
+    note_path: Path,
+    is_new: bool,
+    semaphore: asyncio.Semaphore,
+    client,
+    stats: SyncStats,
+    printer: Printer,
+) -> None:
     from siphon_api.api.siphon_request import SiphonRequestParams
     from siphon_api.api.to_siphon_request import create_siphon_request
     from siphon_api.enums import ActionType
+
+    async with semaphore:
+        try:
+            params = SiphonRequestParams(action=ActionType.GULP, use_cache=False)
+            request = create_siphon_request(
+                source=str(note_path.resolve()),
+                request_params=params,
+            )
+            await client.siphon.process(request)
+            if is_new:
+                stats.new += 1
+            else:
+                stats.updated += 1
+        except Exception as e:
+            printer.print_pretty(f"  [red]error:[/red] {note_path.name}: {e}")
+            stats.errors.append(str(note_path))
+
+
+async def _run_sync_async(
+    vault_path: Path,
+    dry_run: bool,
+    concurrency: int,
+    printer: Printer,
+) -> SyncStats:
     from siphon_api.enums import SourceType
     from siphon_server.database.postgres.repository import ContentRepository
 
@@ -134,24 +166,20 @@ def _run_sync(vault_path: Path, dry_run: bool, printer: Printer) -> SyncStats:
     note_paths = _collect_notes(vault_root, blocklist)
     printer.print_pretty(f"Found {len(note_paths)} notes in {vault_root}")
 
-    # URI → path for every note currently on disk
     current_uris: dict[str, Path] = {
         f"obsidian:///{p.stem}": p for p in note_paths
     }
 
-    # All obsidian URIs currently in postgres
     existing_uris: set[str] = set(
         repository.get_all_uris_by_source_type(SourceType.OBSIDIAN)
     )
 
-    # Determine which notes need processing
-    to_process: list[tuple[str, Path, bool]] = []  # (uri, path, is_new)
+    to_process: list[tuple[str, Path, bool]] = []
 
     for uri, note_path in current_uris.items():
         if uri not in existing_uris:
             to_process.append((uri, note_path, True))
             continue
-
         existing = repository.get(uri)
         file_mtime = int(note_path.stat().st_mtime)
         if existing and file_mtime <= existing.updated_at:
@@ -159,35 +187,22 @@ def _run_sync(vault_path: Path, dry_run: bool, printer: Printer) -> SyncStats:
         else:
             to_process.append((uri, note_path, False))
 
-    # Process through headwater (full pipeline: extract → enrich → embed → store)
-    if not dry_run and to_process:
-        from headwater_client.client.headwater_client import HeadwaterClient
-        client = HeadwaterClient()
-
-        for uri, note_path, is_new in to_process:
-            try:
-                params = SiphonRequestParams(action=ActionType.GULP, use_cache=False)
-                request = create_siphon_request(
-                    source=str(note_path.resolve()),
-                    request_params=params,
-                )
-                client.siphon.process(request)
-                if is_new:
-                    stats.new += 1
-                else:
-                    stats.updated += 1
-            except Exception as e:
-                printer.print_pretty(f"  [red]error:[/red] {note_path.name}: {e}")
-                stats.errors.append(str(note_path))
-    else:
-        # Dry run — just count
+    if dry_run:
         for _, _, is_new in to_process:
             if is_new:
                 stats.new += 1
             else:
                 stats.updated += 1
+    elif to_process:
+        from headwater_client.client.headwater_client_async import HeadwaterAsyncClient
 
-    # Prune records for notes no longer on disk
+        semaphore = asyncio.Semaphore(concurrency)
+        async with HeadwaterAsyncClient() as client:
+            await asyncio.gather(*[
+                _process_note(note_path, is_new, semaphore, client, stats, printer)
+                for _, note_path, is_new in to_process
+            ])
+
     stale_uris = existing_uris - set(current_uris.keys())
     if not dry_run:
         for uri in stale_uris:
@@ -197,6 +212,10 @@ def _run_sync(vault_path: Path, dry_run: bool, printer: Printer) -> SyncStats:
         stats.pruned = len(stale_uris)
 
     return stats
+
+
+def _run_sync(vault_path: Path, dry_run: bool, concurrency: int, printer: Printer) -> SyncStats:
+    return asyncio.run(_run_sync_async(vault_path, dry_run, concurrency, printer))
 
 
 @click.command()
@@ -217,6 +236,14 @@ def _run_sync(vault_path: Path, dry_run: bool, printer: Printer) -> SyncStats:
     help="Preview what would change without writing to the database",
 )
 @click.option(
+    "--concurrency",
+    "-c",
+    default=10,
+    type=int,
+    show_default=True,
+    help="Max simultaneous requests to headwater",
+)
+@click.option(
     "--raw",
     is_flag=True,
     help="Force raw output mode",
@@ -225,20 +252,23 @@ def sync(
     vault: str | None,
     install_hook: bool,
     dry_run: bool,
+    concurrency: int,
     raw: bool,
 ) -> None:
     """
     Sync an Obsidian vault into Siphon.
 
     New and changed notes are processed through the full headwater pipeline
-    (extract → enrich → embed → store). Unchanged notes are skipped. Notes
-    removed from disk are pruned from the database.
+    (extract → enrich → embed → store) with up to CONCURRENCY requests in
+    flight simultaneously. Unchanged notes are skipped. Notes removed from
+    disk are pruned from the database.
 
     Examples:
         siphon sync --vault ~/morphy
-        siphon sync                  # uses vault from config.toml
-        siphon sync --install-hook   # write git post-merge hook
+        siphon sync                    # uses vault from config.toml
+        siphon sync --install-hook     # write git post-merge hook
         siphon sync --dry-run
+        siphon sync --concurrency 20   # push harder on first sync
     """
     printer = Printer(raw=raw)
 
@@ -260,7 +290,7 @@ def sync(
 
     dry_label = " [dim](dry run)[/dim]" if dry_run else ""
     with printer.status(f"Syncing vault {vault_path}{dry_label}..."):
-        stats = _run_sync(vault_path, dry_run, printer)
+        stats = _run_sync(vault_path, dry_run, concurrency, printer)
 
     prefix = "[dim]dry run:[/dim] " if dry_run else ""
     printer.print_pretty(f"{prefix}Sync complete — {stats.summary()}")
