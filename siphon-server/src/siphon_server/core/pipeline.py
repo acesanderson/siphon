@@ -264,14 +264,12 @@ class SiphonPipeline:
         )
         logger.info("Processed content assembled.")
 
-        # Store in repository
-        if use_cache:
-            REPOSITORY.set(result)
-            logger.info(
-                f"Processed content stored in repository for URI: {source_info.uri}"
-            )
-        else:
-            logger.debug("Cache usage disabled; not storing in repository.")
+        # Store in repository — always, regardless of use_cache.
+        # use_cache only controls the read-through skip at the top of this method.
+        REPOSITORY.set(result)
+        logger.info(
+            f"Processed content stored in repository for URI: {source_info.uri}"
+        )
 
         assert action == ActionType.GULP, (
             "Action must be GULP at this stage, suggests error in code."

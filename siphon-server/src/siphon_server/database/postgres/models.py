@@ -1,9 +1,14 @@
 # pyright: basic
 # ^^^ because of SQLAlchemy dynamic attributes
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, Index, Integer, String, Text, ARRAY
 from sqlalchemy.dialects.postgresql import JSONB
 from siphon_server.database.postgres.connection import Base
+
+# Embedding dimension for sentence-transformers/all-MiniLM-L6-v2.
+# Changing this requires a migration + full re-embed of all records.
+EMBED_DIM = 384
 
 
 class ProcessedContentORM(Base):
@@ -11,6 +16,13 @@ class ProcessedContentORM(Base):
     __table_args__ = (
         # GIN index enables fast containment queries on wikilinks and other metadata
         Index("ix_pc_metadata_gin", "content_metadata", postgresql_using="gin"),
+        # HNSW index for cosine-distance semantic search via pgvector
+        Index(
+            "ix_pc_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
 
     # Primary key: integer for internal DB operations
@@ -39,6 +51,10 @@ class ProcessedContentORM(Base):
     tags = Column(ARRAY(String), default=list)
     created_at = Column(Integer, nullable=False)
     updated_at = Column(Integer, nullable=False)
+
+    # Embedding — NULL until embed-batch runs; reset to NULL on every content update
+    embedding = Column(Vector(EMBED_DIM), nullable=True)
+    embed_model = Column(String, nullable=True)
 
 
 class QueryHistoryORM(Base):

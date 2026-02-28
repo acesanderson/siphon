@@ -16,6 +16,7 @@ dependencies = [
     "rich>=14.2.0",
     "siphon_api",
     "pydub",
+    "pgvector>=0.3.0",
     "sqlalchemy>=2.0.44",
     # "torch",
     "trafilatura[all]>=2.0.0",

@@ -13,7 +13,12 @@ from siphon_server.database.postgres.models import ProcessedContentORM, QueryHis
 
 
 def to_orm(pc: ProcessedContent) -> ProcessedContentORM:
-    """Convert domain model to ORM model."""
+    """Convert domain model to ORM model.
+
+    embedding and embed_model are always set to None so that any call to
+    repository.set() resets a stale embedding — embed-batch will re-embed
+    the updated record on the next sync pass.
+    """
     return ProcessedContentORM(
         uri=pc.source.uri,
         source_type=pc.source.source_type.value,  # Enum to string
@@ -29,6 +34,8 @@ def to_orm(pc: ProcessedContent) -> ProcessedContentORM:
         tags=pc.tags,
         created_at=pc.created_at,
         updated_at=pc.updated_at,
+        embedding=None,
+        embed_model=None,
     )
 
 

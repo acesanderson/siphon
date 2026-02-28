@@ -238,6 +238,56 @@ class ContentRepository:
             results = q.all()
             return [from_orm(orm_obj) for orm_obj in results]
 
+    def get_embed_texts(
+        self,
+        uris: list[str],
+        skip_existing: bool = True,
+    ) -> dict[str, tuple[str, str]]:
+        """Return {uri: (title, summary)} for URIs that need embedding.
+
+        When skip_existing=True (default), only returns rows where embedding IS NULL,
+        so the caller encodes only records that actually need a vector.
+        Rows with empty title+summary are included — the caller filters those.
+        """
+        with self._session() as db:
+            q = db.query(
+                ProcessedContentORM.uri,
+                ProcessedContentORM.title,
+                ProcessedContentORM.summary,
+            ).filter(ProcessedContentORM.uri.in_(uris))
+            if skip_existing:
+                q = q.filter(ProcessedContentORM.embedding.is_(None))
+            rows = q.all()
+            return {row.uri: (row.title or "", row.summary or "") for row in rows}
+
+    def set_embeddings_batch(
+        self,
+        pairs: list[tuple[str, list[float]]],
+        model: str,
+        force: bool = False,
+    ) -> int:
+        """Store vectors for (uri, vector) pairs. Returns count stored.
+
+        Idempotent by default (force=False): skips URIs that already have an
+        embedding.  Pass force=True to overwrite (e.g., after a model change).
+        All pairs are written in a single transaction.
+        """
+        if not pairs:
+            return 0
+        uri_to_vector = dict(pairs)
+        uris = list(uri_to_vector.keys())
+        with self._session() as db:
+            q = db.query(ProcessedContentORM).filter(
+                ProcessedContentORM.uri.in_(uris)
+            )
+            if not force:
+                q = q.filter(ProcessedContentORM.embedding.is_(None))
+            rows = q.all()
+            for row in rows:
+                row.embedding = uri_to_vector[row.uri]
+                row.embed_model = model
+            return len(rows)
+
     def list_all(
         self,
         source_type: SourceType | None = None,

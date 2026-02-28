@@ -1,10 +1,10 @@
 """
 Siphon sync command - bulk ingest an Obsidian vault into Siphon.
 
-Vault walking and change detection happen client-side. All actual processing
-(extract → enrich → embed → store) goes through HeadwaterAsyncClient so the full
-server-side pipeline runs, including embeddings. Requests are dispatched concurrently
-up to --concurrency (default 10) simultaneous in-flight requests.
+Vault walking and change detection happen client-side. Processing
+(extract → enrich → store) goes through HeadwaterAsyncClient so the full
+server-side pipeline runs. After all notes are processed, a single embed-batch
+call generates vectors for every changed note, rather than one call per note.
 
 Reads vault path from --vault flag or ~/.config/siphon/config.toml (key: vault).
 """
@@ -44,6 +44,8 @@ class SyncStats:
     updated: int = 0
     pruned: int = 0
     skipped: int = 0
+    empty_skipped: int = 0
+    embed_ok: int = 0
     errors: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -56,6 +58,10 @@ class SyncStats:
             parts.append(f"{self.pruned} pruned")
         if self.skipped:
             parts.append(f"{self.skipped} skipped")
+        if self.empty_skipped:
+            parts.append(f"{self.empty_skipped} empty")
+        if self.embed_ok:
+            parts.append(f"{self.embed_ok} embedded")
         if self.errors:
             parts.append(f"{len(self.errors)} errors")
         return ", ".join(parts) if parts else "nothing to do"
@@ -98,6 +104,13 @@ def _collect_notes(vault_root: Path, blocklist: set[str]) -> list[Path]:
     ]
 
 
+def _is_empty(path: Path) -> bool:
+    """Return True if the file has no meaningful content."""
+    if path.stat().st_size == 0:
+        return True
+    return not path.read_text(encoding="utf-8", errors="replace").strip()
+
+
 def _install_hook(vault_path: Path, printer: Printer) -> None:
     git_dir = vault_path / ".git"
     if not git_dir.is_dir():
@@ -121,13 +134,15 @@ def _install_hook(vault_path: Path, printer: Printer) -> None:
 
 
 async def _process_note(
+    uri: str,
     note_path: Path,
     is_new: bool,
     semaphore: asyncio.Semaphore,
     client,
     stats: SyncStats,
     printer: Printer,
-) -> None:
+) -> str | None:
+    """Process one note through the pipeline. Returns the URI on success, None on error."""
     from siphon_api.api.siphon_request import SiphonRequestParams
     from siphon_api.api.to_siphon_request import create_siphon_request
     from siphon_api.enums import ActionType
@@ -144,9 +159,11 @@ async def _process_note(
                 stats.new += 1
             else:
                 stats.updated += 1
+            return uri
         except Exception as e:
             printer.print_pretty(f"  [red]error:[/red] {note_path.name}: {e}")
             stats.errors.append(str(note_path))
+            return None
 
 
 async def _run_sync_async(
@@ -187,21 +204,42 @@ async def _run_sync_async(
         else:
             to_process.append((uri, note_path, False))
 
+    # Pre-filter: skip empty files before sending through the pipeline.
+    # Empty notes waste an LLM enrichment call and produce nothing worth embedding.
+    filtered_to_process: list[tuple[str, Path, bool]] = []
+    for uri, note_path, is_new in to_process:
+        if _is_empty(note_path):
+            stats.empty_skipped += 1
+        else:
+            filtered_to_process.append((uri, note_path, is_new))
+
     if dry_run:
-        for _, _, is_new in to_process:
+        for _, _, is_new in filtered_to_process:
             if is_new:
                 stats.new += 1
             else:
                 stats.updated += 1
-    elif to_process:
+        stats.embed_ok = len(filtered_to_process)  # would-be embed count
+    elif filtered_to_process:
         from headwater_client.client.headwater_client_async import HeadwaterAsyncClient
 
         semaphore = asyncio.Semaphore(concurrency)
         async with HeadwaterAsyncClient() as client:
-            await asyncio.gather(*[
-                _process_note(note_path, is_new, semaphore, client, stats, printer)
-                for _, note_path, is_new in to_process
+            results = await asyncio.gather(*[
+                _process_note(uri, note_path, is_new, semaphore, client, stats, printer)
+                for uri, note_path, is_new in filtered_to_process
             ])
+
+            processed_uris = [r for r in results if r is not None]
+
+            if processed_uris:
+                try:
+                    embed_result = await client.siphon.embed_batch(processed_uris)
+                    stats.embed_ok = embed_result.embedded
+                except Exception as e:
+                    printer.print_pretty(
+                        f"  [yellow]warning:[/yellow] embed-batch failed: {e}"
+                    )
 
     stale_uris = existing_uris - set(current_uris.keys())
     if not dry_run:
@@ -259,9 +297,11 @@ def sync(
     Sync an Obsidian vault into Siphon.
 
     New and changed notes are processed through the full headwater pipeline
-    (extract → enrich → embed → store) with up to CONCURRENCY requests in
-    flight simultaneously. Unchanged notes are skipped. Notes removed from
-    disk are pruned from the database.
+    (extract → enrich → store) with up to CONCURRENCY requests in flight
+    simultaneously. Unchanged notes are skipped. Empty notes are skipped
+    entirely. After all notes are processed, a single embed-batch call
+    generates vectors for every successfully processed note. Notes removed
+    from disk are pruned from the database.
 
     Examples:
         siphon sync --vault ~/morphy

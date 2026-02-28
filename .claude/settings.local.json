@@ -8,7 +8,9 @@
       "Bash(/Users/bianders/Brian_Code/siphon/siphon-server-refactor/siphon-server/.venv/bin/pytest:*)",
       "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/pytest:*)",
       "Bash(tail:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(uv run:*)",
+      "Bash(/Users/bianders/Brian_Code/dbclients-project/.venv/bin/python:*)"
     ]
   }
 }
