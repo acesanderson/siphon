@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import override
 
 from siphon_api.enums import SourceType
 from siphon_api.interfaces import ParserStrategy
 from siphon_api.models import SourceInfo
+from siphon_server.sources.obsidian.text_utils import read_note
 
 
 def _find_vault_root(note_path: Path) -> Path | None:
@@ -39,9 +41,11 @@ class ObsidianParser(ParserStrategy):
     def parse(self, source: str) -> SourceInfo:
         p = Path(source).resolve()
         stem = p.stem
+        full_text, _, _ = read_note(p)
+        content_hash = hashlib.sha256(full_text.encode("utf-8", errors="replace")).hexdigest()
         return SourceInfo(
             source_type=self.source_type,
             uri=f"obsidian:///{stem}",
             original_source=source,
-            hash=None,
+            hash=content_hash,
         )

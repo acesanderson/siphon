@@ -152,6 +152,30 @@ class ContentRepository:
             )
             return [row.uri for row in rows]
 
+    def get_sync_metadata(
+        self, source_type: SourceType
+    ) -> dict[str, tuple[int, str | None, int]]:
+        """Return {uri: (updated_at, source_hash, content_len)} for all records
+        of the given source type. Single query; used by the sync loop to avoid
+        N+1 full-row reads.
+        """
+        with self._session() as db:
+            from sqlalchemy import func
+            rows = (
+                db.query(
+                    ProcessedContentORM.uri,
+                    ProcessedContentORM.updated_at,
+                    ProcessedContentORM.source_hash,
+                    func.length(ProcessedContentORM.content_text).label("content_len"),
+                )
+                .filter(ProcessedContentORM.source_type == source_type.value)
+                .all()
+            )
+            return {
+                row.uri: (row.updated_at, row.source_hash, row.content_len)
+                for row in rows
+            }
+
     def get_backlinks(self, uri: str) -> list[ProcessedContent]:
         """Find all records whose wikilinks metadata contains the given URI."""
         with self._session() as db:

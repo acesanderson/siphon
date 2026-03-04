@@ -11,6 +11,7 @@ Reads vault path from --vault flag or ~/.config/siphon/config.toml (key: vault).
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import tomllib
 from dataclasses import dataclass
 from dataclasses import field
@@ -20,9 +21,13 @@ from typing import TYPE_CHECKING
 import click
 
 from siphon_client.cli.printer import Printer
+from siphon_server.sources.obsidian.text_utils import read_note
 
 if TYPE_CHECKING:
     pass
+
+_MIN_CHANGE_CHARS = 50
+_MIN_CHANGE_PCT   = 0.02
 
 DEFAULT_BLOCKLIST: set[str] = {".obsidian", "templates", "_attachments"}
 _BLOCKLIST_PATH = Path.home() / ".config" / "siphon" / "obsidian_blocklist.txt"
@@ -45,6 +50,8 @@ class SyncStats:
     pruned: int = 0
     skipped: int = 0
     empty_skipped: int = 0
+    hash_skipped: int = 0
+    trivial_skipped: int = 0
     embed_ok: int = 0
     errors: list[str] = field(default_factory=list)
 
@@ -60,6 +67,10 @@ class SyncStats:
             parts.append(f"{self.skipped} skipped")
         if self.empty_skipped:
             parts.append(f"{self.empty_skipped} empty")
+        if self.hash_skipped:
+            parts.append(f"{self.hash_skipped} hash-skipped")
+        if self.trivial_skipped:
+            parts.append(f"{self.trivial_skipped} trivial-skipped")
         if self.embed_ok:
             parts.append(f"{self.embed_ok} embedded")
         if self.errors:
@@ -103,12 +114,6 @@ def _collect_notes(vault_root: Path, blocklist: set[str]) -> list[Path]:
         if not _is_blocked(p, vault_root, blocklist)
     ]
 
-
-def _is_empty(path: Path) -> bool:
-    """Return True if the file has no meaningful content."""
-    if path.stat().st_size == 0:
-        return True
-    return not path.read_text(encoding="utf-8", errors="replace").strip()
 
 
 def _install_hook(vault_path: Path, printer: Printer) -> None:
@@ -187,31 +192,48 @@ async def _run_sync_async(
         f"obsidian:///{p.stem}": p for p in note_paths
     }
 
-    existing_uris: set[str] = set(
-        repository.get_all_uris_by_source_type(SourceType.OBSIDIAN)
+    sync_meta: dict[str, tuple[int, str | None, int]] = repository.get_sync_metadata(
+        SourceType.OBSIDIAN
     )
+    existing_uris: set[str] = set(sync_meta.keys())
 
-    to_process: list[tuple[str, Path, bool]] = []
+    filtered_to_process: list[tuple[str, Path, bool]] = []
 
     for uri, note_path in current_uris.items():
         if uri not in existing_uris:
-            to_process.append((uri, note_path, True))
+            filtered_to_process.append((uri, note_path, True))
             continue
-        existing = repository.get(uri)
-        file_mtime = int(note_path.stat().st_mtime)
-        if existing and file_mtime <= existing.updated_at:
-            stats.skipped += 1
-        else:
-            to_process.append((uri, note_path, False))
 
-    # Pre-filter: skip empty files before sending through the pipeline.
-    # Empty notes waste an LLM enrichment call and produce nothing worth embedding.
-    filtered_to_process: list[tuple[str, Path, bool]] = []
-    for uri, note_path, is_new in to_process:
-        if _is_empty(note_path):
+        stored_updated_at, stored_hash, stored_content_len = sync_meta[uri]
+
+        # Gate 0 — mtime (no I/O)
+        file_mtime = int(note_path.stat().st_mtime)
+        if file_mtime <= stored_updated_at:
+            stats.skipped += 1
+            continue
+
+        # Gates 1 and 2 both require reading the file — single read covers both.
+        full_text, _, new_body = read_note(note_path)
+
+        is_empty = not full_text.strip()
+        if is_empty:
             stats.empty_skipped += 1
-        else:
-            filtered_to_process.append((uri, note_path, is_new))
+            continue
+
+        # Gate 1 — content hash
+        content_hash = hashlib.sha256(full_text.encode("utf-8", errors="replace")).hexdigest()
+        if stored_hash is not None and content_hash == stored_hash:
+            stats.hash_skipped += 1
+            continue
+
+        # Gate 2 — significance (body only)
+        body_delta = abs(len(new_body) - stored_content_len)
+        body_pct = body_delta / max(stored_content_len, 1)
+        if body_delta < _MIN_CHANGE_CHARS and body_pct < _MIN_CHANGE_PCT:
+            stats.trivial_skipped += 1
+            continue
+
+        filtered_to_process.append((uri, note_path, False))
 
     if dry_run:
         for _, _, is_new in filtered_to_process:
