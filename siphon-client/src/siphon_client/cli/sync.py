@@ -171,12 +171,20 @@ async def _process_note(
             return None
 
 
-async def _run_sync_async(
-    vault_path: Path,
-    dry_run: bool,
-    concurrency: int,
-    printer: Printer,
-) -> SyncStats:
+@dataclass
+class _ClassifyResult:
+    total: int
+    to_process: list[tuple[str, Path, bool]]
+    stale_uris: set[str]
+    stats: SyncStats
+
+
+async def _classify_async(vault_path: Path, printer: Printer) -> _ClassifyResult:
+    """Phase 1: walk vault, evaluate all gates, return what needs processing.
+
+    No pipeline calls — pure local I/O. Runs without a spinner so the breakdown
+    can be printed before the slow pipeline phase begins.
+    """
     from siphon_api.enums import SourceType
     from siphon_server.database.postgres.repository import ContentRepository
 
@@ -186,22 +194,18 @@ async def _run_sync_async(
     vault_root = vault_path.resolve()
 
     note_paths = _collect_notes(vault_root, blocklist)
-    printer.print_pretty(f"Found {len(note_paths)} notes in {vault_root}")
-
-    current_uris: dict[str, Path] = {
-        f"obsidian:///{p.stem}": p for p in note_paths
-    }
+    current_uris: dict[str, Path] = {f"obsidian:///{p.stem}": p for p in note_paths}
 
     sync_meta: dict[str, tuple[int, str | None, int]] = repository.get_sync_metadata(
         SourceType.OBSIDIAN
     )
     existing_uris: set[str] = set(sync_meta.keys())
 
-    filtered_to_process: list[tuple[str, Path, bool]] = []
+    to_process: list[tuple[str, Path, bool]] = []
 
     for uri, note_path in current_uris.items():
         if uri not in existing_uris:
-            filtered_to_process.append((uri, note_path, True))
+            to_process.append((uri, note_path, True))
             continue
 
         stored_updated_at, stored_hash, stored_content_len = sync_meta[uri]
@@ -212,11 +216,10 @@ async def _run_sync_async(
             stats.skipped += 1
             continue
 
-        # Gates 1 and 2 both require reading the file — single read covers both.
+        # Single file read covers gates 1 + 2 + empty check.
         full_text, _, new_body = read_note(note_path)
 
-        is_empty = not full_text.strip()
-        if is_empty:
+        if not full_text.strip():
             stats.empty_skipped += 1
             continue
 
@@ -233,49 +236,112 @@ async def _run_sync_async(
             stats.trivial_skipped += 1
             continue
 
-        filtered_to_process.append((uri, note_path, False))
+        to_process.append((uri, note_path, False))
+
+    stale_uris = existing_uris - set(current_uris.keys())
+    return _ClassifyResult(
+        total=len(note_paths),
+        to_process=to_process,
+        stale_uris=stale_uris,
+        stats=stats,
+    )
+
+
+def _print_scan_report(result: _ClassifyResult, printer: Printer, dry_run: bool) -> None:
+    """Print the pre-processing breakdown table."""
+    r = result
+    new_count  = sum(1 for _, _, is_new in r.to_process if is_new)
+    upd_count  = sum(1 for _, _, is_new in r.to_process if not is_new)
+    queue      = len(r.to_process)
+    dry_label  = " [dim](dry run)[/dim]" if dry_run else ""
+
+    printer.print_pretty(f"Vault: {r.total} notes scanned{dry_label}")
+    printer.print_pretty("")
+
+    # Skip breakdown (only show non-zero rows)
+    rows = [
+        (r.stats.skipped,       "mtime unchanged"),
+        (r.stats.hash_skipped,  "content unchanged"),
+        (r.stats.trivial_skipped, "trivial edit"),
+        (r.stats.empty_skipped, "empty"),
+        (len(r.stale_uris),     "stale (will prune)"),
+    ]
+    skipped_rows = [(n, label) for n, label in rows if n > 0]
+    if skipped_rows:
+        width = max(len(str(n)) for n, _ in skipped_rows)
+        for n, label in skipped_rows:
+            printer.print_pretty(f"  [dim]{n:{width}}  {label}[/dim]")
+        printer.print_pretty("")
+
+    # Queue breakdown
+    width = max(len(str(new_count)), len(str(upd_count)), 1)
+    if new_count:
+        printer.print_pretty(f"  [green]{new_count:{width}}  new[/green]")
+    if upd_count:
+        printer.print_pretty(f"  [cyan]{upd_count:{width}}  updated[/cyan]")
+    if queue == 0:
+        printer.print_pretty("  [dim]nothing to process[/dim]")
+    printer.print_pretty("")
+
+
+async def _process_async(
+    result: _ClassifyResult,
+    dry_run: bool,
+    concurrency: int,
+    printer: Printer,
+) -> SyncStats:
+    """Phase 2: run pipeline for queued notes, embed, prune. Updates result.stats in place."""
+    from siphon_server.database.postgres.repository import ContentRepository
+
+    stats = result.stats
 
     if dry_run:
-        for _, _, is_new in filtered_to_process:
+        for _, _, is_new in result.to_process:
             if is_new:
                 stats.new += 1
             else:
                 stats.updated += 1
-        stats.embed_ok = len(filtered_to_process)  # would-be embed count
-    elif filtered_to_process:
+        stats.embed_ok = len(result.to_process)
+        stats.pruned = len(result.stale_uris)
+        return stats
+
+    if result.to_process:
         from headwater_client.client.headwater_client_async import HeadwaterAsyncClient
 
         semaphore = asyncio.Semaphore(concurrency)
         async with HeadwaterAsyncClient() as client:
             results = await asyncio.gather(*[
                 _process_note(uri, note_path, is_new, semaphore, client, stats, printer)
-                for uri, note_path, is_new in filtered_to_process
+                for uri, note_path, is_new in result.to_process
             ])
-
             processed_uris = [r for r in results if r is not None]
-
             if processed_uris:
                 try:
                     embed_result = await client.siphon.embed_batch(processed_uris)
                     stats.embed_ok = embed_result.embedded
                 except Exception as e:
-                    printer.print_pretty(
-                        f"  [yellow]warning:[/yellow] embed-batch failed: {e}"
-                    )
+                    printer.print_pretty(f"  [yellow]warning:[/yellow] embed-batch failed: {e}")
 
-    stale_uris = existing_uris - set(current_uris.keys())
-    if not dry_run:
-        for uri in stale_uris:
-            repository.delete(uri)
-            stats.pruned += 1
-    else:
-        stats.pruned = len(stale_uris)
+    repository = ContentRepository()
+    for uri in result.stale_uris:
+        repository.delete(uri)
+        stats.pruned += 1
 
     return stats
 
 
 def _run_sync(vault_path: Path, dry_run: bool, concurrency: int, printer: Printer) -> SyncStats:
-    return asyncio.run(_run_sync_async(vault_path, dry_run, concurrency, printer))
+    async def _run() -> SyncStats:
+        with printer.status("Scanning vault..."):
+            result = await _classify_async(vault_path, printer)
+        _print_scan_report(result, printer, dry_run)
+        if not result.to_process and not result.stale_uris:
+            return result.stats
+        label = f"Processing {len(result.to_process)} notes..."
+        with printer.status(label):
+            return await _process_async(result, dry_run, concurrency, printer)
+
+    return asyncio.run(_run())
 
 
 @click.command()
@@ -350,9 +416,6 @@ def sync(
         _install_hook(vault_path, printer)
         return
 
-    dry_label = " [dim](dry run)[/dim]" if dry_run else ""
-    with printer.status(f"Syncing vault {vault_path}{dry_label}..."):
-        stats = _run_sync(vault_path, dry_run, concurrency, printer)
-
+    stats = _run_sync(vault_path, dry_run, concurrency, printer)
     prefix = "[dim]dry run:[/dim] " if dry_run else ""
     printer.print_pretty(f"{prefix}Sync complete — {stats.summary()}")
