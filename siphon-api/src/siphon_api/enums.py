@@ -18,6 +18,7 @@ class SourceType(str, Enum):
     GITHUB = "GitHub"
     OBSIDIAN = "Obsidian"
     ARXIV = "Arxiv"
+    GUTENBERG = "Gutenberg"
 
 
 class ActionType(str, Enum):
