@@ -288,12 +288,12 @@ Explain the structure, components, and relationships shown."""
         # Build pipeline options
         options = PdfPipelineOptions(
             do_ocr=settings.docling_do_ocr,
-            do_table_structure=False,  # Disabled for now; requires additional system libs
-            do_picture_classification=False,  # Disabled for now; requires CV2
-            do_picture_description=False,  # Disable for now; Phase 5 enables
+            do_table_structure=settings.docling_do_table_structure,
+            do_picture_classification=settings.docling_do_picture_classification,
+            do_picture_description=settings.docling_picture_description_enabled,
             picture_area_threshold=settings.docling_picture_area_threshold,
-            generate_picture_images=False,
-            enable_remote_services=False,  # No VLM yet
+            generate_picture_images=True,
+            enable_remote_services=settings.docling_picture_description_enabled,
             document_timeout=120,
         )
 
@@ -304,8 +304,18 @@ Explain the structure, components, and relationships shown."""
         try:
             result = converter.convert(path)
             return result.document
+        except TimeoutError as e:
+            # AC-5.2: Timeout > 120s
+            raise TimeoutError(f"Document processing exceeded 120s timeout on {path}") from e
+        except FileNotFoundError as e:
+            # AC-5.5: Missing model weights
+            raise FileNotFoundError(
+                f"Docling model weights not found. "
+                f"Run: docling-cli download-models"
+            ) from e
         except Exception as e:
-            raise ValueError(f"Corrupted document: {path}. Docling converter failed: {e}")
+            # AC-5.1: Corrupted document
+            raise ValueError(f"Corrupted document: {path}. Docling converter failed: {e}") from e
 
     def _generate_metadata(self, source: SourceInfo) -> dict[str, str]:
         path = Path(source.original_source)

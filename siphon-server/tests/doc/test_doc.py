@@ -633,6 +633,50 @@ class TestDocExtractor:
         assert content_data.text is not None
         # Mixed documents should extract without error
 
+    def test_corrupted_document_raises_value_error(self, extractor):
+        """Test: Corrupted PDF raises ValueError. AC-5.1"""
+        # Create fake/corrupted file
+        corrupted_path = Path(__file__).parent / "fixtures" / "corrupted.pdf"
+        corrupted_path.parent.mkdir(parents=True, exist_ok=True)
+        corrupted_path.write_bytes(b"This is not a valid PDF")
+
+        try:
+            source = SourceInfo(
+                source_type=SourceType.DOC,
+                uri="doc:///test",
+                original_source=str(corrupted_path),
+                hash="test",
+                metadata={}
+            )
+
+            with pytest.raises(ValueError) as exc_info:
+                extractor.extract(source)
+
+            assert "corrupted" in str(exc_info.value).lower()
+        finally:
+            corrupted_path.unlink(missing_ok=True)
+
+    def test_vlm_timeout_raises_timeout_error(self, extractor):
+        """Test: VLM timeout raises TimeoutError. AC-5.4"""
+        from unittest.mock import patch
+
+        # Create mock picture
+        picture = Mock()
+        picture.__class__ = PictureItem
+        picture.annotations = {
+            'document_figure_classifier': {
+                'class': 'chart',
+                'confidence': 0.9
+            }
+        }
+        picture.image_data = b'test'
+
+        with patch.object(extractor, '_get_vlm_description') as mock_vlm:
+            mock_vlm.side_effect = TimeoutError("VLM timeout")
+
+            with pytest.raises(TimeoutError):
+                extractor._get_vlm_description(picture, "chart")
+
 
 # === ENRICHER TESTS ===
 @pytest.mark.enricher
