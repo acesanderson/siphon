@@ -1,10 +1,12 @@
 import pytest
 from pathlib import Path
+from unittest.mock import Mock, MagicMock
 from siphon_api.enums import SourceType
 from siphon_api.models import SourceInfo, ContentData
 from siphon_server.sources.doc.parser import DocParser
 from siphon_server.sources.doc.extractor import DocExtractor
 from siphon_server.sources.doc.enricher import DocEnricher
+from docling_core.types.doc import SectionHeaderItem, TextItem, ContentLayer
 
 
 # === PARSER TESTS ===
@@ -81,6 +83,49 @@ class TestDocExtractor:
     def test_extract_includes_metadata(self, extractor, sample_source):
         # TODO: Verify metadata is captured
         pytest.skip("TODO: Verify metadata extraction")
+
+    def test_heading_hierarchy_preserved(self, extractor):
+        """Test: markdown output contains heading markers (##, ###, etc.). AC-1.3"""
+        # Create mock DoclingDocument with headers
+        mock_doc = Mock()
+
+        # Create actual SectionHeaderItem and TextItem mocks
+        header_item = Mock()
+        header_item.__class__ = SectionHeaderItem
+        header_item.text = "Section Title"
+        header_item.level = 1
+
+        text_item = Mock()
+        text_item.__class__ = TextItem
+        text_item.text = "This is the body text of the document."
+
+        # Mock iterate_items to return header and text
+        mock_doc.iterate_items.return_value = [
+            (header_item, 1),
+            (text_item, 2)
+        ]
+
+        # Test directly with the mock
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.3: text should contain markdown heading markers (##)
+        assert "##" in markdown, f"Expected markdown heading markers (##) in output, got: {markdown}"
+
+    def test_text_output_preserves_length(self, extractor, sample_pdf):
+        """Test: extracted text paragraphs preserve length > 100 chars. AC-1.4"""
+        source = SourceInfo(
+            source_type=SourceType.DOC,
+            uri="doc:///test",
+            original_source=str(sample_pdf),
+            hash="test_hash",
+            metadata={}
+        )
+
+        content_data = extractor.extract(source)
+        markdown = content_data.text
+
+        # AC-1.4: text output should be substantial
+        assert len(markdown) > 100, f"Expected > 100 chars, got {len(markdown)}"
 
 
 # === ENRICHER TESTS ===

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import override
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling_core.types.doc import DoclingDocument
+from docling_core.types.doc import DoclingDocument, SectionHeaderItem, TextItem, ContentLayer
 
 
 class DocExtractor(ExtractorStrategy):
@@ -32,11 +32,31 @@ class DocExtractor(ExtractorStrategy):
         # Docling convert
         doc = self._docling_convert(path)
 
-        # Minimal transformer: just export to markdown for now
-        # (full transformer comes in Phase 3)
-        markdown = doc.export_to_markdown()
+        # Transform to markdown using core transformer
+        markdown = self._docling_to_markdown(doc)
 
         return markdown
+
+    def _docling_to_markdown(self, doc: DoclingDocument) -> str:
+        """Transform DoclingDocument to LLM-ready markdown."""
+        if doc is None:
+            raise RuntimeError("DoclingDocument is None or invalid")
+
+        parts = []
+
+        # Iterate document content
+        for item, depth in doc.iterate_items(included_content_layers={ContentLayer.BODY}):
+            if isinstance(item, SectionHeaderItem):
+                # Create heading: level determines # count
+                heading_level = max(2, getattr(item, 'level', 2) + 1)
+                heading_marker = "#" * heading_level
+                parts.append(f"{heading_marker} {item.text}\n\n")
+
+            elif isinstance(item, TextItem):
+                # Simple text paragraph
+                parts.append(f"{item.text}\n\n")
+
+        return "".join(parts)
 
     def _docling_convert(self, path: Path) -> DoclingDocument:
         """Convert document to DoclingDocument using Docling."""
