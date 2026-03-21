@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from siphon_api.enums import SourceType
 from siphon_api.models import SourceInfo, ContentData
 from siphon_server.sources.doc.parser import DocParser
@@ -38,6 +39,14 @@ class TestDocExtractor:
         return DocExtractor(client=None)
     
     @pytest.fixture
+    def sample_pdf(self):
+        """Provide path to sample test PDF."""
+        pdf_path = Path(__file__).parent.parent / "fixtures" / "sample_text.pdf"
+        if not pdf_path.exists():
+            pytest.skip("Test PDF fixture not found")
+        return pdf_path
+
+    @pytest.fixture
     def sample_source(self):
         # TODO: Create realistic sample SourceInfo
         return SourceInfo(
@@ -46,10 +55,24 @@ class TestDocExtractor:
             original_source="TODO: original URL",
             metadata={"identifier": "sample_id"}
         )
-    
-    def test_extract_returns_content_data(self, extractor, sample_source):
-        # TODO: Implement extraction test
-        pytest.skip("TODO: Implement extract test")
+
+    def test_extract_returns_content_data(self, extractor, sample_pdf):
+        """Test: extract() returns ContentData with non-empty text. AC-1.1"""
+        source = SourceInfo(
+            source_type=SourceType.DOC,
+            uri="doc:///test",
+            original_source=str(sample_pdf),
+            hash="test_hash",
+            metadata={}
+        )
+
+        content_data = extractor.extract(source)
+
+        # AC-1.1: text field exists and is > 100 chars
+        assert content_data.text is not None
+        assert len(content_data.text) > 100, f"Expected > 100 chars, got {len(content_data.text)}"
+        assert content_data.source_type == SourceType.DOC
+        assert content_data.metadata is not None
     
     def test_extract_populates_text(self, extractor, sample_source):
         # TODO: Verify text field is populated

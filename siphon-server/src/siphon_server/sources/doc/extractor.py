@@ -7,6 +7,9 @@ from datetime import datetime, timezone
 from markitdown import MarkItDown
 from pathlib import Path
 from typing import override
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling_core.types.doc import DoclingDocument
 
 
 class DocExtractor(ExtractorStrategy):
