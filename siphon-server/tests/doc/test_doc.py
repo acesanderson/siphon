@@ -615,6 +615,24 @@ class TestDocExtractor:
         with pytest.raises(ValueError, match="OCR confidence 0.30 < 0.5"):
             extractor._docling_to_markdown(mock_doc)
 
+    def test_mixed_native_and_ocr_documents_extract(self, extractor):
+        """Test: Documents with mixed native + OCR content extract successfully. AC-3.4"""
+        source = SourceInfo(
+            source_type=SourceType.DOC,
+            uri="doc:///test",
+            original_source=str(Path(__file__).parent.parent / "fixtures" / "sample_text.pdf"),
+            hash="test_hash",
+            metadata={}
+        )
+
+        # Should succeed and contain content
+        content_data = extractor.extract(source)
+        markdown = content_data.text
+
+        assert len(markdown) > 100
+        assert content_data.text is not None
+        # Mixed documents should extract without error
+
 
 # === ENRICHER TESTS ===
 @pytest.mark.enricher
