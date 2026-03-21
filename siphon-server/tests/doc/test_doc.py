@@ -425,6 +425,30 @@ class TestDocExtractor:
         filepath_pattern = re.compile(r'[A-Z]:\\|/[a-zA-Z0-9_/\-\.]+\.(pdf|docx|pptx)')
         assert not filepath_pattern.search(markdown), "File paths detected in output"
 
+    def test_vlm_prompt_selection_by_image_type(self, extractor):
+        """Test: Correct prompt selected by image type. AC-4.5"""
+        # Test chart type selection
+        chart_prompt = extractor._select_vlm_prompt("bar_chart")
+        assert "Analyze this chart" in chart_prompt, "Expected PROMPT_CHART for bar_chart"
+
+        line_chart_prompt = extractor._select_vlm_prompt("line_chart")
+        assert "Analyze this chart" in line_chart_prompt, "Expected PROMPT_CHART for line_chart"
+
+        # Test diagram type selection
+        diagram_prompt = extractor._select_vlm_prompt("diagram")
+        assert "Describe this diagram" in diagram_prompt, "Expected PROMPT_DIAGRAM for diagram"
+
+        flow_chart_prompt = extractor._select_vlm_prompt("flow_chart")
+        assert "Describe this diagram" in flow_chart_prompt, "Expected PROMPT_DIAGRAM for flow_chart"
+
+        # Test OCR type selection
+        ocr_prompt = extractor._select_vlm_prompt("text")
+        assert "Extract all text" in ocr_prompt, "Expected PROMPT_OCR for text"
+
+        # Test default prompt selection
+        unknown_prompt = extractor._select_vlm_prompt("unknown_type")
+        assert "Describe this image in detail" in unknown_prompt, "Expected PROMPT_DEFAULT for unknown type"
+
 
 # === ENRICHER TESTS ===
 @pytest.mark.enricher

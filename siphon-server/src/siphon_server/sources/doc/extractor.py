@@ -28,6 +28,37 @@ class DocExtractor(ExtractorStrategy):
 
     source_type: SourceType = SourceType.DOC
 
+    # VLM prompt templates
+    PROMPT_OCR = """## INSTRUCTIONS
+Extract all text, tables, headings, and structure from the document image.
+Output clean, valid Markdown. Preserve hierarchy. Do not hallucinate content.
+
+## INPUTS
+An image (attached to message).
+Focus on: headings (#/##/###), paragraphs, lists, tables (pipe syntax), bold/italic.
+
+## CONSTRAINTS
+- Only include content visible in the image
+- Mark uncertain text as [UNCERTAIN], unreadable as [ILLEGIBLE]
+- No summaries, no additions, no explanations
+
+## OUTPUT FORMAT
+Valid Markdown only. Title as H1, sections as H2/H3. No JSON wrappers or preamble."""
+
+    PROMPT_CHART = """## INSTRUCTIONS
+Analyze this chart and extract key data, trends, and insights.
+
+## OUTPUT
+Describe the chart type, axes, key values, and any trends or relationships visible."""
+
+    PROMPT_DIAGRAM = """## INSTRUCTIONS
+Describe this diagram, flowchart, or technical drawing.
+
+## OUTPUT
+Explain the structure, components, and relationships shown."""
+
+    PROMPT_DEFAULT = """Describe this image in detail."""
+
     @override
     def extract(self, source: SourceInfo) -> ContentData:
         text = self._extract(source)
@@ -117,6 +148,21 @@ class DocExtractor(ExtractorStrategy):
             logging.warning(f"Wide table detected: {len(rows[0])} columns.")
 
         return "\n".join(markdown_lines) + "\n\n"
+
+    def _select_vlm_prompt(self, image_type: str) -> str:
+        """Select VLM prompt template based on image classification type."""
+        chart_types = {"bar_chart", "line_chart", "pie_chart", "scatter_plot", "box_plot"}
+        diagram_types = {"diagram", "flow_chart", "engineering_drawing"}
+        ocr_types = {"text"}
+
+        if image_type in chart_types:
+            return self.PROMPT_CHART
+        elif image_type in diagram_types:
+            return self.PROMPT_DIAGRAM
+        elif image_type in ocr_types:
+            return self.PROMPT_OCR
+        else:
+            return self.PROMPT_DEFAULT
 
     def _docling_convert(self, path: Path) -> DoclingDocument:
         """Convert document to DoclingDocument using Docling."""
