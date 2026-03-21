@@ -103,10 +103,12 @@ class TestDocExtractor:
         header_item.__class__ = SectionHeaderItem
         header_item.text = "Section Title"
         header_item.level = 1
+        header_item.metadata = None  # Not OCR text
 
         text_item = Mock()
         text_item.__class__ = TextItem
         text_item.text = "This is the body text of the document."
+        text_item.metadata = None  # Not OCR text
 
         # Mock iterate_items to return header and text
         mock_doc.iterate_items.return_value = [
@@ -144,6 +146,7 @@ class TestDocExtractor:
         code_item.__class__ = CodeItem
         code_item.text = "def hello():\n    print('Hello, World!')"
         code_item.language = "python"
+        code_item.metadata = None  # Not OCR text
 
         mock_doc.iterate_items.return_value = [(code_item, 1)]
 
@@ -161,6 +164,7 @@ class TestDocExtractor:
         code_item = Mock()
         code_item.__class__ = CodeItem
         code_item.text = "some code here"
+        code_item.metadata = None  # Not OCR text
         # No language attribute
 
         mock_doc.iterate_items.return_value = [(code_item, 1)]
@@ -178,6 +182,7 @@ class TestDocExtractor:
         formula_item = Mock()
         formula_item.__class__ = FormulaItem
         formula_item.text = "E = mc^2"
+        formula_item.metadata = None  # Not OCR text
 
         mock_doc.iterate_items.return_value = [(formula_item, 1)]
 
@@ -194,6 +199,7 @@ class TestDocExtractor:
         list_item.__class__ = ListItem
         list_item.text = "First item"
         list_item.is_bullet = True
+        list_item.metadata = None  # Not OCR text
 
         mock_doc.iterate_items.return_value = [(list_item, 1)]
 
@@ -211,6 +217,7 @@ class TestDocExtractor:
         list_item.text = "First step"
         list_item.is_bullet = False
         list_item.index = 1
+        list_item.metadata = None  # Not OCR text
 
         mock_doc.iterate_items.return_value = [(list_item, 1)]
 
@@ -226,20 +233,24 @@ class TestDocExtractor:
         text_item = Mock()
         text_item.__class__ = TextItem
         text_item.text = "Introduction text"
+        text_item.metadata = None  # Not OCR text
 
         code_item = Mock()
         code_item.__class__ = CodeItem
         code_item.text = "print('hello')"
         code_item.language = "python"
+        code_item.metadata = None  # Not OCR text
 
         formula_item = Mock()
         formula_item.__class__ = FormulaItem
         formula_item.text = "x^2 + y^2"
+        formula_item.metadata = None  # Not OCR text
 
         list_item = Mock()
         list_item.__class__ = ListItem
         list_item.text = "List item"
         list_item.is_bullet = True
+        list_item.metadata = None  # Not OCR text
 
         mock_doc.iterate_items.return_value = [
             (text_item, 1),
@@ -361,6 +372,7 @@ class TestDocExtractor:
         text_item = Mock()
         text_item.__class__ = TextItem
         text_item.text = "Text before table"
+        text_item.metadata = None  # Not OCR text
 
         mock_doc.iterate_items.return_value = [
             (text_item, 1),
@@ -555,6 +567,53 @@ class TestDocExtractor:
 
         # AC-2.5: type should be 'unknown' when confidence < 0.5
         assert image_type == 'unknown'
+
+    def test_ocr_text_marked_with_comment(self, extractor):
+        """Test: OCR text prefixed with <!-- OCR: from page N -->. AC-3.1"""
+        mock_doc = Mock()
+
+        # Create OCR TextItem with metadata
+        ocr_text_item = Mock()
+        ocr_text_item.__class__ = TextItem
+        ocr_text_item.text = "OCR extracted text"
+        ocr_text_item.metadata = {'ocr_confidence': 0.95}
+        ocr_text_item.prov = [Mock(page_no=2)]
+
+        # Create non-OCR TextItem
+        normal_text_item = Mock()
+        normal_text_item.__class__ = TextItem
+        normal_text_item.text = "Normal text"
+        normal_text_item.metadata = None
+
+        mock_doc.iterate_items.return_value = [
+            (normal_text_item, 1),
+            (ocr_text_item, 2),
+        ]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-3.1: OCR marker should be present before OCR text
+        assert "<!-- OCR: from page 2 -->" in markdown, f"Expected OCR marker in output, got: {markdown}"
+        assert "OCR extracted text" in markdown
+
+    def test_ocr_confidence_validation(self, extractor):
+        """Test: OCR confidence < 0.5 raises ValueError. AC-3.3"""
+        mock_doc = Mock()
+
+        # Create low-confidence OCR TextItem
+        low_conf_ocr_item = Mock()
+        low_conf_ocr_item.__class__ = TextItem
+        low_conf_ocr_item.text = "Low confidence OCR text"
+        low_conf_ocr_item.metadata = {'ocr_confidence': 0.3}  # < 0.5
+        low_conf_ocr_item.prov = [Mock(page_no=1)]
+
+        mock_doc.iterate_items.return_value = [
+            (low_conf_ocr_item, 1),
+        ]
+
+        # AC-3.3: should raise ValueError for low OCR confidence
+        with pytest.raises(ValueError, match="OCR confidence 0.30 < 0.5"):
+            extractor._docling_to_markdown(mock_doc)
 
 
 # === ENRICHER TESTS ===

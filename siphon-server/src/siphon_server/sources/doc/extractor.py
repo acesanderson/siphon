@@ -21,6 +21,7 @@ from docling_core.types.doc import (
     PictureItem,
 )
 from siphon_server.sources.doc.vlm_client import VLMClient
+from typing import Optional
 
 
 class DocExtractor(ExtractorStrategy):
@@ -79,12 +80,45 @@ Explain the structure, components, and relationships shown."""
 
         return markdown
 
+    def _is_ocr_text(self, item: TextItem) -> bool:
+        """Check if text was recovered via OCR. AC-3.2: only when OCR source"""
+        if not hasattr(item, 'metadata') or item.metadata is None:
+            return False
+        ocr_conf = item.metadata.get('ocr_confidence')
+        return ocr_conf is not None
+
+    def _get_page_no(self, item: TextItem) -> Optional[int]:
+        """Extract page number from provenance."""
+        if hasattr(item, 'prov') and item.prov:
+            return item.prov[0].page_no
+        return None
+
+    def _validate_ocr_confidence(self, doc: DoclingDocument) -> None:
+        """Validate all OCR text has confidence >= 0.5. AC-3.3"""
+        for item, _ in doc.iterate_items(included_content_layers={ContentLayer.BODY}):
+            # Check for TextItem but exclude subclasses like SectionHeaderItem, CodeItem, etc
+            if type(item) == TextItem or (isinstance(item, TextItem) and
+                                          not isinstance(item, (SectionHeaderItem, CodeItem,
+                                                              FormulaItem, ListItem))):
+                if self._is_ocr_text(item):
+                    ocr_conf = item.metadata.get('ocr_confidence', 1.0)
+                    if ocr_conf < 0.5:
+                        page_no = self._get_page_no(item)
+                        raise ValueError(
+                            f"OCR confidence {ocr_conf:.2f} < 0.5 on page {page_no}; "
+                            f"text unreadable"
+                        )
+
     def _docling_to_markdown(self, doc: DoclingDocument) -> str:
-        """Transform DoclingDocument to LLM-ready markdown."""
+        """Validate OCR first, then transform."""
         if doc is None:
             raise RuntimeError("DoclingDocument is None or invalid")
 
+        # Validate OCR before processing (AC-3.3)
+        self._validate_ocr_confidence(doc)
+
         parts = []
+        prev_ocr = False  # Track OCR state for grouping
 
         # Iterate document content
         for item, depth in doc.iterate_items(included_content_layers={ContentLayer.BODY}):
@@ -93,17 +127,20 @@ Explain the structure, components, and relationships shown."""
                 heading_level = max(2, getattr(item, 'level', 2) + 1)
                 heading_marker = "#" * heading_level
                 parts.append(f"{heading_marker} {item.text}\n\n")
+                prev_ocr = False
 
             elif isinstance(item, CodeItem):
                 # Code block with language identifier
                 # Note: Check CodeItem before TextItem since CodeItem is a subclass of TextItem
                 lang = getattr(item, 'language', '')
                 parts.append(f"```{lang}\n{item.text}\n```\n\n")
+                prev_ocr = False
 
             elif isinstance(item, FormulaItem):
                 # Mathematical formula in LaTeX format
                 # Note: Check FormulaItem before TextItem since FormulaItem is a subclass of TextItem
                 parts.append(f"${item.text}$\n\n")
+                prev_ocr = False
 
             elif isinstance(item, ListItem):
                 # List item (bullet or numbered)
@@ -111,18 +148,29 @@ Explain the structure, components, and relationships shown."""
                 is_bullet = getattr(item, 'is_bullet', True)
                 bullet_marker = "-" if is_bullet else f"{getattr(item, 'index', 1)}."
                 parts.append(f"{bullet_marker} {item.text}\n")
+                prev_ocr = False
 
             elif isinstance(item, TableItem):
                 # GFM pipe table
                 parts.append(self._table_to_markdown(item))
+                prev_ocr = False
 
             elif isinstance(item, PictureItem):
                 # Picture with VLM description
                 parts.append(self._picture_to_markdown(item))
+                prev_ocr = False
 
             elif isinstance(item, TextItem):
                 # Simple text paragraph
+                is_ocr = self._is_ocr_text(item)
+
+                # Emit OCR marker when transitioning to OCR text (AC-3.1)
+                if is_ocr and not prev_ocr:
+                    page_no = self._get_page_no(item)
+                    parts.append(f"<!-- OCR: from page {page_no} -->\n")
+
                 parts.append(f"{item.text}\n\n")
+                prev_ocr = is_ocr
 
         return "".join(parts)
 
