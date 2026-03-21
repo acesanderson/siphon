@@ -6,7 +6,14 @@ from siphon_api.models import SourceInfo, ContentData
 from siphon_server.sources.doc.parser import DocParser
 from siphon_server.sources.doc.extractor import DocExtractor
 from siphon_server.sources.doc.enricher import DocEnricher
-from docling_core.types.doc import SectionHeaderItem, TextItem, ContentLayer
+from docling_core.types.doc import (
+    SectionHeaderItem,
+    TextItem,
+    ContentLayer,
+    CodeItem,
+    FormulaItem,
+    ListItem,
+)
 
 
 # === PARSER TESTS ===
@@ -126,6 +133,126 @@ class TestDocExtractor:
 
         # AC-1.4: text output should be substantial
         assert len(markdown) > 100, f"Expected > 100 chars, got {len(markdown)}"
+
+    def test_code_blocks_formatted_correctly(self, extractor):
+        """Test: code blocks are formatted with markdown triple backticks. AC-1.1"""
+        mock_doc = Mock()
+
+        code_item = Mock()
+        code_item.__class__ = CodeItem
+        code_item.text = "def hello():\n    print('Hello, World!')"
+        code_item.language = "python"
+
+        mock_doc.iterate_items.return_value = [(code_item, 1)]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.1: code blocks should be wrapped in triple backticks with language
+        assert "```python" in markdown, f"Expected ```python in output, got: {markdown}"
+        assert "def hello()" in markdown, f"Expected code content in output, got: {markdown}"
+        assert "```" in markdown, f"Expected closing backticks in output, got: {markdown}"
+
+    def test_code_blocks_without_language(self, extractor):
+        """Test: code blocks without language are still formatted. AC-1.1"""
+        mock_doc = Mock()
+
+        code_item = Mock()
+        code_item.__class__ = CodeItem
+        code_item.text = "some code here"
+        # No language attribute
+
+        mock_doc.iterate_items.return_value = [(code_item, 1)]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # Code should be wrapped in backticks even without language
+        assert "```" in markdown, f"Expected backticks in output, got: {markdown}"
+        assert "some code here" in markdown, f"Expected code content in output, got: {markdown}"
+
+    def test_formulas_formatted_correctly(self, extractor):
+        """Test: formulas are formatted with LaTeX delimiters. AC-1.1"""
+        mock_doc = Mock()
+
+        formula_item = Mock()
+        formula_item.__class__ = FormulaItem
+        formula_item.text = "E = mc^2"
+
+        mock_doc.iterate_items.return_value = [(formula_item, 1)]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.1: formulas should be wrapped in $ delimiters
+        assert "$E = mc^2$" in markdown, f"Expected $E = mc^2$ in output, got: {markdown}"
+
+    def test_bullet_list_items_formatted_correctly(self, extractor):
+        """Test: bullet list items are formatted with dashes. AC-1.1"""
+        mock_doc = Mock()
+
+        list_item = Mock()
+        list_item.__class__ = ListItem
+        list_item.text = "First item"
+        list_item.is_bullet = True
+
+        mock_doc.iterate_items.return_value = [(list_item, 1)]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.1: bullet list items should start with dash
+        assert "- First item" in markdown, f"Expected '- First item' in output, got: {markdown}"
+
+    def test_numbered_list_items_formatted_correctly(self, extractor):
+        """Test: numbered list items are formatted with numbers. AC-1.1"""
+        mock_doc = Mock()
+
+        list_item = Mock()
+        list_item.__class__ = ListItem
+        list_item.text = "First step"
+        list_item.is_bullet = False
+        list_item.index = 1
+
+        mock_doc.iterate_items.return_value = [(list_item, 1)]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.1: numbered list items should start with number and dot
+        assert "1. First step" in markdown, f"Expected '1. First step' in output, got: {markdown}"
+
+    def test_mixed_content_types(self, extractor):
+        """Test: mixed content types (text, code, formula, lists) are all formatted. AC-1.1"""
+        mock_doc = Mock()
+
+        text_item = Mock()
+        text_item.__class__ = TextItem
+        text_item.text = "Introduction text"
+
+        code_item = Mock()
+        code_item.__class__ = CodeItem
+        code_item.text = "print('hello')"
+        code_item.language = "python"
+
+        formula_item = Mock()
+        formula_item.__class__ = FormulaItem
+        formula_item.text = "x^2 + y^2"
+
+        list_item = Mock()
+        list_item.__class__ = ListItem
+        list_item.text = "List item"
+        list_item.is_bullet = True
+
+        mock_doc.iterate_items.return_value = [
+            (text_item, 1),
+            (code_item, 2),
+            (formula_item, 3),
+            (list_item, 4),
+        ]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.1: all content types should be present and formatted
+        assert "Introduction text" in markdown, "Expected text content"
+        assert "```python" in markdown, "Expected code block"
+        assert "$x^2 + y^2$" in markdown, "Expected formula"
+        assert "- List item" in markdown, "Expected list item"
 
 
 # === ENRICHER TESTS ===

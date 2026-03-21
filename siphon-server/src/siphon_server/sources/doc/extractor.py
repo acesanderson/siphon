@@ -9,7 +9,15 @@ from pathlib import Path
 from typing import override
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling_core.types.doc import DoclingDocument, SectionHeaderItem, TextItem, ContentLayer
+from docling_core.types.doc import (
+    DoclingDocument,
+    SectionHeaderItem,
+    TextItem,
+    ContentLayer,
+    CodeItem,
+    FormulaItem,
+    ListItem,
+)
 
 
 class DocExtractor(ExtractorStrategy):
@@ -51,6 +59,24 @@ class DocExtractor(ExtractorStrategy):
                 heading_level = max(2, getattr(item, 'level', 2) + 1)
                 heading_marker = "#" * heading_level
                 parts.append(f"{heading_marker} {item.text}\n\n")
+
+            elif isinstance(item, CodeItem):
+                # Code block with language identifier
+                # Note: Check CodeItem before TextItem since CodeItem is a subclass of TextItem
+                lang = getattr(item, 'language', '')
+                parts.append(f"```{lang}\n{item.text}\n```\n\n")
+
+            elif isinstance(item, FormulaItem):
+                # Mathematical formula in LaTeX format
+                # Note: Check FormulaItem before TextItem since FormulaItem is a subclass of TextItem
+                parts.append(f"${item.text}$\n\n")
+
+            elif isinstance(item, ListItem):
+                # List item (bullet or numbered)
+                # Note: Check ListItem before TextItem since ListItem is a subclass of TextItem
+                is_bullet = getattr(item, 'is_bullet', True)
+                bullet_marker = "-" if is_bullet else f"{getattr(item, 'index', 1)}."
+                parts.append(f"{bullet_marker} {item.text}\n")
 
             elif isinstance(item, TextItem):
                 # Simple text paragraph
