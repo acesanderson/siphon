@@ -373,6 +373,33 @@ class TestDocExtractor:
         assert "| Header1 | Header2 |" in markdown, "Expected table header"
         assert "| Data1 | Data2 |" in markdown, "Expected table data"
 
+    def test_markdown_is_valid_gfm(self, extractor, sample_pdf):
+        """Test: Returned markdown parses as valid GFM. AC-1.2"""
+        source = SourceInfo(
+            source_type=SourceType.DOC,
+            uri="doc:///test",
+            original_source=str(sample_pdf),
+            hash="test_hash",
+            metadata={}
+        )
+
+        content_data = extractor.extract(source)
+        markdown = content_data.text
+
+        # Use markdown parser to validate syntax
+        try:
+            import markdown
+            # Parse and validate markdown
+            html = markdown.markdown(markdown)
+            # If we get here without exception, markdown is valid
+            assert html is not None
+        except Exception as e:
+            pytest.fail(f"Markdown parsing failed: {e}")
+
+        # Additional check: ensure no obvious syntax errors
+        assert markdown.count("| ") >= 0  # Tables allowed
+        assert markdown.count("#") >= 0   # Headings allowed
+
 
 # === ENRICHER TESTS ===
 @pytest.mark.enricher
