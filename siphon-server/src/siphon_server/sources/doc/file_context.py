@@ -17,19 +17,6 @@ def route_file(file_path: Path):
     return "unknown"
 
 
-def convert_markitdown(file_path: Path):
-    """Convert a file using MarkItDown."""
-    from markitdown import MarkItDown
-
-    if not file_path.exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-    if not file_path.suffix.lower() in Extensions["markitdown"]:
-        raise ValueError(f"File type not supported for MarkItDown: {file_path.suffix}")
-    # Do the conversion
-    md = MarkItDown()
-    return md.convert(file_path)
-
-
 def convert_raw(file_path: Path):
     """Convert raw files (CSV, JSON, etc.) to text."""
     if not file_path.exists():
@@ -128,8 +115,6 @@ def retrieve_file_context(file_path: Path) -> str:
     """Convert a file based on its type."""
     output = ""
     match category:
-        case "markitdown":
-            output = convert_markitdown(file_path)
         case "raw":
             output = convert_raw(file_path)
         case "code":

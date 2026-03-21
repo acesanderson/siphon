@@ -4,7 +4,6 @@ from siphon_api.enums import SourceType
 from siphon_api.metadata import FileMetadata
 from siphon_api.file_types import MIME_TYPES
 from datetime import datetime, timezone
-from markitdown import MarkItDown
 from pathlib import Path
 from typing import override
 from docling.document_converter import DocumentConverter, PdfFormatOption

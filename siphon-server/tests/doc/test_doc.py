@@ -684,7 +684,7 @@ class TestDocEnricher:
     @pytest.fixture
     def enricher(self):
         # TODO: Mock LLM client
-        return DocEnricher(llm=None)
+        return DocEnricher()
 
     @pytest.fixture
     def sample_content(self):
