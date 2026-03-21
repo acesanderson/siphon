@@ -26,9 +26,43 @@ class DocExtractor(ExtractorStrategy):
         return ContentData(source_type=self.source_type, text=text, metadata=metadata)
 
     def _extract(self, source: SourceInfo) -> str:
+        """Extract markdown text from document."""
         path = Path(source.original_source)
-        md = MarkItDown()
-        return md.convert(path).text_content
+
+        # Docling convert
+        doc = self._docling_convert(path)
+
+        # Minimal transformer: just export to markdown for now
+        # (full transformer comes in Phase 3)
+        markdown = doc.export_to_markdown()
+
+        return markdown
+
+    def _docling_convert(self, path: Path) -> DoclingDocument:
+        """Convert document to DoclingDocument using Docling."""
+        from siphon_server.config import settings
+
+        # Build pipeline options
+        options = PdfPipelineOptions(
+            do_ocr=settings.docling_do_ocr,
+            do_table_structure=False,  # Disabled for now; requires additional system libs
+            do_picture_classification=False,  # Disabled for now; requires CV2
+            do_picture_description=False,  # Disable for now; Phase 5 enables
+            picture_area_threshold=settings.docling_picture_area_threshold,
+            generate_picture_images=False,
+            enable_remote_services=False,  # No VLM yet
+            document_timeout=120,
+        )
+
+        converter = DocumentConverter(
+            format_options={"pdf": PdfFormatOption(pipeline_options=options)}
+        )
+
+        try:
+            result = converter.convert(path)
+            return result.document
+        except Exception as e:
+            raise ValueError(f"Corrupted document: {path}. Docling converter failed: {e}")
 
     def _generate_metadata(self, source: SourceInfo) -> dict[str, str]:
         path = Path(source.original_source)

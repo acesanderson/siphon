@@ -36,7 +36,7 @@ class TestDocExtractor:
     @pytest.fixture
     def extractor(self):
         # TODO: Mock client dependency
-        return DocExtractor(client=None)
+        return DocExtractor()
     
     @pytest.fixture
     def sample_pdf(self):
