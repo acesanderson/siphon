@@ -449,6 +449,27 @@ class TestDocExtractor:
         unknown_prompt = extractor._select_vlm_prompt("unknown_type")
         assert "Describe this image in detail" in unknown_prompt, "Expected PROMPT_DEFAULT for unknown type"
 
+    def test_vlm_client_timeout(self):
+        """Test: VLM client raises TimeoutError on timeout. AC-2.4"""
+        from siphon_server.sources.doc.vlm_client import VLMClient
+        from unittest.mock import patch, MagicMock
+        import httpx
+
+        client = VLMClient(
+            url="http://localhost:11434/v1/chat/completions",
+            model="test",
+            timeout=60.0
+        )
+
+        # Mock httpx.Client to raise TimeoutException
+        with patch('siphon_server.sources.doc.vlm_client.httpx.Client') as mock_client_class:
+            mock_client_instance = MagicMock()
+            mock_client_class.return_value.__enter__.return_value = mock_client_instance
+            mock_client_instance.post.side_effect = httpx.TimeoutException("Request timed out")
+
+            with pytest.raises(TimeoutError, match="timed out"):
+                client.describe(b"fake_image_data", "describe")
+
 
 # === ENRICHER TESTS ===
 @pytest.mark.enricher

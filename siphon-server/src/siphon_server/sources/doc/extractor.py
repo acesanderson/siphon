@@ -19,6 +19,7 @@ from docling_core.types.doc import (
     ListItem,
     TableItem,
 )
+from siphon_server.sources.doc.vlm_client import VLMClient
 
 
 class DocExtractor(ExtractorStrategy):
@@ -163,6 +164,24 @@ Explain the structure, components, and relationships shown."""
             return self.PROMPT_OCR
         else:
             return self.PROMPT_DEFAULT
+
+    def _get_vlm_description(self, picture, image_type: str) -> str:
+        """Get VLM description for image. AC-2.4"""
+        from siphon_server.config import settings
+
+        if not hasattr(picture, 'image_data') or picture.image_data is None:
+            raise ValueError(f"Picture lacks image data")
+
+        prompt = self._select_vlm_prompt(image_type)
+
+        vlm = VLMClient(
+            url=settings.docling_vlm_url,
+            model=settings.docling_vlm_model,
+            timeout=settings.docling_vlm_timeout,
+        )
+
+        description = vlm.describe(picture.image_data, prompt)
+        return description
 
     def _docling_convert(self, path: Path) -> DoclingDocument:
         """Convert document to DoclingDocument using Docling."""
