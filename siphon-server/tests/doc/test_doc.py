@@ -426,6 +426,30 @@ class TestDocExtractor:
         filepath_pattern = re.compile(r'[A-Z]:\\|/[a-zA-Z0-9_/\-\.]+\.(pdf|docx|pptx)')
         assert not filepath_pattern.search(markdown), "File paths detected in output"
 
+    def test_no_forbidden_image_syntax_in_output(self, extractor):
+        """Test: No ![](...)  or base64 images. AC-2.6"""
+        source = SourceInfo(
+            source_type=SourceType.DOC,
+            uri="doc:///test",
+            original_source=str(Path(__file__).parent.parent / "fixtures" / "sample_text.pdf"),
+            hash="test_hash",
+            metadata={}
+        )
+
+        content_data = extractor.extract(source)
+        markdown = content_data.text
+
+        # Check for forbidden patterns
+        assert "![" not in markdown, "Markdown image references found"
+        assert "](" not in markdown or "<image" in markdown, "Image syntax mixed with forbidden markers"
+        assert "<img" not in markdown, "HTML img tags found"
+        assert "data:image" not in markdown, "base64 data URIs found"
+
+        # Should have <image> tags instead
+        # Note: sample PDF may not have images, so just verify no forbidden content
+        assert "<img" not in markdown
+        assert "![" not in markdown
+
     def test_vlm_prompt_selection_by_image_type(self, extractor):
         """Test: Correct prompt selected by image type. AC-4.5"""
         # Test chart type selection
