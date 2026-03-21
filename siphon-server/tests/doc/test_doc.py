@@ -13,6 +13,7 @@ from docling_core.types.doc import (
     CodeItem,
     FormulaItem,
     ListItem,
+    TableItem,
 )
 
 
@@ -253,6 +254,124 @@ class TestDocExtractor:
         assert "```python" in markdown, "Expected code block"
         assert "$x^2 + y^2$" in markdown, "Expected formula"
         assert "- List item" in markdown, "Expected list item"
+
+    def test_table_basic_formatting(self, extractor):
+        """Test: basic table is formatted as GFM pipe table. AC-1.5"""
+        mock_doc = Mock()
+
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        table_item.data = [
+            ["Name", "Age", "City"],
+            ["Alice", "30", "NYC"],
+            ["Bob", "25", "LA"],
+        ]
+
+        mock_doc.iterate_items.return_value = [(table_item, 1)]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.5: table should be formatted as GFM pipe table
+        assert "| Name | Age | City |" in markdown, "Expected header row"
+        assert "| --- | --- | --- |" in markdown, "Expected separator row"
+        assert "| Alice | 30 | NYC |" in markdown, "Expected data row 1"
+        assert "| Bob | 25 | LA |" in markdown, "Expected data row 2"
+
+    def test_table_with_pipes_in_cells(self, extractor):
+        """Test: pipes in cell content are escaped. AC-1.5"""
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        table_item.data = [
+            ["Code", "Description"],
+            ["A|B", "Contains pipe"],
+        ]
+
+        markdown = extractor._table_to_markdown(table_item)
+
+        # AC-1.5: pipes should be escaped with backslash
+        assert "A\\|B" in markdown, "Expected escaped pipe in cell"
+        assert "| A\\|B | Contains pipe |" in markdown, "Expected escaped pipe in row"
+
+    def test_table_with_empty_cells(self, extractor):
+        """Test: empty cells are handled correctly. AC-1.5"""
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        table_item.data = [
+            ["Col1", "Col2", "Col3"],
+            ["Value", "", "Data"],
+            ["", "Middle", ""],
+        ]
+
+        markdown = extractor._table_to_markdown(table_item)
+
+        # AC-1.5: empty cells should be handled gracefully
+        assert "| Value |  | Data |" in markdown, "Expected empty cell in row 1"
+        assert "|  | Middle |  |" in markdown, "Expected empty cells in row 2"
+
+    def test_table_wide_table_warning(self, extractor, caplog):
+        """Test: wide table (>50 columns) logs warning. AC-1.5"""
+        import logging
+        caplog.set_level(logging.WARNING)
+
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        # Create a table with 51 columns
+        table_item.data = [
+            [f"Col{i}" for i in range(51)],
+            [f"Val{i}" for i in range(51)],
+        ]
+
+        markdown = extractor._table_to_markdown(table_item)
+
+        # AC-1.5: warning should be logged for wide tables
+        assert "Wide table detected" in caplog.text, "Expected warning for wide table"
+        assert "51 columns" in caplog.text, "Expected column count in warning"
+
+    def test_table_error_no_data(self, extractor):
+        """Test: table without data raises ValueError. AC-1.5"""
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        # No data attribute
+        del table_item.data
+
+        with pytest.raises(ValueError, match="Table lacks data"):
+            extractor._table_to_markdown(table_item)
+
+    def test_table_error_empty_table(self, extractor):
+        """Test: empty table raises ValueError. AC-1.5"""
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        table_item.data = []
+
+        with pytest.raises(ValueError, match="Table lacks data"):
+            extractor._table_to_markdown(table_item)
+
+    def test_table_in_document(self, extractor):
+        """Test: table is processed in document iteration. AC-1.5"""
+        mock_doc = Mock()
+
+        table_item = Mock()
+        table_item.__class__ = TableItem
+        table_item.data = [
+            ["Header1", "Header2"],
+            ["Data1", "Data2"],
+        ]
+
+        text_item = Mock()
+        text_item.__class__ = TextItem
+        text_item.text = "Text before table"
+
+        mock_doc.iterate_items.return_value = [
+            (text_item, 1),
+            (table_item, 2),
+        ]
+
+        markdown = extractor._docling_to_markdown(mock_doc)
+
+        # AC-1.5: both text and table should be in output
+        assert "Text before table" in markdown, "Expected text content"
+        assert "| Header1 | Header2 |" in markdown, "Expected table header"
+        assert "| Data1 | Data2 |" in markdown, "Expected table data"
 
 
 # === ENRICHER TESTS ===

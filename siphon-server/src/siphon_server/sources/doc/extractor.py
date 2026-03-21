@@ -17,6 +17,7 @@ from docling_core.types.doc import (
     CodeItem,
     FormulaItem,
     ListItem,
+    TableItem,
 )
 
 
@@ -78,11 +79,44 @@ class DocExtractor(ExtractorStrategy):
                 bullet_marker = "-" if is_bullet else f"{getattr(item, 'index', 1)}."
                 parts.append(f"{bullet_marker} {item.text}\n")
 
+            elif isinstance(item, TableItem):
+                # GFM pipe table
+                parts.append(self._table_to_markdown(item))
+
             elif isinstance(item, TextItem):
                 # Simple text paragraph
                 parts.append(f"{item.text}\n\n")
 
         return "".join(parts)
+
+    def _table_to_markdown(self, table: TableItem) -> str:
+        """Convert TableItem to GFM pipe table."""
+        if not hasattr(table, 'data') or not table.data:
+            raise ValueError(f"Table lacks data")
+
+        rows = table.data
+        if not rows or not rows[0]:
+            raise ValueError("Empty table")
+
+        markdown_lines = []
+
+        for i, row in enumerate(rows):
+            cells = []
+            for cell_content in row:
+                cell_text = str(cell_content).replace("|", "\\|")
+                cells.append(cell_text)
+
+            markdown_lines.append("| " + " | ".join(cells) + " |")
+
+            if i == 0:
+                separator = "| " + " | ".join(["---"] * len(cells)) + " |"
+                markdown_lines.append(separator)
+
+        if len(rows[0]) > 50:
+            import logging
+            logging.warning(f"Wide table detected: {len(rows[0])} columns.")
+
+        return "\n".join(markdown_lines) + "\n\n"
 
     def _docling_convert(self, path: Path) -> DoclingDocument:
         """Convert document to DoclingDocument using Docling."""
