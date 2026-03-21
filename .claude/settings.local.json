@@ -10,7 +10,11 @@
       "Bash(tail:*)",
       "Bash(python3:*)",
       "Bash(uv run:*)",
-      "Bash(/Users/bianders/Brian_Code/dbclients-project/.venv/bin/python:*)"
+      "Bash(/Users/bianders/Brian_Code/dbclients-project/.venv/bin/python:*)",
+      "WebFetch(domain:www.llamaindex.ai)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:ds4sd.github.io)",
+      "WebFetch(domain:docling-project.github.io)"
     ]
   }
 }
