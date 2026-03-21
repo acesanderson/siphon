@@ -14,6 +14,7 @@ from docling_core.types.doc import (
     FormulaItem,
     ListItem,
     TableItem,
+    PictureItem,
 )
 
 
@@ -469,6 +470,67 @@ class TestDocExtractor:
 
             with pytest.raises(TimeoutError, match="timed out"):
                 client.describe(b"fake_image_data", "describe")
+
+    def test_picture_item_classification(self, extractor):
+        """Test: Every PictureItem has valid classification type. AC-2.2"""
+        # Mock picture with classification
+        picture_item = Mock()
+        picture_item.__class__ = PictureItem
+        picture_item.annotations = {
+            'document_figure_classifier': {
+                'class': 'bar_chart',
+                'confidence': 0.95
+            }
+        }
+
+        image_type = extractor._get_picture_type(picture_item)
+
+        # AC-2.2: type should be non-empty and valid
+        assert image_type is not None
+        assert isinstance(image_type, str)
+        assert len(image_type) > 0
+        assert image_type == 'bar_chart'
+
+    def test_image_markdown_generation(self, extractor):
+        """Test: PictureItem → <image type='...'>description</image>. AC-2.1, AC-2.3"""
+        from unittest.mock import patch
+
+        picture_item = Mock()
+        picture_item.__class__ = PictureItem
+        picture_item.annotations = {
+            'document_figure_classifier': {
+                'class': 'diagram',
+                'confidence': 0.85
+            }
+        }
+        picture_item.image_data = b'fake_image_data'
+
+        # Mock the VLMClient.describe method
+        with patch.object(extractor, '_get_vlm_description', return_value='A flowchart showing process steps'):
+            markdown = extractor._picture_to_markdown(picture_item)
+
+            # AC-2.1: format should be <image type="...">description</image>
+            assert '<image type="diagram">' in markdown
+            assert '</image>' in markdown
+            assert 'A flowchart showing process steps' in markdown
+            # AC-2.3: description should be non-empty
+            assert len(markdown) > 50
+
+    def test_low_confidence_defaults_to_unknown(self, extractor):
+        """Test: Confidence < 0.5 → 'unknown' type. AC-2.5"""
+        picture_item = Mock()
+        picture_item.__class__ = PictureItem
+        picture_item.annotations = {
+            'document_figure_classifier': {
+                'class': 'bar_chart',
+                'confidence': 0.3  # Low confidence
+            }
+        }
+
+        image_type = extractor._get_picture_type(picture_item)
+
+        # AC-2.5: type should be 'unknown' when confidence < 0.5
+        assert image_type == 'unknown'
 
 
 # === ENRICHER TESTS ===

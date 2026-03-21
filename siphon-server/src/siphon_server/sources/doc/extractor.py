@@ -18,6 +18,7 @@ from docling_core.types.doc import (
     FormulaItem,
     ListItem,
     TableItem,
+    PictureItem,
 )
 from siphon_server.sources.doc.vlm_client import VLMClient
 
@@ -115,6 +116,10 @@ Explain the structure, components, and relationships shown."""
                 # GFM pipe table
                 parts.append(self._table_to_markdown(item))
 
+            elif isinstance(item, PictureItem):
+                # Picture with VLM description
+                parts.append(self._picture_to_markdown(item))
+
             elif isinstance(item, TextItem):
                 # Simple text paragraph
                 parts.append(f"{item.text}\n\n")
@@ -149,6 +154,51 @@ Explain the structure, components, and relationships shown."""
             logging.warning(f"Wide table detected: {len(rows[0])} columns.")
 
         return "\n".join(markdown_lines) + "\n\n"
+
+    def _get_picture_type(self, picture: PictureItem) -> str:
+        """Extract classification type from picture. AC-2.5: low confidence → 'unknown'"""
+        try:
+            annotations = picture.annotations or {}
+            classifier = annotations.get('document_figure_classifier', {})
+            image_type = classifier.get('class', 'unknown')
+            confidence = classifier.get('confidence', 0.0)
+
+            # Default to unknown if low confidence (AC-2.5)
+            if confidence < 0.5:
+                image_type = 'unknown'
+
+            return image_type.lower()
+
+        except Exception:
+            return 'unknown'
+
+    def _picture_to_markdown(self, picture: PictureItem) -> str:
+        """Convert PictureItem to markdown with VLM description. AC-2.1, AC-2.2, AC-2.3"""
+        from siphon_server.config import settings
+
+        if picture is None:
+            raise ValueError("Picture is None")
+
+        # Get classification type (AC-2.2: type non-empty)
+        image_type = self._get_picture_type(picture)
+
+        # Skip description if disabled
+        if not settings.docling_picture_description_enabled:
+            description = f"[Image: {image_type}]"
+        else:
+            try:
+                description = self._get_vlm_description(picture, image_type)
+                if not description or not description.strip():
+                    raise ValueError(f"VLM returned empty description for picture type {image_type}")
+            except TimeoutError:
+                raise
+            except ValueError:
+                raise
+
+        # Format: <image type="...">description</image>  (AC-2.1)
+        markdown = f'<image type="{image_type}">\n{description}\n</image>\n\n'
+
+        return markdown
 
     def _select_vlm_prompt(self, image_type: str) -> str:
         """Select VLM prompt template based on image classification type."""
