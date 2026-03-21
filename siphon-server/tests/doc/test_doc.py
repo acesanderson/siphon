@@ -400,6 +400,31 @@ class TestDocExtractor:
         assert markdown.count("| ") >= 0  # Tables allowed
         assert markdown.count("#") >= 0   # Headings allowed
 
+    def test_no_file_paths_or_uris_in_output(self, extractor):
+        """Test: Markdown contains no file paths, URIs, or base64. AC-1.6"""
+        source = SourceInfo(
+            source_type=SourceType.DOC,
+            uri="doc:///test",
+            original_source=str(Path(__file__).parent.parent / "fixtures" / "sample_text.pdf"),
+            hash="test_hash",
+            metadata={}
+        )
+
+        content_data = extractor.extract(source)
+        markdown = content_data.text
+
+        # Check for forbidden patterns
+        assert "http://" not in markdown and "https://" not in markdown, "URIs found in output"
+        assert "file://" not in markdown, "file:// URIs found"
+        assert "data:image" not in markdown, "base64 data URIs found"
+        assert "![" not in markdown, "Markdown image references found"
+        assert "<img" not in markdown, "HTML img tags found"
+
+        # Check for filepath patterns (rough heuristic)
+        import re
+        filepath_pattern = re.compile(r'[A-Z]:\\|/[a-zA-Z0-9_/\-\.]+\.(pdf|docx|pptx)')
+        assert not filepath_pattern.search(markdown), "File paths detected in output"
+
 
 # === ENRICHER TESTS ===
 @pytest.mark.enricher
