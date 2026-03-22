@@ -453,11 +453,10 @@ class TestDocExtractor:
 
         # Check for forbidden patterns
         assert "![" not in markdown, "Markdown image references found"
-        assert "](" not in markdown or "<image" in markdown, "Image syntax mixed with forbidden markers"
         assert "<img" not in markdown, "HTML img tags found"
         assert "data:image" not in markdown, "base64 data URIs found"
 
-        # Should have <image> tags instead
+        # Should have directive-style image blocks instead
         # Note: sample PDF may not have images, so just verify no forbidden content
         assert "<img" not in markdown
         assert "![" not in markdown
@@ -528,7 +527,7 @@ class TestDocExtractor:
         assert image_type == 'bar_chart'
 
     def test_image_markdown_generation(self, extractor):
-        """Test: PictureItem → <image type='...'>description</image>. AC-2.1, AC-2.3"""
+        """Test: PictureItem → :::{diagram}\ndescription\n:::. AC-2.1, AC-2.3"""
         from unittest.mock import patch
 
         picture_item = Mock()
@@ -544,9 +543,9 @@ class TestDocExtractor:
         with patch.object(extractor, '_get_vlm_description', return_value='A flowchart showing process steps'):
             markdown = extractor._picture_to_markdown(picture_item, mock_doc)
 
-            # AC-2.1: format should be <image type="...">description</image>
-            assert '<image type="diagram">' in markdown
-            assert '</image>' in markdown
+            # AC-2.1: format should be :::{diagram}\ndescription\n:::
+            assert ':::{diagram}' in markdown
+            assert ':::' in markdown
             assert 'A flowchart showing process steps' in markdown
             # AC-2.3: description should be non-empty
             assert len(markdown) > 50

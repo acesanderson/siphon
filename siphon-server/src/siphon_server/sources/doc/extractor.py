@@ -42,7 +42,8 @@ Focus on: headings (#/##/###), paragraphs, lists, tables (pipe syntax), bold/ita
 ## CONSTRAINTS
 - Only include content visible in the image
 - Mark uncertain text as [UNCERTAIN], unreadable as [ILLEGIBLE]
-- No summaries, no additions, no explanations
+- No summaries, no additions, no explanations, no disclaimers or meta-commentary
+- No phrases like "Please note", "It should be noted", "I cannot"
 
 ## OUTPUT FORMAT
 Valid Markdown only. Title as H1, sections as H2/H3. No JSON wrappers or preamble."""
@@ -51,15 +52,25 @@ Valid Markdown only. Title as H1, sections as H2/H3. No JSON wrappers or preambl
 Analyze this chart and extract key data, trends, and insights.
 
 ## OUTPUT
-Describe the chart type, axes, key values, and any trends or relationships visible."""
+Describe the chart type, axes, key values, and any trends or relationships visible.
+
+## CONSTRAINTS
+- No disclaimers, caveats, or meta-commentary about what you cannot determine
+- No phrases like "Please note", "It should be noted", "I cannot", "it is not possible"
+- Only describe what is visible; omit anything not shown"""
 
     PROMPT_DIAGRAM = """## INSTRUCTIONS
 Describe this diagram, flowchart, or technical drawing.
 
 ## OUTPUT
-Explain the structure, components, and relationships shown."""
+Explain the structure, components, and relationships shown.
 
-    PROMPT_DEFAULT = """Describe this image in detail."""
+## CONSTRAINTS
+- No disclaimers, caveats, or meta-commentary about what you cannot determine
+- No phrases like "Please note", "It should be noted", "I cannot", "it is not possible"
+- Only describe what is visible; omit anything not shown"""
+
+    PROMPT_DEFAULT = """Describe this image in detail. Only describe what is visible. No disclaimers or meta-commentary."""
 
     @override
     def extract(self, source: SourceInfo) -> ContentData:
@@ -242,8 +253,8 @@ Explain the structure, components, and relationships shown."""
             except ValueError:
                 raise
 
-        # Format: <image type="...">description</image>  (AC-2.1)
-        markdown = f'<image type="{image_type}">\n{description}\n</image>\n\n'
+        # Format: :::{image} type\ndescription\n:::
+        markdown = f':::{{{image_type}}}\n{description}\n:::\n\n'
 
         return markdown
 
