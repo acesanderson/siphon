@@ -518,13 +518,14 @@ class TestDocExtractor:
             }
         }
 
-        image_type = extractor._get_picture_type(picture_item)
+        image_type, confident = extractor._get_picture_type(picture_item)
 
         # AC-2.2: type should be non-empty and valid
         assert image_type is not None
         assert isinstance(image_type, str)
         assert len(image_type) > 0
         assert image_type == 'bar_chart'
+        assert confident is True
 
     def test_image_markdown_generation(self, extractor):
         """Test: PictureItem → :::{diagram}\ndescription\n:::. AC-2.1, AC-2.3"""
@@ -544,7 +545,7 @@ class TestDocExtractor:
             markdown = extractor._picture_to_markdown(picture_item, mock_doc)
 
             # AC-2.1: format should be :::{diagram}\ndescription\n:::
-            assert ':::{diagram}' in markdown
+            assert ':::{diagram}' in markdown  # high confidence → bare type
             assert ':::' in markdown
             assert 'A flowchart showing process steps' in markdown
             # AC-2.3: description should be non-empty
@@ -561,10 +562,11 @@ class TestDocExtractor:
             }
         }
 
-        image_type = extractor._get_picture_type(picture_item)
+        image_type, confident = extractor._get_picture_type(picture_item)
 
-        # AC-2.5: type should be 'unknown' when confidence < 0.5
-        assert image_type == 'unknown'
+        # AC-2.5: low confidence → not confident, but type hint preserved
+        assert confident is False
+        assert image_type == 'bar_chart'
 
     def test_ocr_text_marked_with_comment(self, extractor):
         """Test: OCR text prefixed with <!-- OCR: from page N -->. AC-3.1"""

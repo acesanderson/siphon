@@ -213,22 +213,30 @@ Explain the structure, components, and relationships shown.
 
         return "\n".join(markdown_lines) + "\n\n"
 
-    def _get_picture_type(self, picture: PictureItem) -> str:
-        """Extract classification type from picture. AC-2.5: low confidence → 'unknown'"""
+    def _get_picture_type(self, picture: PictureItem) -> tuple[str, bool]:
+        """Extract classification type from picture.
+
+        Returns (type_label, confident) where:
+        - confident=True, type_label='bar_chart'    → high confidence classification
+        - confident=False, type_label='bar_chart'   → low confidence, has a guess
+        - confident=False, type_label=''            → no classification signal
+        """
         try:
             annotations = picture.annotations or {}
             classifier = annotations.get('document_figure_classifier', {})
-            image_type = classifier.get('class', 'unknown')
+            image_type = classifier.get('class', '')
             confidence = classifier.get('confidence', 0.0)
 
-            # Default to unknown if low confidence (AC-2.5)
-            if confidence < 0.5:
-                image_type = 'unknown'
+            if not image_type:
+                return ('', False)
 
-            return image_type.lower()
+            if confidence >= 0.5:
+                return (image_type.lower(), True)
+            else:
+                return (image_type.lower(), False)
 
         except Exception:
-            return 'unknown'
+            return ('', False)
 
     def _picture_to_markdown(self, picture: PictureItem, doc: DoclingDocument) -> str:
         """Convert PictureItem to markdown with VLM description. AC-2.1, AC-2.2, AC-2.3"""
@@ -238,23 +246,30 @@ Explain the structure, components, and relationships shown.
             raise ValueError("Picture is None")
 
         # Get classification type (AC-2.2: type non-empty)
-        image_type = self._get_picture_type(picture)
+        image_type, confident = self._get_picture_type(picture)
+
+        # Build directive label: three tiers
+        if confident:
+            label = image_type                        # e.g. "bar_chart"
+        elif image_type:
+            label = f"image -- likely {image_type}"  # e.g. "image -- likely bar_chart"
+        else:
+            label = "image"                           # no signal
 
         # Skip description if disabled
         if not settings.docling_picture_description_enabled:
-            description = f"[Image: {image_type}]"
+            description = f"[Image: {label}]"
         else:
             try:
                 description = self._get_vlm_description(picture, doc, image_type)
                 if not description or not description.strip():
-                    raise ValueError(f"VLM returned empty description for picture type {image_type}")
+                    raise ValueError(f"VLM returned empty description for picture type {label}")
             except TimeoutError:
                 raise
             except ValueError:
                 raise
 
-        # Format: :::{image} type\ndescription\n:::
-        markdown = f':::{{{image_type}}}\n{description}\n:::\n\n'
+        markdown = f':::{{{label}}}\n{description}\n:::\n\n'
 
         return markdown
 
