@@ -283,6 +283,10 @@ Explain the structure, components, and relationships shown."""
     def _docling_convert(self, path: Path) -> DoclingDocument:
         """Convert document to DoclingDocument using Docling."""
         from siphon_server.config import settings
+        import os
+        # yt-dlp's Cryptodome compat shim conflicts with torch._dynamo's pickle cache.
+        # Eager mode is sufficient for inference; dynamo compilation is not needed.
+        os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 
         # Build pipeline options
         options = PdfPipelineOptions(
