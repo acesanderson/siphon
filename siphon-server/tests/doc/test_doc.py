@@ -18,6 +18,25 @@ from docling_core.types.doc import (
 )
 
 
+def make_table_data(rows: list[list[str]]) -> Mock:
+    """Build a mock TableData from a list-of-lists, matching the real Docling API."""
+    num_rows = len(rows)
+    num_cols = len(rows[0]) if rows else 0
+    cells = []
+    for r, row in enumerate(rows):
+        for c, text in enumerate(row):
+            cell = Mock()
+            cell.start_row_offset_idx = r
+            cell.start_col_offset_idx = c
+            cell.text = text
+            cells.append(cell)
+    data = Mock()
+    data.num_rows = num_rows
+    data.num_cols = num_cols
+    data.table_cells = cells
+    return data
+
+
 # === PARSER TESTS ===
 @pytest.mark.parser
 class TestDocParser:
@@ -273,11 +292,11 @@ class TestDocExtractor:
 
         table_item = Mock()
         table_item.__class__ = TableItem
-        table_item.data = [
+        table_item.data = make_table_data([
             ["Name", "Age", "City"],
             ["Alice", "30", "NYC"],
             ["Bob", "25", "LA"],
-        ]
+        ])
 
         mock_doc.iterate_items.return_value = [(table_item, 1)]
 
@@ -293,10 +312,10 @@ class TestDocExtractor:
         """Test: pipes in cell content are escaped. AC-1.5"""
         table_item = Mock()
         table_item.__class__ = TableItem
-        table_item.data = [
+        table_item.data = make_table_data([
             ["Code", "Description"],
             ["A|B", "Contains pipe"],
-        ]
+        ])
 
         markdown = extractor._table_to_markdown(table_item)
 
@@ -308,11 +327,11 @@ class TestDocExtractor:
         """Test: empty cells are handled correctly. AC-1.5"""
         table_item = Mock()
         table_item.__class__ = TableItem
-        table_item.data = [
+        table_item.data = make_table_data([
             ["Col1", "Col2", "Col3"],
             ["Value", "", "Data"],
             ["", "Middle", ""],
-        ]
+        ])
 
         markdown = extractor._table_to_markdown(table_item)
 
@@ -327,11 +346,10 @@ class TestDocExtractor:
 
         table_item = Mock()
         table_item.__class__ = TableItem
-        # Create a table with 51 columns
-        table_item.data = [
+        table_item.data = make_table_data([
             [f"Col{i}" for i in range(51)],
             [f"Val{i}" for i in range(51)],
-        ]
+        ])
 
         markdown = extractor._table_to_markdown(table_item)
 
@@ -353,7 +371,11 @@ class TestDocExtractor:
         """Test: empty table raises ValueError. AC-1.5"""
         table_item = Mock()
         table_item.__class__ = TableItem
-        table_item.data = []
+        data = Mock()
+        data.num_rows = 0
+        data.num_cols = 0
+        data.table_cells = []
+        table_item.data = data
 
         with pytest.raises(ValueError, match="Table lacks data"):
             extractor._table_to_markdown(table_item)
@@ -364,10 +386,10 @@ class TestDocExtractor:
 
         table_item = Mock()
         table_item.__class__ = TableItem
-        table_item.data = [
+        table_item.data = make_table_data([
             ["Header1", "Header2"],
             ["Data1", "Data2"],
-        ]
+        ])
 
         text_item = Mock()
         text_item.__class__ = TextItem
@@ -835,11 +857,11 @@ def test_full_extraction_pipeline_mock():
 
     table = Mock()
     table.__class__ = TableItem
-    table.data = [
+    table.data = make_table_data([
         ["Column A", "Column B"],
         ["Value 1", "Value 2"],
         ["Value 3", "Value 4"],
-    ]
+    ])
 
     mock_doc.iterate_items.return_value = [
         (header, 1),

@@ -186,30 +186,31 @@ Explain the structure, components, and relationships shown.
 
     def _table_to_markdown(self, table: TableItem) -> str:
         """Convert TableItem to GFM pipe table."""
-        if not hasattr(table, 'data') or not table.data:
-            raise ValueError(f"Table lacks data")
+        import logging
 
-        rows = table.data
-        if not rows or not rows[0]:
-            raise ValueError("Empty table")
+        data = table.data
+        if not data or not hasattr(data, 'num_rows') or data.num_rows == 0 or data.num_cols == 0:
+            raise ValueError("Table lacks data")
+
+        num_rows = data.num_rows
+        num_cols = data.num_cols
+
+        # Build grid from flat cell list
+        grid: list[list[str]] = [[""] * num_cols for _ in range(num_rows)]
+        for cell in data.table_cells:
+            r = cell.start_row_offset_idx
+            c = cell.start_col_offset_idx
+            if r < num_rows and c < num_cols:
+                grid[r][c] = str(cell.text).replace("|", "\\|")
+
+        if num_cols > 50:
+            logging.warning(f"Wide table detected: {num_cols} columns.")
 
         markdown_lines = []
-
-        for i, row in enumerate(rows):
-            cells = []
-            for cell_content in row:
-                cell_text = str(cell_content).replace("|", "\\|")
-                cells.append(cell_text)
-
-            markdown_lines.append("| " + " | ".join(cells) + " |")
-
+        for i, row in enumerate(grid):
+            markdown_lines.append("| " + " | ".join(row) + " |")
             if i == 0:
-                separator = "| " + " | ".join(["---"] * len(cells)) + " |"
-                markdown_lines.append(separator)
-
-        if len(rows[0]) > 50:
-            import logging
-            logging.warning(f"Wide table detected: {len(rows[0])} columns.")
+                markdown_lines.append("| " + " | ".join(["---"] * num_cols) + " |")
 
         return "\n".join(markdown_lines) + "\n\n"
 
