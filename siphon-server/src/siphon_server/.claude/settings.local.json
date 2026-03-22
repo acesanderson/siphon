@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git:*)",
       "Bash(uv run:*)",
-      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/python:*)"
+      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/python:*)",
+      "Bash(ask:*)",
+      "Bash(GH_TOKEN=$GITHUB_PERSONAL_TOKEN /opt/homebrew/bin/gh api repos/docling-project/docling/contents/tests --jq .[].name)",
+      "Bash(GH_TOKEN=\"$GITHUB_PERSONAL_TOKEN\" /opt/homebrew/bin/gh api repos/docling-project/docling/contents/tests/data/pdf --jq '.[].name' 2>/dev/null)"
     ]
   }
 }
