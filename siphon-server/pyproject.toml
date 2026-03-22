@@ -13,6 +13,7 @@ dependencies = [
     "dbclients",
     "fastapi>=0.120.0",
     "docling>=2.0.0",
+    "opencv-python-headless",
     "rich>=14.2.0",
     "siphon_api",
     "pydub",

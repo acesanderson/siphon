@@ -312,6 +312,11 @@ Explain the structure, components, and relationships shown."""
                 f"Docling model weights not found. "
                 f"Run: docling-cli download-models"
             ) from e
+        except ImportError as e:
+            raise ImportError(
+                f"Missing dependency for Docling: {e}. "
+                f"On headless servers, ensure opencv-python-headless is installed."
+            ) from e
         except Exception as e:
             # AC-5.1: Corrupted document
             raise ValueError(f"Corrupted document: {path}. Docling converter failed: {e}") from e
