@@ -156,7 +156,7 @@ Explain the structure, components, and relationships shown."""
 
             elif isinstance(item, PictureItem):
                 # Picture with VLM description
-                parts.append(self._picture_to_markdown(item))
+                parts.append(self._picture_to_markdown(item, doc))
                 prev_ocr = False
 
             elif isinstance(item, TextItem):
@@ -219,7 +219,7 @@ Explain the structure, components, and relationships shown."""
         except Exception:
             return 'unknown'
 
-    def _picture_to_markdown(self, picture: PictureItem) -> str:
+    def _picture_to_markdown(self, picture: PictureItem, doc: DoclingDocument) -> str:
         """Convert PictureItem to markdown with VLM description. AC-2.1, AC-2.2, AC-2.3"""
         from siphon_server.config import settings
 
@@ -234,7 +234,7 @@ Explain the structure, components, and relationships shown."""
             description = f"[Image: {image_type}]"
         else:
             try:
-                description = self._get_vlm_description(picture, image_type)
+                description = self._get_vlm_description(picture, doc, image_type)
                 if not description or not description.strip():
                     raise ValueError(f"VLM returned empty description for picture type {image_type}")
             except TimeoutError:
@@ -262,12 +262,18 @@ Explain the structure, components, and relationships shown."""
         else:
             return self.PROMPT_DEFAULT
 
-    def _get_vlm_description(self, picture, image_type: str) -> str:
+    def _get_vlm_description(self, picture: PictureItem, doc: DoclingDocument, image_type: str) -> str:
         """Get VLM description for image. AC-2.4"""
+        import io
         from siphon_server.config import settings
 
-        if not hasattr(picture, 'image_data') or picture.image_data is None:
+        pil_image = picture.get_image(doc)
+        if pil_image is None:
             raise ValueError(f"Picture lacks image data")
+
+        buf = io.BytesIO()
+        pil_image.save(buf, format="PNG")
+        image_bytes = buf.getvalue()
 
         prompt = self._select_vlm_prompt(image_type)
 
@@ -277,7 +283,7 @@ Explain the structure, components, and relationships shown."""
             timeout=settings.docling_vlm_timeout,
         )
 
-        description = vlm.describe(picture.image_data, prompt)
+        description = vlm.describe(image_bytes, prompt)
         return description
 
     def _docling_convert(self, path: Path) -> DoclingDocument:

@@ -539,11 +539,10 @@ class TestDocExtractor:
                 'confidence': 0.85
             }
         }
-        picture_item.image_data = b'fake_image_data'
-
         # Mock the VLMClient.describe method
+        mock_doc = Mock()
         with patch.object(extractor, '_get_vlm_description', return_value='A flowchart showing process steps'):
-            markdown = extractor._picture_to_markdown(picture_item)
+            markdown = extractor._picture_to_markdown(picture_item, mock_doc)
 
             # AC-2.1: format should be <image type="...">description</image>
             assert '<image type="diagram">' in markdown
@@ -669,13 +668,13 @@ class TestDocExtractor:
                 'confidence': 0.9
             }
         }
-        picture.image_data = b'test'
+        mock_doc = Mock()
 
         with patch.object(extractor, '_get_vlm_description') as mock_vlm:
             mock_vlm.side_effect = TimeoutError("VLM timeout")
 
             with pytest.raises(TimeoutError):
-                extractor._get_vlm_description(picture, "chart")
+                extractor._get_vlm_description(picture, mock_doc, "chart")
 
 
 # === ENRICHER TESTS ===
