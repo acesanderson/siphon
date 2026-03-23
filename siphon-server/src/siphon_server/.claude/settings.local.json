@@ -8,7 +8,10 @@
       "Bash(GH_TOKEN=$GITHUB_PERSONAL_TOKEN /opt/homebrew/bin/gh api repos/docling-project/docling/contents/tests --jq .[].name)",
       "Bash(GH_TOKEN=\"$GITHUB_PERSONAL_TOKEN\" /opt/homebrew/bin/gh api repos/docling-project/docling/contents/tests/data/pdf --jq '.[].name' 2>/dev/null)",
       "Bash(python -c \"from docling_core.types.doc import ContentLayer; print\\(list\\(ContentLayer\\)\\)\")",
-      "Bash(.venv/bin/python -c \"from docling_core.types.doc import ContentLayer; print\\(list\\(ContentLayer\\)\\)\")"
+      "Bash(.venv/bin/python -c \"from docling_core.types.doc import ContentLayer; print\\(list\\(ContentLayer\\)\\)\")",
+      "Bash(.venv/bin/pytest tests/doc/test_doc.py -x --tb=short --no-header -q)",
+      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/pytest /Users/bianders/Brian_Code/siphon/siphon-server/tests/doc/test_doc.py -x --tb=short --no-header -q)",
+      "Bash(/Users/bianders/Brian_Code/siphon/siphon-server/.venv/bin/pytest /Users/bianders/Brian_Code/siphon/siphon-server/tests/doc/test_doc.py --tb=short --no-header -q)"
     ]
   }
 }

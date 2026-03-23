@@ -2,6 +2,19 @@
 
 Siphon is a multi-source content ingestion and retrieval pipeline designed to transform heterogeneous data—YouTube videos, web articles, local documents, Obsidian vaults, and emails—into structured, searchable, and LLM-enriched knowledge.
 
+## Two Modes of Ingestion
+
+<p align="center">
+  <img src="snail_mollusk.png" alt="Snail and mollusk representing active and passive ingestion" width="300"/>
+</p>
+
+Siphon is built around two complementary ingestion patterns:
+
+- **Active ingestion (the snail)** — deliberate, on-demand capture. You encounter something worth keeping and explicitly pull it in: `siphon gulp <url>`. The snail moves with intention, carrying everything it has gathered.
+- **Passive ingestion (the mollusk)** — ambient, automatic absorption. Content flows through configured channels (email, vault syncs, scheduled crawls) and is filtered in without manual intervention. The mollusk sits open, drawing in whatever the current carries.
+
+Most knowledge pipelines optimize for one or the other. Siphon handles both.
+
 ## Table of Contents
 - [Quick Start](#quick-start)
 - [Core Pipeline Architecture](#core-pipeline-architecture)

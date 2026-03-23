@@ -204,7 +204,7 @@ Analyze this image. Answer these questions concisely:
         """Convert TableItem to GFM pipe table."""
         import logging
 
-        data = table.data
+        data = getattr(table, 'data', None)
         if not data or not hasattr(data, 'num_rows') or data.num_rows == 0 or data.num_cols == 0:
             raise ValueError("Table lacks data")
 
