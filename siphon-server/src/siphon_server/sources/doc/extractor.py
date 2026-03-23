@@ -121,7 +121,7 @@ Analyze this image. Answer these questions concisely:
 
     def _validate_ocr_confidence(self, doc: DoclingDocument) -> None:
         """Validate all OCR text has confidence >= 0.5. AC-3.3"""
-        for item, _ in doc.iterate_items(included_content_layers={ContentLayer.BODY}):
+        for item, _ in doc.iterate_items(included_content_layers={ContentLayer.BODY, ContentLayer.FURNITURE}):
             # Check for TextItem but exclude subclasses like SectionHeaderItem, CodeItem, etc
             if type(item) == TextItem or (isinstance(item, TextItem) and
                                           not isinstance(item, (SectionHeaderItem, CodeItem,
@@ -147,7 +147,7 @@ Analyze this image. Answer these questions concisely:
         prev_ocr = False  # Track OCR state for grouping
 
         # Iterate document content
-        for item, depth in doc.iterate_items(included_content_layers={ContentLayer.BODY}):
+        for item, depth in doc.iterate_items(included_content_layers={ContentLayer.BODY, ContentLayer.FURNITURE}):
             if isinstance(item, SectionHeaderItem):
                 # Create heading: level determines # count
                 heading_level = max(2, getattr(item, 'level', 2) + 1)
