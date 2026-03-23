@@ -75,9 +75,18 @@ Explain what this diagram shows. Answer these questions concisely:
 - No disclaimers, no "Please note", "Overall", "In summary", "It should be noted"
 - No meta-commentary about what you cannot determine"""
 
-    PROMPT_DEFAULT = """Explain what this image shows and what it means. Be concise.
-Focus on content and meaning, not aesthetics.
-No summary paragraphs. No disclaimers. No "Overall", "In summary", "Please note"."""
+    PROMPT_DEFAULT = """## INSTRUCTIONS
+Analyze this image. Answer these questions concisely:
+1. What does this image show?
+2. What is the key information, finding, or message it conveys?
+3. If it contains data or a visualization: what are the values, trends, or patterns?
+
+## CONSTRAINTS
+- Focus on content and meaning, not aesthetics (skip colors and layout unless they encode information)
+- No closing or contextualizing sentence at the end
+- No summary paragraphs
+- No disclaimers, no "Please note", "Overall", "In summary", "It should be noted"
+- No meta-commentary about the source or context of the image"""
 
     @override
     def extract(self, source: SourceInfo) -> ContentData:
@@ -229,11 +238,19 @@ No summary paragraphs. No disclaimers. No "Overall", "In summary", "Please note"
         - confident=False, type_label='bar_chart'   → low confidence, has a guess
         - confident=False, type_label=''            → no classification signal
         """
+        import logging
         try:
             annotations = picture.annotations or {}
             classifier = annotations.get('document_figure_classifier', {})
             image_type = classifier.get('class', '')
             confidence = classifier.get('confidence', 0.0)
+
+            logging.debug(
+                "Picture classifier: class=%r confidence=%.3f → %s",
+                image_type,
+                confidence,
+                "confident" if (image_type and confidence >= 0.5) else "low-confidence" if image_type else "no-signal",
+            )
 
             if not image_type:
                 return ('', False)
@@ -244,6 +261,7 @@ No summary paragraphs. No disclaimers. No "Overall", "In summary", "Please note"
                 return (image_type.lower(), False)
 
         except Exception:
+            logging.debug("Picture classifier: failed to extract classification", exc_info=True)
             return ('', False)
 
     def _picture_to_markdown(self, picture: PictureItem, doc: DoclingDocument) -> str:
