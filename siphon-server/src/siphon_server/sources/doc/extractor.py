@@ -42,35 +42,42 @@ Focus on: headings (#/##/###), paragraphs, lists, tables (pipe syntax), bold/ita
 ## CONSTRAINTS
 - Only include content visible in the image
 - Mark uncertain text as [UNCERTAIN], unreadable as [ILLEGIBLE]
-- No summaries, no additions, no explanations, no disclaimers or meta-commentary
-- No phrases like "Please note", "It should be noted", "I cannot"
+- No summaries, additions, explanations, disclaimers, or meta-commentary
+- No phrases like "Please note", "It should be noted", "I cannot", "Overall"
 
 ## OUTPUT FORMAT
 Valid Markdown only. Title as H1, sections as H2/H3. No JSON wrappers or preamble."""
 
     PROMPT_CHART = """## INSTRUCTIONS
-Analyze this chart and extract key data, trends, and insights.
-
-## OUTPUT
-Describe the chart type, axes, key values, and any trends or relationships visible.
+Analyze this chart. Answer these questions concisely:
+1. What is being measured or compared?
+2. What are the approximate values or ranges shown?
+3. What is the key trend, pattern, or finding?
+4. What conclusion does the chart support?
 
 ## CONSTRAINTS
-- No disclaimers, caveats, or meta-commentary about what you cannot determine
-- No phrases like "Please note", "It should be noted", "I cannot", "it is not possible"
-- Only describe what is visible; omit anything not shown"""
+- Focus on meaning and data, not aesthetics (skip colors and layout unless they encode information)
+- Use approximate values when exact figures are not labeled
+- No summary or concluding paragraphs
+- No disclaimers, no "Please note", "Overall", "In summary", "It should be noted"
+- No meta-commentary about what you cannot determine"""
 
     PROMPT_DIAGRAM = """## INSTRUCTIONS
-Describe this diagram, flowchart, or technical drawing.
-
-## OUTPUT
-Explain the structure, components, and relationships shown.
+Explain what this diagram shows. Answer these questions concisely:
+1. What system, process, or concept does this depict?
+2. What are the key components or steps?
+3. How do they relate or connect?
+4. What is the diagram communicating?
 
 ## CONSTRAINTS
-- No disclaimers, caveats, or meta-commentary about what you cannot determine
-- No phrases like "Please note", "It should be noted", "I cannot", "it is not possible"
-- Only describe what is visible; omit anything not shown"""
+- Focus on meaning and relationships, not aesthetics
+- No summary or concluding paragraphs
+- No disclaimers, no "Please note", "Overall", "In summary", "It should be noted"
+- No meta-commentary about what you cannot determine"""
 
-    PROMPT_DEFAULT = """Describe this image in detail. Only describe what is visible. No disclaimers or meta-commentary."""
+    PROMPT_DEFAULT = """Explain what this image shows and what it means. Be concise.
+Focus on content and meaning, not aesthetics.
+No summary paragraphs. No disclaimers. No "Overall", "In summary", "Please note"."""
 
     @override
     def extract(self, source: SourceInfo) -> ContentData:
