@@ -14,7 +14,10 @@
       "WebFetch(domain:www.llamaindex.ai)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:ds4sd.github.io)",
-      "WebFetch(domain:docling-project.github.io)"
+      "WebFetch(domain:docling-project.github.io)",
+      "Bash(conduit batch:*)",
+      "Bash(ask:*)",
+      "Read(//Users/bianders/.ssh/**)"
     ]
   }
 }
