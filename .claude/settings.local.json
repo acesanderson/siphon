@@ -17,7 +17,9 @@
       "WebFetch(domain:docling-project.github.io)",
       "Bash(conduit batch:*)",
       "Bash(ask:*)",
-      "Read(//Users/bianders/.ssh/**)"
+      "Read(//Users/bianders/.ssh/**)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/supportedsites.md\")"
     ]
   }
 }

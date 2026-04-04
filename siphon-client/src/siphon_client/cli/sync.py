@@ -8,6 +8,7 @@ call generates vectors for every changed note, rather than one call per note.
 
 Reads vault path from --vault flag or ~/.config/siphon/config.toml (key: vault).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     pass
 
 _MIN_CHANGE_CHARS = 50
-_MIN_CHANGE_PCT   = 0.02
+_MIN_CHANGE_PCT = 0.02
 
 DEFAULT_BLOCKLIST: set[str] = {".obsidian", "templates", "_attachments"}
 _BLOCKLIST_PATH = Path.home() / ".config" / "siphon" / "obsidian_blocklist.txt"
@@ -110,18 +111,14 @@ def _is_blocked(path: Path, vault_root: Path, blocklist: set[str]) -> bool:
 
 def _collect_notes(vault_root: Path, blocklist: set[str]) -> list[Path]:
     return [
-        p for p in vault_root.rglob("*.md")
-        if not _is_blocked(p, vault_root, blocklist)
+        p for p in vault_root.rglob("*.md") if not _is_blocked(p, vault_root, blocklist)
     ]
-
 
 
 def _install_hook(vault_path: Path, printer: Printer) -> None:
     git_dir = vault_path / ".git"
     if not git_dir.is_dir():
-        printer.print_pretty(
-            f"[red]Error:[/red] {vault_path} is not a git repository."
-        )
+        printer.print_pretty(f"[red]Error:[/red] {vault_path} is not a git repository.")
         raise click.Abort()
 
     hooks_dir = git_dir / "hooks"
@@ -224,7 +221,9 @@ async def _classify_async(vault_path: Path, printer: Printer) -> _ClassifyResult
             continue
 
         # Gate 1 — content hash
-        content_hash = hashlib.sha256(full_text.encode("utf-8", errors="replace")).hexdigest()
+        content_hash = hashlib.sha256(
+            full_text.encode("utf-8", errors="replace")
+        ).hexdigest()
         if stored_hash is not None and content_hash == stored_hash:
             stats.hash_skipped += 1
             continue
@@ -247,24 +246,26 @@ async def _classify_async(vault_path: Path, printer: Printer) -> _ClassifyResult
     )
 
 
-def _print_scan_report(result: _ClassifyResult, printer: Printer, dry_run: bool) -> None:
+def _print_scan_report(
+    result: _ClassifyResult, printer: Printer, dry_run: bool
+) -> None:
     """Print the pre-processing breakdown table."""
     r = result
-    new_count  = sum(1 for _, _, is_new in r.to_process if is_new)
-    upd_count  = sum(1 for _, _, is_new in r.to_process if not is_new)
-    queue      = len(r.to_process)
-    dry_label  = " [dim](dry run)[/dim]" if dry_run else ""
+    new_count = sum(1 for _, _, is_new in r.to_process if is_new)
+    upd_count = sum(1 for _, _, is_new in r.to_process if not is_new)
+    queue = len(r.to_process)
+    dry_label = " [dim](dry run)[/dim]" if dry_run else ""
 
     printer.print_pretty(f"Vault: {r.total} notes scanned{dry_label}")
     printer.print_pretty("")
 
     # Skip breakdown (only show non-zero rows)
     rows = [
-        (r.stats.skipped,       "mtime unchanged"),
-        (r.stats.hash_skipped,  "content unchanged"),
+        (r.stats.skipped, "mtime unchanged"),
+        (r.stats.hash_skipped, "content unchanged"),
         (r.stats.trivial_skipped, "trivial edit"),
         (r.stats.empty_skipped, "empty"),
-        (len(r.stale_uris),     "stale (will prune)"),
+        (len(r.stale_uris), "stale (will prune)"),
     ]
     skipped_rows = [(n, label) for n, label in rows if n > 0]
     if skipped_rows:
@@ -309,18 +310,24 @@ async def _process_async(
         from headwater_client.client.headwater_client_async import HeadwaterAsyncClient
 
         semaphore = asyncio.Semaphore(concurrency)
-        async with HeadwaterAsyncClient() as client:
-            results = await asyncio.gather(*[
-                _process_note(uri, note_path, is_new, semaphore, client, stats, printer)
-                for uri, note_path, is_new in result.to_process
-            ])
+        async with HeadwaterAsyncClient(host_alias="deepwater") as client:
+            results = await asyncio.gather(
+                *[
+                    _process_note(
+                        uri, note_path, is_new, semaphore, client, stats, printer
+                    )
+                    for uri, note_path, is_new in result.to_process
+                ]
+            )
             processed_uris = [r for r in results if r is not None]
             if processed_uris:
                 try:
                     embed_result = await client.siphon.embed_batch(processed_uris)
                     stats.embed_ok = embed_result.embedded
                 except Exception as e:
-                    printer.print_pretty(f"  [yellow]warning:[/yellow] embed-batch failed: {e}")
+                    printer.print_pretty(
+                        f"  [yellow]warning:[/yellow] embed-batch failed: {e}"
+                    )
 
     repository = ContentRepository()
     for uri in result.stale_uris:
@@ -330,7 +337,9 @@ async def _process_async(
     return stats
 
 
-def _run_sync(vault_path: Path, dry_run: bool, concurrency: int, printer: Printer) -> SyncStats:
+def _run_sync(
+    vault_path: Path, dry_run: bool, concurrency: int, printer: Printer
+) -> SyncStats:
     async def _run() -> SyncStats:
         with printer.status("Scanning vault..."):
             result = await _classify_async(vault_path, printer)
