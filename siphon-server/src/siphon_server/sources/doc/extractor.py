@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import threading
 from siphon_api.interfaces import ExtractorStrategy
 from siphon_api.models import SourceInfo, ContentData
 from siphon_api.enums import SourceType
@@ -29,6 +32,10 @@ class DocExtractor(ExtractorStrategy):
     """
 
     source_type: SourceType = SourceType.DOC
+
+    def __init__(self) -> None:
+        from siphon_server.config import settings
+        self._semaphore = threading.Semaphore(settings.docling_vlm_concurrency)
 
     # VLM prompt templates
     PROMPT_OCR = """## INSTRUCTIONS
@@ -98,8 +105,9 @@ Analyze this image. Answer these questions concisely:
         """Extract markdown text from document."""
         path = Path(source.original_source)
 
-        # Docling convert
-        doc = self._docling_convert(path)
+        # Docling convert — semaphore caps concurrent GPU calls
+        with self._semaphore:
+            doc = self._docling_convert(path)
 
         # Transform to markdown using core transformer
         markdown = self._docling_to_markdown(doc)
