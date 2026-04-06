@@ -83,6 +83,9 @@ POSTGRES_URL = f"postgresql://{USERNAME}:{PASSWORD}@{SERVER_IP}:{PORT}/{DBNAME}"
 engine = create_engine(
     POSTGRES_URL,
     echo=False,
+    pool_size=20,
+    max_overflow=40,
+    pool_pre_ping=True,
 )
 
 
