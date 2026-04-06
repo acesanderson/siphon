@@ -1,6 +1,9 @@
-import httpx
+from __future__ import annotations
+
 import base64
-from typing import Optional
+import httpx
+
+_shared_client: httpx.Client = httpx.Client()
 
 
 class VLMClient:
@@ -49,17 +52,16 @@ class VLMClient:
         }
 
         try:
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(self.url, json=payload)
-                response.raise_for_status()
-                data = response.json()
+            response = _shared_client.post(self.url, json=payload, timeout=self.timeout)
+            response.raise_for_status()
+            data = response.json()
 
-                description = data["choices"][0]["message"]["content"]
+            description = data["choices"][0]["message"]["content"]
 
-                if not description or not description.strip():
-                    raise ValueError("VLM returned empty response")
+            if not description or not description.strip():
+                raise ValueError("VLM returned empty response")
 
-                return description
+            return description
 
         except (httpx.TimeoutException, httpx.ConnectTimeout, httpx.ReadTimeout, httpx.WriteTimeout, httpx.PoolTimeout) as e:
             raise TimeoutError(f"VLM request timed out after {self.timeout}s") from e
