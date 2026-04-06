@@ -13,10 +13,12 @@ from siphon_api.interfaces import (
     EnricherStrategy,
 )
 from siphon_server.database.postgres.repository import ContentRepository
+from siphon_server.metrics import extraction_metrics
 from siphon_server.sources.registry import load_registry, generate_registry
 from siphon_server.config import load_settings
 from siphon_api.enums import SourceType
 from typing import TYPE_CHECKING
+import asyncio
 import time
 
 if TYPE_CHECKING:
@@ -234,7 +236,19 @@ class SiphonPipeline:
             logger.debug("Cache usage disabled; proceeding without repository check.")
 
         # Step 2: Extract content
-        content_data = self.extractor.execute(source_info)
+        _t0 = time.monotonic()
+        _error_occurred = False
+        try:
+            content_data = await asyncio.to_thread(self.extractor.execute, source_info)
+        except Exception:
+            _error_occurred = True
+            raise
+        finally:
+            extraction_metrics.record(
+                source_info.source_type.value,
+                latency_ms=(time.monotonic() - _t0) * 1000,
+                error=_error_occurred,
+            )
         logger.info(f"Extracted content data: {content_data}")
         if action == ActionType.EXTRACT:
             return content_data
