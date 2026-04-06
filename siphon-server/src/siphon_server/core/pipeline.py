@@ -17,6 +17,7 @@ from siphon_server.sources.registry import load_registry, generate_registry
 from siphon_server.config import load_settings
 from siphon_api.enums import SourceType
 from typing import TYPE_CHECKING
+import asyncio
 import time
 
 if TYPE_CHECKING:
@@ -234,7 +235,7 @@ class SiphonPipeline:
             logger.debug("Cache usage disabled; proceeding without repository check.")
 
         # Step 2: Extract content
-        content_data = self.extractor.execute(source_info)
+        content_data = await asyncio.to_thread(self.extractor.execute, source_info)
         logger.info(f"Extracted content data: {content_data}")
         if action == ActionType.EXTRACT:
             return content_data
