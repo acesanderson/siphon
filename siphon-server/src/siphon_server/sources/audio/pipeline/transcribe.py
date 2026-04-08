@@ -38,9 +38,24 @@ def _transcribe_mlx(file_name: str) -> list[dict]:
 
 
 def _transcribe_hf(file_name: str) -> list[dict]:
+    import wave
+    import numpy as np
     from transformers import pipeline
     import torch
     logger.debug(f"[TRANSCRIBE] Using HF transformers (CUDA): {file_name}")
+
+    # Read WAV as numpy array to avoid transformers' internal ffmpeg PATH dependency
+    with wave.open(file_name, "rb") as wf:
+        sample_rate = wf.getframerate()
+        n_channels = wf.getnchannels()
+        sampwidth = wf.getsampwidth()
+        frames = wf.readframes(wf.getnframes())
+    dtype = {1: np.int8, 2: np.int16, 4: np.int32}.get(sampwidth, np.int16)
+    audio = np.frombuffer(frames, dtype=dtype).astype(np.float32)
+    if n_channels > 1:
+        audio = audio.reshape(-1, n_channels).mean(axis=1)
+    audio /= np.iinfo(dtype).max
+
     transcriber = pipeline(
         "automatic-speech-recognition",
         model="openai/whisper-large-v3",
@@ -48,7 +63,7 @@ def _transcribe_hf(file_name: str) -> list[dict]:
         device=0,
         torch_dtype=torch.float16,
     )
-    result = transcriber(file_name)
+    result = transcriber({"raw": audio, "sampling_rate": sample_rate})
     return [
         {
             "text": chunk["text"],
