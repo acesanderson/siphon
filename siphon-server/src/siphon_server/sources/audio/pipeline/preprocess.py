@@ -1,70 +1,48 @@
-"""
-Audio preprocessing utility for normalizing diverse audio formats into WAV for downstream processing.
+from __future__ import annotations
 
-This module provides a context manager that abstracts away audio format conversion complexity within the Siphon audio pipeline. The `guaranteed_wav_path()` function accepts any supported audio format (MP3, OGG, M4A, FLAC, or WAV) and guarantees a valid WAV file path for consumption by transcription and diarization components. For native WAV files, it yields the original path with no conversion overhead; for other formats, it transparently converts to a temporary WAV file via pydub's AudioSegment and automatically cleans up on context exit.
-
-This design isolates format handling concerns from higher-level audio processing logic, allowing transcription and diarization modules to assume WAV input without conditional branching. The temporary file lifecycle is managed safely through context manager semantics and OS-level file deletion, preventing resource leaks in batch processing scenarios.
-
-Usage:
-```python
-from pathlib import Path
-from siphon_server.sources.audio.preprocess import guaranteed_wav_path
-
-with guaranteed_wav_path(Path("podcast.mp3")) as wav_path:
-    transcript = transcribe(wav_path)  # Guaranteed to receive valid WAV path
-    # Temp file automatically deleted when exiting context
-```
-"""
-
-from pathlib import Path
-from siphon_api.file_types import EXTENSIONS
+import shutil
+import subprocess
 import tempfile
+import logging
 from contextlib import contextmanager
 from pathlib import Path
-from pydub import AudioSegment
-import logging
+
+from siphon_api.file_types import EXTENSIONS
 
 logger = logging.getLogger(__name__)
+
+_FFMPEG = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
 
 
 @contextmanager
 def guaranteed_wav_path(input_path: Path):
     """
-    Context manager to guarantee a file path to a WAV file.
+    Context manager that guarantees a WAV file path for downstream processing.
 
-    If the input_path is already a .wav, it yields the original path
-    and performs no cleanup.
-
-    If the input_path is another format (mp3, ogg, m4a, flac), it
-    converts it to a temporary WAV file, yields the path to that
-    temp file, and automatically deletes the temp file upon exit.
+    Yields the original path unchanged for WAV inputs. For all other formats,
+    converts to a temporary WAV via ffmpeg and deletes it on exit.
     """
     suffix = input_path.suffix.lower()
     if suffix not in EXTENSIONS["Audio"]:
         raise ValueError(f"Unsupported audio format: {suffix}")
-    elif input_path.suffix.lower() == ".wav":
-        logging.debug(f"[PREPROCESS] Input is already a WAV: {input_path}")
-        try:
-            yield input_path
-        finally:
-            logger.debug("[PREPROCESS] No cleanup required for original WAV.")
-    else:
-        temp_file = None
-        try:
-            temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=True)
-            logger.debug(
-                f"[PREPROCESS] Converting {input_path} to temp WAV: {temp_file.name}"
-            )
 
-            # Load and export the audio
-            audio = AudioSegment.from_file(input_path, format=input_path.suffix[1:])
-            audio.export(temp_file.name, format="wav")
+    if suffix == ".wav":
+        logger.debug(f"[PREPROCESS] Input is already a WAV: {input_path}")
+        yield input_path
+        return
 
-            # Yield the path to the newly created temp file
-            yield Path(temp_file.name)
-
-        finally:
-            if temp_file:
-                # Closing the file handle triggers the OS to delete it.
-                temp_file.close()
-                logger.debug(f"[PREPROCESS] Temp WAV file deleted: {temp_file.name}")
+    tmp = None
+    try:
+        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        tmp.close()
+        logger.debug(f"[PREPROCESS] Converting {input_path} to temp WAV: {tmp.name}")
+        subprocess.run(
+            [_FFMPEG, "-i", str(input_path), "-y", tmp.name],
+            check=True,
+            capture_output=True,
+        )
+        yield Path(tmp.name)
+    finally:
+        if tmp:
+            Path(tmp.name).unlink(missing_ok=True)
+            logger.debug(f"[PREPROCESS] Temp WAV deleted: {tmp.name}")
