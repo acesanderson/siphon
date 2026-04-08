@@ -103,7 +103,7 @@ def gulp(
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient(host_alias="deepwater")
+    client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
@@ -172,7 +172,7 @@ def parse(source: str, return_type: Literal["u", "st"]):
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient(host_alias="deepwater")
+    client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
@@ -217,7 +217,7 @@ def extract(source: str, return_type: Literal["c", "m", "to"]):
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient(host_alias="deepwater")
+    client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
@@ -266,7 +266,7 @@ def enrich(source: str, return_type: Literal["s", "d", "t"]):
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient(host_alias="deepwater")
+    client = HeadwaterClient()
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
