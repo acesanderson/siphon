@@ -37,7 +37,7 @@ def guaranteed_wav_path(input_path: Path):
         tmp.close()
         logger.debug(f"[PREPROCESS] Converting {input_path} to temp WAV: {tmp.name}")
         subprocess.run(
-            [_FFMPEG, "-i", str(input_path), "-y", tmp.name],
+            [_FFMPEG, "-i", str(input_path), "-ar", "16000", "-ac", "1", "-y", tmp.name],
             check=True,
             capture_output=True,
         )
