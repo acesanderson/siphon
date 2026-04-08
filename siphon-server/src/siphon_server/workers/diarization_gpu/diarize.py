@@ -15,7 +15,7 @@ if not hasattr(torchaudio, 'AudioMetaData'):
         ['sample_rate', 'num_frames', 'num_channels', 'bits_per_sample', 'encoding'],
     )
 if not hasattr(torchaudio, 'list_audio_backends'):
-    torchaudio.list_audio_backends = lambda: []
+    torchaudio.list_audio_backends = lambda: ['soundfile']  # soundfile is installed
 if not hasattr(torchaudio, 'set_audio_backend'):
     torchaudio.set_audio_backend = lambda name: None
 
