@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import hashlib
-import platform
 import sys
 
 from siphon_api.file_types import EXTENSIONS
