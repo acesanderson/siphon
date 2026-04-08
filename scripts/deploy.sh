@@ -30,6 +30,11 @@ WORKER_PORTS=(
     8002
 )
 
+# Legacy workers to stop before bringing up new ones (port conflicts)
+LEGACY_WORKERS_ALPHABLUE=(
+    "siphon-server/src/siphon_server/workers/diarization_cpu"
+)
+
 # --- parse args ---
 RESTART_WORKERS=0
 TARGET="all"
@@ -61,6 +66,13 @@ remote_restart_workers() {
     local repo="${REMOTE_REPO[$host]}"
     local num_workers="${#WORKERS_ALPHABLUE[@]}"
 
+    # Stop any legacy workers that may conflict on the same ports
+    for legacy_dir in "${LEGACY_WORKERS_ALPHABLUE[@]}"; do
+        local legacy_compose="$repo/$legacy_dir/docker-compose.yml"
+        echo "==> [$host] stopping legacy worker: $legacy_dir ..."
+        ssh "$host" "[ -f $legacy_compose ] && docker compose -f $legacy_compose down 2>/dev/null || true"
+    done
+
     for (( i=0; i<num_workers; i++ )); do
         local worker_dir="${WORKERS_ALPHABLUE[$i]}"
         local port="${WORKER_PORTS[$i]}"
@@ -71,19 +83,23 @@ remote_restart_workers() {
         ssh "$host" "docker compose -f $compose_file up -d --build"
 
         echo -n "==> [$host] waiting for worker on :$port ... "
+        local last_status=""
         for j in $(seq 1 300); do
             status=$(ssh "$host" "curl -sf http://localhost:$port/health 2>/dev/null | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('status',''))\" 2>/dev/null" 2>/dev/null || true)
+            last_status="$status"
             if [[ "$status" == "healthy" ]]; then
                 echo "up"
                 break
             elif [[ "$status" == "error" ]]; then
                 echo "ERROR — model failed to load"
-                echo "    run: ssh $host 'docker compose -f $compose_file logs' for details"
+                echo "--- container logs ---"
+                ssh "$host" "docker compose -f $compose_file logs --tail=50" || true
                 exit 1
             fi
             if [[ $j -eq 300 ]]; then
-                echo "TIMEOUT after 300s (last status: ${status:-no response})"
-                echo "    run: ssh $host 'docker compose -f $compose_file logs' for details"
+                echo "TIMEOUT after 300s (last status: ${last_status:-no response})"
+                echo "--- container logs ---"
+                ssh "$host" "docker compose -f $compose_file logs --tail=50" || true
                 exit 1
             fi
             sleep 1
