@@ -22,9 +22,11 @@ declare -A REMOTE_REPO=(
 )
 
 WORKERS_ALPHABLUE=(
+    "siphon-server/src/siphon_server/workers/diarization_gpu"
     "siphon-server/src/siphon_server/workers/whisper_gpu"
 )
 WORKER_PORTS=(
+    8000
     8002
 )
 
