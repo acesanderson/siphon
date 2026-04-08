@@ -36,6 +36,8 @@ remote_pull() {
     local repo="${REMOTE_REPO[$host]}"
     echo "==> [$host] pulling code..."
     ssh "$host" "git -C $repo pull --ff-only https://${GITHUB_PERSONAL_TOKEN}@github.com/acesanderson/siphon.git"
+    echo "==> [$host] syncing dependencies..."
+    ssh "$host" "cd $repo/siphon-server && uv sync"
 }
 
 case "$TARGET" in
