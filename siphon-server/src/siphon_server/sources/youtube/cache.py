@@ -29,7 +29,7 @@ class YouTubeMetadataCache:
         cache_root = Path(xdg_cache_home()) / "siphon" / "youtube"
         cache_root.mkdir(parents=True, exist_ok=True)
         self.path = cache_root / "metadata_cache.db"
-        self._con = sqlite3.connect(self.path)
+        self._con = sqlite3.connect(self.path, check_same_thread=False)
         self._con.execute(
             "CREATE TABLE IF NOT EXISTS metadata ("
             "id TEXT PRIMARY KEY, "
@@ -165,7 +165,7 @@ class YouTubeTranscriptCache:
         cache_root = Path(xdg_cache_home()) / "siphon" / "youtube"
         cache_root.mkdir(parents=True, exist_ok=True)
         self.path = cache_root / "transcript_cache.db"
-        self._con = sqlite3.connect(self.path)
+        self._con = sqlite3.connect(self.path, check_same_thread=False)
         self._con.execute(
             "CREATE TABLE IF NOT EXISTS transcripts ("
             "id TEXT PRIMARY KEY, "
