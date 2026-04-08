@@ -1,10 +1,11 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, HTTPException, File
 from pydantic import BaseModel
 import tempfile
 import os
 from pathlib import Path
 
-from transcribe import run_transcription
+import transcribe
 
 
 class TranscriptionSegment(BaseModel):
@@ -17,7 +18,13 @@ class TranscriptionResponse(BaseModel):
     segments: list[TranscriptionSegment]
 
 
-app = FastAPI(title="Whisper GPU Worker")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    transcribe.load_model()
+    yield
+
+
+app = FastAPI(title="Whisper GPU Worker", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -33,7 +40,7 @@ async def process_audio_file(file: UploadFile = File(...)):
             tmp.write(await file.read())
             tmp_path = Path(tmp.name)
 
-        segments = run_transcription(str(tmp_path))
+        segments = transcribe.run_transcription(str(tmp_path))
         return TranscriptionResponse(
             segments=[TranscriptionSegment(**s) for s in segments]
         )

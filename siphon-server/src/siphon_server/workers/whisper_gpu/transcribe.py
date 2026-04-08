@@ -1,11 +1,14 @@
 import numpy as np
 import wave
-from transformers import pipeline
 import torch
+from transformers import pipeline
+
+_transcriber = None
 
 
-def load_transcriber():
-    return pipeline(
+def load_model():
+    global _transcriber
+    _transcriber = pipeline(
         "automatic-speech-recognition",
         model="openai/whisper-large-v3",
         return_timestamps="sentence",
@@ -14,11 +17,10 @@ def load_transcriber():
     )
 
 
-# Module-level singleton — loaded once on startup
-_transcriber = load_transcriber()
-
-
 def run_transcription(wav_path: str) -> list[dict]:
+    if _transcriber is None:
+        raise RuntimeError("Model not loaded — call load_model() first")
+
     with wave.open(wav_path, "rb") as wf:
         sample_rate = wf.getframerate()
         n_channels = wf.getnchannels()
