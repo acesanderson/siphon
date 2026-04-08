@@ -112,7 +112,7 @@ class ContentExtractor:
                 extractors.append(extractor)
         return extractors
 
-    def execute(self, source_info: SourceInfo) -> ContentData:
+    def execute(self, source_info: SourceInfo, diarize: bool = False) -> ContentData:
         logger.debug(
             f"Executing ContentExtractor for source type: {source_info.source_type}"
         )
@@ -123,7 +123,7 @@ class ContentExtractor:
                     "Using extractor {extractor.__name__} for source type: {source_type}"
                 )
                 extractor_obj = extractor()
-                return extractor_obj.extract(source=source_info)
+                return extractor_obj.extract(source=source_info, diarize=diarize)
 
 
 class ContentEnricher:
@@ -195,6 +195,7 @@ class SiphonPipeline:
         action: ActionType = ActionType.GULP,
         use_cache: bool = True,
         preferred_model: str = PREFERRED_MODEL,
+        diarize: bool = False,
     ) -> PipelineClass:
         """
         Process a source through the Siphon ingestion pipeline with optional early exit.
@@ -239,7 +240,7 @@ class SiphonPipeline:
         _t0 = time.monotonic()
         _error_occurred = False
         try:
-            content_data = await asyncio.to_thread(self.extractor.execute, source_info)
+            content_data = await asyncio.to_thread(self.extractor.execute, source_info, diarize)
         except Exception:
             _error_occurred = True
             raise

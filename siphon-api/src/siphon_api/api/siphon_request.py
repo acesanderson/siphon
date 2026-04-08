@@ -35,6 +35,10 @@ class SiphonRequestParams(BaseModel):
         default=True,
         description="Whether caching is enabled for this request.",
     )
+    diarize: bool = Field(
+        default=False,
+        description="Whether to run speaker diarization (audio sources only).",
+    )
 
 
 class SiphonFile(BaseModel):

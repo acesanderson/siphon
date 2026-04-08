@@ -14,21 +14,19 @@ class AudioExtractor(ExtractorStrategy):
     source_type: SourceType = SourceType.AUDIO
 
     @override
-    def extract(self, source: SourceInfo) -> ContentData:
+    def extract(self, source: SourceInfo, diarize: bool = False) -> ContentData:
         if source.source_type != self.source_type:
             raise ValueError(
                 f"Cannot extract source of type {source.source_type} with AudioExtractor"
             )
-        text = self._extract(source)
+        text = self._extract(source, diarize=diarize)
         metadata = self._generate_metadata(source)
         return ContentData(source_type=self.source_type, text=text, metadata=metadata)
 
-    def _extract(self, source: SourceInfo) -> str:
+    def _extract(self, source: SourceInfo, diarize: bool = False) -> str:
         from siphon_server.sources.audio.pipeline.audio_pipeline import retrieve_audio
 
-        path = Path(source.original_source)
-
-        audio_content = retrieve_audio(Path(source.original_source))
+        audio_content = retrieve_audio(Path(source.original_source), diarize=diarize)
         return audio_content
 
     def _generate_metadata(self, source: SourceInfo) -> dict[str, str]:

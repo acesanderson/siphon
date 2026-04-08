@@ -197,7 +197,13 @@ def parse(source: str, return_type: Literal["u", "st"]):
     default="c",
     help="Type to return: [c]ontent, [m]etadata, [to]ken_count.",
 )
-def extract(source: str, return_type: Literal["c", "m", "to"]):
+@click.option(
+    "--diarize",
+    is_flag=True,
+    default=False,
+    help="Enable speaker diarization (audio sources only).",
+)
+def extract(source: str, return_type: Literal["c", "m", "to"], diarize: bool):
     """
     Extract content from a source without persisting (ephemeral).
     """
@@ -209,7 +215,7 @@ def extract(source: str, return_type: Literal["c", "m", "to"]):
     else:
         action = ActionType.EXTRACT
     # Build request
-    params: SiphonRequestParams = SiphonRequestParams(action=action)
+    params: SiphonRequestParams = SiphonRequestParams(action=action, diarize=diarize)
     request: SiphonRequest = create_siphon_request(
         source=source,
         request_params=params,
