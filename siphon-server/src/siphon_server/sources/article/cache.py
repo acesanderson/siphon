@@ -29,7 +29,7 @@ class ArticleCache:
         cache_root = Path(xdg_cache_home()) / "siphon" / "readabilipy"
         cache_root.mkdir(parents=True, exist_ok=True)
         self.path = cache_root / "fetch.db"
-        self._con = sqlite3.connect(self.path)
+        self._con = sqlite3.connect(self.path, check_same_thread=False)
         try:
             _ = self._con.execute(
                 """
