@@ -2,14 +2,6 @@ from __future__ import annotations
 import hashlib
 import platform
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from siphon_api.api.siphon_request import SiphonRequest, SiphonRequestParams
-
-from siphon_api.file_types import EXTENSIONS
-
-_ALL_EXTENSIONS: list[str] = [ext for exts in EXTENSIONS.values() for ext in exts]
 
 
 class EphemeralInputError(ValueError):
