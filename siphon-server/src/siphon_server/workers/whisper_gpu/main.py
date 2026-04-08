@@ -20,7 +20,7 @@ class TranscriptionResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    transcribe.load_model()
+    transcribe.start_loading()  # non-blocking — server starts immediately
     yield
 
 
@@ -29,11 +29,17 @@ app = FastAPI(title="Whisper GPU Worker", lifespan=lifespan)
 
 @app.get("/health")
 async def health_check():
+    if err := transcribe.get_error():
+        return {"status": "error", "detail": err}
+    if not transcribe.is_ready():
+        return {"status": "loading", "service": "whisper_gpu"}
     return {"status": "healthy", "service": "whisper_gpu"}
 
 
 @app.post("/process", response_model=TranscriptionResponse)
 async def process_audio_file(file: UploadFile = File(...)):
+    if not transcribe.is_ready():
+        raise HTTPException(status_code=503, detail="Model still loading, try again shortly")
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:

@@ -72,12 +72,17 @@ remote_restart_workers() {
 
         echo -n "==> [$host] waiting for worker on :$port ... "
         for j in $(seq 1 300); do
-            if ssh "$host" "curl -sf http://localhost:$port/health" > /dev/null 2>&1; then
+            status=$(ssh "$host" "curl -sf http://localhost:$port/health 2>/dev/null | python3 -c \"import sys,json; d=json.load(sys.stdin); print(d.get('status',''))\" 2>/dev/null" 2>/dev/null || true)
+            if [[ "$status" == "healthy" ]]; then
                 echo "up"
                 break
+            elif [[ "$status" == "error" ]]; then
+                echo "ERROR — model failed to load"
+                echo "    run: ssh $host 'docker compose -f $compose_file logs' for details"
+                exit 1
             fi
             if [[ $j -eq 300 ]]; then
-                echo "TIMEOUT after 300s"
+                echo "TIMEOUT after 300s (last status: ${status:-no response})"
                 echo "    run: ssh $host 'docker compose -f $compose_file logs' for details"
                 exit 1
             fi

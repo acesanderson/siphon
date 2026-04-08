@@ -20,7 +20,7 @@ class DiarizationResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    diarize.load_model()
+    diarize.start_loading()  # non-blocking — server starts immediately
     yield
 
 
@@ -29,11 +29,17 @@ app = FastAPI(title="Diarization GPU Worker", lifespan=lifespan)
 
 @app.get("/health")
 async def health_check():
+    if err := diarize.get_error():
+        return {"status": "error", "detail": err}
+    if not diarize.is_ready():
+        return {"status": "loading", "service": "diarization_gpu"}
     return {"status": "healthy", "service": "diarization_gpu"}
 
 
 @app.post("/process", response_model=DiarizationResponse)
 async def process_audio_file(file: UploadFile = File(...)):
+    if not diarize.is_ready():
+        raise HTTPException(status_code=503, detail="Model still loading, try again shortly")
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
