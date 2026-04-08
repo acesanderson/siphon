@@ -78,8 +78,15 @@ remote_restart_workers() {
         local port="${WORKER_PORTS[$i]}"
         local full_path="$repo/$worker_dir"
         local compose_file="$full_path/docker-compose.yml"
+        # Derive compose project name (directory basename)
+        local project_name
+        project_name=$(basename "$full_path")
 
         echo "==> [$host] rebuilding worker: $worker_dir ..."
+        # Bring down first to clear any cached state, then rebuild
+        ssh "$host" "docker compose -f $compose_file down 2>/dev/null || true"
+        # Clear the HF model cache volume so stale 403s don't persist across access changes
+        ssh "$host" "docker volume rm ${project_name}_hf_cache 2>/dev/null || true"
         ssh "$host" "docker compose -f $compose_file up -d --build"
 
         echo -n "==> [$host] waiting for worker on :$port ... "
