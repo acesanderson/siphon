@@ -19,7 +19,9 @@
       "Bash(ask:*)",
       "Read(//Users/bianders/.ssh/**)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(curl -s \"https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/supportedsites.md\")"
+      "Bash(curl -s \"https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/supportedsites.md\")",
+      "Bash(bash:*)",
+      "Bash(git:*)"
     ]
   }
 }
