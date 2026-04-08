@@ -3,6 +3,26 @@ import os
 import threading
 import torch
 from pathlib import Path
+
+# torchaudio 2.7+ removed AudioMetaData from the top-level module, but
+# pyannote.audio 3.3.2 references it as a type annotation in io.py at import
+# time. Patch it back before importing pyannote so the annotation resolves.
+import torchaudio
+if not hasattr(torchaudio, 'AudioMetaData'):
+    try:
+        from torchaudio.backend.common import AudioMetaData as _AM
+        torchaudio.AudioMetaData = _AM
+    except ImportError:
+        try:
+            from torchaudio._backend.common import AudioMetaData as _AM
+            torchaudio.AudioMetaData = _AM
+        except ImportError:
+            from collections import namedtuple
+            torchaudio.AudioMetaData = namedtuple(
+                'AudioMetaData',
+                ['sample_rate', 'num_frames', 'num_channels', 'bits_per_sample', 'encoding'],
+            )
+
 from pyannote.audio import Pipeline
 from pyannote.core import Annotation
 
