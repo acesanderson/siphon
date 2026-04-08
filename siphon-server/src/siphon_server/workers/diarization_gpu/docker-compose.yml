@@ -7,6 +7,8 @@ services:
       - "8000:8000"
     environment:
       - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
+    volumes:
+      - hf_cache:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
@@ -14,3 +16,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+volumes:
+  hf_cache:

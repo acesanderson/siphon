@@ -71,13 +71,13 @@ remote_restart_workers() {
         ssh "$host" "docker compose -f $compose_file up -d --build"
 
         echo -n "==> [$host] waiting for worker on :$port ... "
-        for j in $(seq 1 120); do
+        for j in $(seq 1 300); do
             if ssh "$host" "curl -sf http://localhost:$port/health" > /dev/null 2>&1; then
                 echo "up"
                 break
             fi
-            if [[ $j -eq 120 ]]; then
-                echo "TIMEOUT after 120s"
+            if [[ $j -eq 300 ]]; then
+                echo "TIMEOUT after 300s"
                 echo "    run: ssh $host 'docker compose -f $compose_file logs' for details"
                 exit 1
             fi

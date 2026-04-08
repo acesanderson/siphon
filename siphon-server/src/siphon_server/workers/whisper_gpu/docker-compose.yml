@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8002:8002"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
@@ -12,3 +14,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+volumes:
+  hf_cache:
