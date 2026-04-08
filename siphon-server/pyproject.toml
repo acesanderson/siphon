@@ -16,11 +16,8 @@ dependencies = [
     "opencv-python-headless",
     "rich>=14.2.0",
     "siphon_api",
-    "pydub",
     "pgvector>=0.3.0",
     "sqlalchemy>=2.0.44",
-    "torch; sys_platform == 'linux'",
-    "mlx-whisper; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "trafilatura[all]>=2.0.0",
     "xdg-base-dirs>=6.0.2",
     "youtube-transcript-api>=1.2.3",
@@ -32,18 +29,12 @@ dependencies = [
     "markdownify>=1.2.2",
 ]
 
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/siphon_server"]
 sources = ["src"]
 include = ["src/siphon_server/py.typed"]
 
 [tool.uv.sources]
-torch = { index = "pytorch-cu128" }
 siphon_api = { path = "../siphon-api", editable = true }
 conduit = { path = "../../conduit-project", editable = true }
 dbclients = { path = "../../dbclients-project", editable = true }
