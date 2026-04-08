@@ -1,6 +1,10 @@
 from __future__ import annotations
+import io
 import pytest
-from siphon_client.ephemeral import sniff_bytes, EphemeralInputError
+from unittest.mock import patch
+from siphon_client.ephemeral import sniff_bytes, EphemeralInputError, read_stdin, build_ephemeral_request
+from siphon_api.api.siphon_request import SiphonRequestParams
+from siphon_api.enums import ActionType
 
 
 def test_sniff_bytes_rejects_zip():
@@ -67,3 +71,39 @@ def test_sniff_bytes_m4a():
     """AC 5 (partial): M4A ftyp box sniffs to .m4a."""
     m4a_header = b"\x00\x00\x00\x20" + b"ftyp" + b"\x00" * 4
     assert sniff_bytes(m4a_header) == ".m4a"
+
+
+def test_read_stdin_format_override_skips_sniffing():
+    """AC 6: --format flag bypasses sniffing entirely."""
+    binary_data = b"\x00\x01\x02\x03\xff\xfe"  # would not sniff to any valid type
+    with patch("siphon_client.ephemeral.sys") as mock_sys:
+        mock_sys.stdin.buffer.read.return_value = binary_data
+        raw, ext = read_stdin(fmt_override="mp3")
+    assert ext == ".mp3"
+    assert raw == binary_data
+
+
+def test_read_stdin_format_override_rejects_unknown_extension():
+    """AC 6: unrecognized --format extension raises EphemeralInputError."""
+    data = b"any bytes"
+    with patch("siphon_client.ephemeral.sys") as mock_sys:
+        mock_sys.stdin.buffer.read.return_value = data
+        with pytest.raises(EphemeralInputError, match="unrecognized format"):
+            read_stdin(fmt_override="xyz")
+
+
+def test_build_ephemeral_request_has_absolute_source():
+    """build_ephemeral_request must produce an absolute path source."""
+    from pathlib import PurePosixPath
+    params = SiphonRequestParams(action=ActionType.GULP)
+    data = b"hello world"
+    request = build_ephemeral_request(data, ".txt", "stdin", params)
+    assert PurePosixPath(request.source).is_absolute()
+
+
+def test_build_ephemeral_request_checksum_is_64_chars():
+    """SiphonFile.checksum must be the full 64-char SHA256 hex."""
+    params = SiphonRequestParams(action=ActionType.GULP)
+    data = b"hello world"
+    request = build_ephemeral_request(data, ".txt", "stdin", params)
+    assert len(request.file.checksum) == 64

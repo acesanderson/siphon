@@ -1,7 +1,13 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 import hashlib
 import platform
 import sys
+
+from siphon_api.file_types import EXTENSIONS
+
+if TYPE_CHECKING:
+    from siphon_api.api.siphon_request import SiphonRequest, SiphonRequestParams
 
 
 class EphemeralInputError(ValueError):
@@ -45,3 +51,60 @@ def sniff_bytes(data: bytes) -> str:
         raise EphemeralInputError(
             "error: could not determine input type; use --format to specify"
         )
+
+
+_ALL_EXTENSIONS: list[str] = [ext for exts in EXTENSIONS.values() for ext in exts]
+
+
+def read_stdin(fmt_override: str | None = None) -> tuple[bytes, str]:
+    """
+    Read all stdin bytes. Use fmt_override to skip sniffing.
+    Returns (raw_bytes, extension) where extension includes the leading dot.
+    Raises EphemeralInputError on empty input or unrecognized format.
+    """
+    data = sys.stdin.buffer.read()
+    if not data:
+        raise EphemeralInputError("error: stdin is empty")
+
+    if fmt_override is not None:
+        ext = fmt_override if fmt_override.startswith(".") else f".{fmt_override}"
+        if ext not in _ALL_EXTENSIONS:
+            valid = ", ".join(sorted(_ALL_EXTENSIONS))
+            raise EphemeralInputError(
+                f"error: unrecognized format '{ext}'; valid extensions: {valid}"
+            )
+        return data, ext
+
+    return data, sniff_bytes(data)
+
+
+def build_ephemeral_request(
+    data: bytes,
+    ext: str,
+    source_prefix: str,
+    params: SiphonRequestParams,
+) -> SiphonRequest:
+    """
+    Build a SiphonRequest from raw bytes for ephemeral (clipboard/stdin) input.
+
+    source_prefix: "clipboard" or "stdin"
+    ext: file extension including leading dot (e.g. ".png", ".txt")
+    """
+    from siphon_api.api.siphon_request import SiphonFile, SiphonRequest
+    from siphon_api.enums import SourceOrigin
+
+    normalized = ext if ext.startswith(".") else f".{ext}"
+    checksum = hashlib.sha256(data).hexdigest()  # full 64-char hex
+    source = f"/{source_prefix}{normalized}"     # absolute synthetic path
+
+    siphon_file = SiphonFile(
+        data=data,
+        checksum=checksum,
+        extension=normalized,
+    )
+    return SiphonRequest(
+        source=source,
+        origin=SourceOrigin.FILE_PATH,
+        params=params,
+        file=siphon_file,
+    )
