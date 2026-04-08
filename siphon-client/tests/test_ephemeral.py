@@ -37,3 +37,33 @@ def test_sniff_bytes_gif():
     """AC 4 (partial): GIF magic bytes sniff to .gif."""
     gif_header = b"GIF8" + b"\x00" * 8
     assert sniff_bytes(gif_header) == ".gif"
+
+
+def test_sniff_bytes_wav():
+    """AC 5 (partial): WAV magic bytes sniff to .wav."""
+    wav_header = b"RIFF" + b"\x00" * 4 + b"WAVE"
+    assert sniff_bytes(wav_header) == ".wav"
+
+
+def test_sniff_bytes_mp3_id3():
+    """AC 5 (partial): MP3 with ID3 tag sniffs to .mp3."""
+    mp3_header = b"ID3" + b"\x00" * 9
+    assert sniff_bytes(mp3_header) == ".mp3"
+
+
+def test_sniff_bytes_mp3_syncword():
+    """AC 5 (partial): MP3 with sync word sniffs to .mp3."""
+    mp3_header = b"\xff\xfb" + b"\x00" * 10
+    assert sniff_bytes(mp3_header) == ".mp3"
+
+
+def test_sniff_bytes_flac():
+    """AC 5 (partial): FLAC magic bytes sniff to .flac."""
+    flac_header = b"fLaC" + b"\x00" * 8
+    assert sniff_bytes(flac_header) == ".flac"
+
+
+def test_sniff_bytes_m4a():
+    """AC 5 (partial): M4A ftyp box sniffs to .m4a."""
+    m4a_header = b"\x00\x00\x00\x20" + b"ftyp" + b"\x00" * 4
+    assert sniff_bytes(m4a_header) == ".m4a"
