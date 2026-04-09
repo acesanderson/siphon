@@ -3,22 +3,6 @@ import os
 import threading
 import torch
 from pathlib import Path
-
-# torchaudio 2.7+ removed the legacy multi-backend API that pyannote.audio 3.3.2
-# depends on at import time. Shim all three missing attributes before importing
-# pyannote so initialisation doesn't crash.
-import torchaudio
-if not hasattr(torchaudio, 'AudioMetaData'):
-    from collections import namedtuple
-    torchaudio.AudioMetaData = namedtuple(
-        'AudioMetaData',
-        ['sample_rate', 'num_frames', 'num_channels', 'bits_per_sample', 'encoding'],
-    )
-if not hasattr(torchaudio, 'list_audio_backends'):
-    torchaudio.list_audio_backends = lambda: ['soundfile']  # soundfile is installed
-if not hasattr(torchaudio, 'set_audio_backend'):
-    torchaudio.set_audio_backend = lambda name: None
-
 from pyannote.audio import Pipeline
 from pyannote.core import Annotation
 
@@ -40,7 +24,7 @@ def load_model_background():
         logger.info("[DIARIZE] Fetching pyannote/speaker-diarization-3.1 from HuggingFace...")
         _pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1",
-            use_auth_token=hf_token,
+            token=hf_token,
         )
         logger.info("[DIARIZE] Moving pipeline to CUDA...")
         _pipeline.to(torch.device("cuda"))
