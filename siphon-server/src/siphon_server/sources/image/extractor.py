@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import base64
-import urllib.request
 from pathlib import Path
 from typing import override
 
@@ -34,13 +32,12 @@ class ImageExtractor(ExtractorStrategy):
 
     @override
     def extract(self, source: SourceInfo, diarize: bool = False) -> ContentData:
-        image_bytes = self._read_bytes(source.original_source)
-        ext = Path(source.original_source.split("?")[0]).suffix.lower()
+        path = source.original_source
+        ext = Path(path.split("?")[0]).suffix.lower()
         mime = MIME_TYPES.get(ext, "image/jpeg")
-        b64 = base64.b64encode(image_bytes).decode()
-        description = self._describe(b64)
+        description = self._describe(path)
         metadata = {
-            "file_name": Path(source.original_source).name,
+            "file_name": Path(path).name,
             "extension": ext,
             "mime_type": mime,
         }
@@ -50,20 +47,14 @@ class ImageExtractor(ExtractorStrategy):
             metadata=metadata,
         )
 
-    def _read_bytes(self, source: str) -> bytes:
-        if source.startswith("http://") or source.startswith("https://"):
-            with urllib.request.urlopen(source) as resp:
-                return resp.read()
-        return Path(source).read_bytes()
-
-    def _describe(self, b64_image: str) -> str:
+    def _describe(self, image_path: str) -> str:
         from conduit.domain.message.message import ImageContent, TextContent, UserMessage
         from conduit.domain.request.generation_params import GenerationParams
         from conduit.domain.request.request import GenerationRequest
         from conduit.domain.config.conduit_options import ConduitOptions
         from headwater_client.client.headwater_client import HeadwaterClient
 
-        image_content = ImageContent(url=f"data:image/png;base64,{b64_image}")
+        image_content = ImageContent.from_file(image_path)
         text_content = TextContent(text=_VISION_PROMPT)
         user_message = UserMessage(content=[image_content, text_content])
         params = GenerationParams.defaults(VLM_MODEL)
