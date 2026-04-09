@@ -85,8 +85,9 @@ remote_restart_workers() {
         echo "==> [$host] rebuilding worker: $worker_dir ..."
         # Bring down first to clear any cached state, then rebuild
         ssh "$host" "docker compose -f $compose_file down 2>/dev/null || true"
-        # Clear the HF model cache volume so stale 403s don't persist across access changes
-        ssh "$host" "docker volume rm ${project_name}_hf_cache 2>/dev/null || true"
+        # NOTE: hf_cache volume is intentionally preserved across restarts to avoid
+        # re-downloading large models. Only delete manually if you need to bust
+        # a stale 403 auth cache: docker volume rm ${project_name}_hf_cache
         ssh "$host" "docker compose -f $compose_file up -d --build"
 
         echo -n "==> [$host] waiting for worker on :$port ... "

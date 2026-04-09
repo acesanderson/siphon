@@ -2,6 +2,8 @@ import logging
 import os
 import threading
 import torch
+import numpy as np
+import soundfile as sf
 from pathlib import Path
 from pyannote.audio import Pipeline
 from pyannote.core import Annotation
@@ -51,4 +53,13 @@ def get_error() -> str | None:
 def run_diarization(audio_file: Path) -> Annotation:
     if not _ready:
         raise RuntimeError("Model not yet loaded")
-    return _pipeline(str(audio_file))
+    # Preload audio via soundfile to bypass torchcodec dependency in pyannote.audio 4.x.
+    # pyannote accepts {'waveform': (channels, time) tensor, 'sample_rate': int}.
+    waveform, sample_rate = sf.read(str(audio_file), dtype="float32")
+    if waveform.ndim == 1:
+        waveform = waveform[np.newaxis, :]  # mono: (time,) → (1, time)
+    else:
+        waveform = waveform.T  # soundfile: (time, channels) → (channels, time)
+    waveform_tensor = torch.from_numpy(waveform)
+    audio_dict = {"waveform": waveform_tensor, "sample_rate": sample_rate}
+    return _pipeline(audio_dict)
