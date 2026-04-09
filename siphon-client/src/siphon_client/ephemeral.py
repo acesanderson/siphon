@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import hashlib
+import platform
 import sys
 
 from siphon_api.file_types import EXTENSIONS
@@ -75,6 +76,49 @@ def read_stdin(fmt_override: str | None = None) -> tuple[bytes, str]:
         return data, ext
 
     return data, sniff_bytes(data)
+
+
+_CLIPBOARD_UTI_MAP: dict[str, str] = {
+    "public.png": ".png",
+    "public.jpeg": ".jpg",
+    "public.gif": ".gif",
+    "public.tiff": ".tiff",
+    "public.webp": ".webp",
+    "public.utf8-plain-text": ".txt",
+}
+
+
+def read_clipboard() -> tuple[bytes, str]:
+    """
+    Read clipboard content on macOS.
+    Returns (raw_bytes, extension).
+    Raises EphemeralInputError for unsupported types, empty clipboard, or non-macOS.
+    """
+    if platform.system() != "Darwin":
+        raise EphemeralInputError(
+            "error: @clipboard is only supported on macOS"
+        )
+
+    import AppKit  # available only on macOS via pyobjc-framework-Cocoa
+
+    pasteboard = AppKit.NSPasteboard.generalPasteboard()
+    types = list(pasteboard.types() or [])
+
+    for uti, ext in _CLIPBOARD_UTI_MAP.items():
+        if uti in types:
+            ns_data = pasteboard.dataForType_(uti)
+            if ns_data is None:
+                continue
+            raw_bytes = bytes(ns_data)
+            if not raw_bytes:
+                raise EphemeralInputError("error: clipboard is empty")
+            return raw_bytes, ext
+
+    found = types[0] if types else "unknown"
+    raise EphemeralInputError(
+        f"error: unsupported clipboard type '{found}'; "
+        "supported: image, plain text"
+    )
 
 
 def build_ephemeral_request(

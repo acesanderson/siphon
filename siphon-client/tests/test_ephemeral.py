@@ -1,8 +1,9 @@
 from __future__ import annotations
 import io
+import platform
 import pytest
-from unittest.mock import patch
-from siphon_client.ephemeral import sniff_bytes, EphemeralInputError, read_stdin, build_ephemeral_request
+from unittest.mock import patch, MagicMock
+from siphon_client.ephemeral import sniff_bytes, EphemeralInputError, read_stdin, build_ephemeral_request, read_clipboard
 from siphon_api.api.siphon_request import SiphonRequestParams
 from siphon_api.enums import ActionType
 
@@ -107,3 +108,25 @@ def test_build_ephemeral_request_checksum_is_64_chars():
     data = b"hello world"
     request = build_ephemeral_request(data, ".txt", "stdin", params)
     assert len(request.file.checksum) == 64
+
+
+def test_read_clipboard_non_macos_raises():
+    """AC 12: read_clipboard raises EphemeralInputError on non-macOS."""
+    with patch("platform.system", return_value="Linux"):
+        with pytest.raises(EphemeralInputError, match="only supported on macOS"):
+            read_clipboard()
+
+
+def test_read_clipboard_empty_raises():
+    """AC 9: empty clipboard raises EphemeralInputError."""
+    mock_pasteboard = MagicMock()
+    mock_pasteboard.types.return_value = ["public.utf8-plain-text"]
+    mock_pasteboard.dataForType_.return_value = b""
+
+    mock_appkit = MagicMock()
+    mock_appkit.NSPasteboard.generalPasteboard.return_value = mock_pasteboard
+
+    with patch("platform.system", return_value="Darwin"):
+        with patch.dict("sys.modules", {"AppKit": mock_appkit}):
+            with pytest.raises(EphemeralInputError, match="clipboard is empty"):
+                read_clipboard()
