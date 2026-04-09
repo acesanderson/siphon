@@ -78,47 +78,27 @@ def read_stdin(fmt_override: str | None = None) -> tuple[bytes, str]:
     return data, sniff_bytes(data)
 
 
-_CLIPBOARD_UTI_MAP: dict[str, str] = {
-    "public.png": ".png",
-    "public.jpeg": ".jpg",
-    "public.gif": ".gif",
-    "public.tiff": ".tiff",
-    "public.webp": ".webp",
-    "public.utf8-plain-text": ".txt",
-}
-
-
 def read_clipboard() -> tuple[bytes, str]:
     """
-    Read clipboard content on macOS.
-    Returns (raw_bytes, extension).
-    Raises EphemeralInputError for unsupported types, empty clipboard, or non-macOS.
+    Read an image from the clipboard on macOS.
+    Returns (raw_bytes, ".png").
+    Raises EphemeralInputError if the clipboard is empty, contains no image, or on non-macOS.
     """
     if platform.system() != "Darwin":
+        raise EphemeralInputError("error: @clipboard is only supported on macOS")
+
+    import io
+    from PIL import Image as PILImage, ImageGrab
+
+    clip = ImageGrab.grabclipboard()
+    if not isinstance(clip, PILImage.Image):
         raise EphemeralInputError(
-            "error: @clipboard is only supported on macOS"
+            "error: clipboard is empty or contains no image; "
+            "for text input use stdin"
         )
-
-    import AppKit  # available only on macOS via pyobjc-framework-Cocoa
-
-    pasteboard = AppKit.NSPasteboard.generalPasteboard()
-    types = list(pasteboard.types() or [])
-
-    for uti, ext in _CLIPBOARD_UTI_MAP.items():
-        if uti in types:
-            ns_data = pasteboard.dataForType_(uti)
-            if ns_data is None:
-                continue
-            raw_bytes = bytes(ns_data)
-            if not raw_bytes:
-                raise EphemeralInputError("error: clipboard is empty")
-            return raw_bytes, ext
-
-    found = types[0] if types else "unknown"
-    raise EphemeralInputError(
-        f"error: unsupported clipboard type '{found}'; "
-        "supported: image, plain text"
-    )
+    buf = io.BytesIO()
+    clip.save(buf, format="PNG")
+    return buf.getvalue(), ".png"
 
 
 def build_ephemeral_request(

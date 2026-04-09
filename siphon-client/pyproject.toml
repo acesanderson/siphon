@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.3.0",
+    "Pillow>=11.0.0",
     "headwater-client",
     "httpx",
     "pytest-watch>=4.2.0",

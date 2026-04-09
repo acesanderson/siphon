@@ -30,7 +30,7 @@ class ImageExtractor(ExtractorStrategy):
     source_type: SourceType = SourceType.IMAGE
 
     @override
-    def extract(self, source: SourceInfo) -> ContentData:
+    def extract(self, source: SourceInfo, diarize: bool = False) -> ContentData:
         image_bytes = self._read_bytes(source.original_source)
         ext = Path(source.original_source.split("?")[0]).suffix.lower()
         mime = MIME_TYPES.get(ext, "image/jpeg")
