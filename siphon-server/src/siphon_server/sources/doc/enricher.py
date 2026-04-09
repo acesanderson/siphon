@@ -7,7 +7,7 @@ from pathlib import Path
 import logging
 
 # Import new Conduit async API
-from conduit.core.model.model_async import ModelAsync
+from conduit.core.model.model_remote import RemoteModelAsync
 from conduit.domain.request.generation_params import GenerationParams
 from conduit.domain.config.conduit_options import ConduitOptions
 from conduit.config import settings as conduit_settings
@@ -106,7 +106,7 @@ class DocEnricher(EnricherStrategy):
         logger.info("Generated description and summary prompts")
         
         # Set up model and options
-        model = ModelAsync(model=preferred_model)
+        model = RemoteModelAsync(model=preferred_model)
         params = GenerationParams(model=preferred_model)
         options = conduit_settings.default_conduit_options()
         options.cache = conduit_settings.default_cache(project_name="siphon")

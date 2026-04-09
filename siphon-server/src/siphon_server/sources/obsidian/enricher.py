@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import override
 
 from conduit.config import settings as conduit_settings
-from conduit.core.model.model_async import ModelAsync
+from conduit.core.model.model_remote import RemoteModelAsync
 from conduit.domain.request.generation_params import GenerationParams
 
 from siphon_api.enums import SourceType
@@ -34,7 +34,7 @@ class ObsidianEnricher(EnricherStrategy):
     async def enrich(
         self, content: ContentData, preferred_model: str = PREFERRED_MODEL
     ) -> EnrichedData:
-        model = ModelAsync(model=preferred_model)
+        model = RemoteModelAsync(model=preferred_model)
         params = GenerationParams(model=preferred_model)
         options = conduit_settings.default_conduit_options()
         options.cache = conduit_settings.default_cache(project_name="siphon")

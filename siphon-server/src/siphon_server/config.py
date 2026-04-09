@@ -26,7 +26,7 @@ def load_settings() -> Settings:
 
     # Defaults (lowest priority)
     config = {
-        "default_model": "gpt-oss:latest",
+        "default_model": "gemma4:latest",
         "log_level": 2,
         "cache": True,
         # Docling defaults
