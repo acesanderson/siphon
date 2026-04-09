@@ -36,6 +36,15 @@ REPOSITORY = ContentRepository()
 SETTINGS = load_settings()
 PREFERRED_MODEL = SETTINGS.default_model
 
+# Pre-warm conduit's OdometerRegistry in the main thread so that worker threads
+# (spawned via asyncio.to_thread) don't hit the signal.signal() call, which is
+# forbidden outside the main thread.
+try:
+    from conduit.config import settings as _conduit_settings
+    _conduit_settings.odometer_registry()
+except Exception:
+    pass
+
 
 class SourceParser:
     """
