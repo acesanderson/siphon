@@ -142,3 +142,90 @@ def test_gulp_clipboard_with_positional_arg_exits_1():
     result = runner.invoke(gulp, ["@clipboard", "/some/path"])
     assert result.exit_code == 1
     assert "cannot combine @clipboard with a source argument" in result.output
+
+
+def test_gulp_stdin_with_positional_arg_exits_1():
+    """AC 8: piped stdin combined with positional source arg exits 1."""
+    runner = CliRunner()
+    result = runner.invoke(gulp, ["/some/path"], input="hello world")
+    assert result.exit_code == 1
+    assert "cannot combine piped input with a source argument" in result.output
+
+
+def test_build_ephemeral_request_same_bytes_same_checksum():
+    """AC 11: identical bytes produce identical checksum (same URI → dedup)."""
+    params = SiphonRequestParams(action=ActionType.GULP)
+    data = b"duplicate content"
+    req1 = build_ephemeral_request(data, ".txt", "stdin", params)
+    req2 = build_ephemeral_request(data, ".txt", "stdin", params)
+    assert req1.file.checksum == req2.file.checksum
+
+
+def test_build_ephemeral_request_different_bytes_different_checksum():
+    """AC 11 (inverse): different bytes produce different checksum."""
+    params = SiphonRequestParams(action=ActionType.GULP)
+    req1 = build_ephemeral_request(b"content a", ".txt", "stdin", params)
+    req2 = build_ephemeral_request(b"content b", ".txt", "stdin", params)
+    assert req1.file.checksum != req2.file.checksum
+
+
+@pytest.mark.skipif(platform.system() != "Darwin", reason="macOS only")
+def test_read_clipboard_png_returns_image_extension():
+    """AC 1 (partial): clipboard with PNG UTI returns .png extension."""
+    png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100
+
+    mock_pasteboard = MagicMock()
+    mock_pasteboard.types.return_value = ["public.png"]
+    mock_pasteboard.dataForType_.return_value = png_bytes
+
+    mock_appkit = MagicMock()
+    mock_appkit.NSPasteboard.generalPasteboard.return_value = mock_pasteboard
+
+    with patch.dict("sys.modules", {"AppKit": mock_appkit}):
+        raw, ext = read_clipboard()
+
+    assert ext == ".png"
+    assert raw == png_bytes
+
+
+@pytest.mark.skipif(platform.system() != "Darwin", reason="macOS only")
+def test_build_ephemeral_request_for_clipboard_png():
+    """AC 1: clipboard PNG bytes produce FILE_PATH request with image extension."""
+    from siphon_api.enums import SourceOrigin
+    png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100
+    params = SiphonRequestParams(action=ActionType.GULP)
+    request = build_ephemeral_request(png_bytes, ".png", "clipboard", params)
+    assert request.origin == SourceOrigin.FILE_PATH
+    assert request.source == "/clipboard.png"
+    assert request.file.extension == ".png"
+
+
+@pytest.mark.skipif(platform.system() != "Darwin", reason="macOS only")
+def test_read_clipboard_plain_text_returns_txt_extension():
+    """AC 2 (partial): clipboard with plain text UTI returns .txt extension."""
+    text_bytes = "Hello, siphon!".encode("utf-8")
+
+    mock_pasteboard = MagicMock()
+    mock_pasteboard.types.return_value = ["public.utf8-plain-text"]
+    mock_pasteboard.dataForType_.return_value = text_bytes
+
+    mock_appkit = MagicMock()
+    mock_appkit.NSPasteboard.generalPasteboard.return_value = mock_pasteboard
+
+    with patch.dict("sys.modules", {"AppKit": mock_appkit}):
+        raw, ext = read_clipboard()
+
+    assert ext == ".txt"
+    assert raw == text_bytes
+
+
+@pytest.mark.skipif(platform.system() != "Darwin", reason="macOS only")
+def test_build_ephemeral_request_for_clipboard_text():
+    """AC 2: clipboard text bytes produce FILE_PATH request with .txt extension."""
+    from siphon_api.enums import SourceOrigin
+    text_bytes = "Hello, siphon!".encode("utf-8")
+    params = SiphonRequestParams(action=ActionType.GULP)
+    request = build_ephemeral_request(text_bytes, ".txt", "clipboard", params)
+    assert request.origin == SourceOrigin.FILE_PATH
+    assert request.source == "/clipboard.txt"
+    assert request.file.extension == ".txt"
