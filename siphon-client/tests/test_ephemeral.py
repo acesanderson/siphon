@@ -112,7 +112,7 @@ def test_build_ephemeral_request_checksum_is_64_chars():
 
 def test_read_clipboard_non_macos_raises():
     """AC 12: read_clipboard raises EphemeralInputError on non-macOS."""
-    with patch("platform.system", return_value="Linux"):
+    with patch("siphon_client.ephemeral.platform.system", return_value="Linux"):
         with pytest.raises(EphemeralInputError, match="only supported on macOS"):
             read_clipboard()
 
@@ -126,7 +126,7 @@ def test_read_clipboard_empty_raises():
     mock_appkit = MagicMock()
     mock_appkit.NSPasteboard.generalPasteboard.return_value = mock_pasteboard
 
-    with patch("platform.system", return_value="Darwin"):
+    with patch("siphon_client.ephemeral.platform.system", return_value="Darwin"):
         with patch.dict("sys.modules", {"AppKit": mock_appkit}):
             with pytest.raises(EphemeralInputError, match="clipboard is empty"):
                 read_clipboard()
