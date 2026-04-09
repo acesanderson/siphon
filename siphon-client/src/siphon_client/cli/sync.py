@@ -310,7 +310,7 @@ async def _process_async(
         from headwater_client.client.headwater_client_async import HeadwaterAsyncClient
 
         semaphore = asyncio.Semaphore(concurrency)
-        async with HeadwaterAsyncClient(host_alias="deepwater") as client:
+        async with HeadwaterAsyncClient() as client:
             results = await asyncio.gather(
                 *[
                     _process_note(
