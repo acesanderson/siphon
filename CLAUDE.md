@@ -30,7 +30,16 @@ bash scripts/deploy.sh --restart-workers alphablue  # alphablue only + rebuild w
 - Runs `uv sync` in `siphon-server/` on each host (always — deps are always synced)
 - `--restart-workers`: additionally rebuilds and restarts Docker worker containers on alphablue, then polls each worker's `/health` endpoint until `status == "healthy"` (or exits non-zero on timeout/error)
 
-**No server restart needed:** there is no standalone siphon-server process. Request routing is handled by headwater, which imports siphon-server as a library. After `uv sync` completes, the updated code is live — no restart required.
+**Headwater restart required for code changes:** headwater is a persistent process that imports siphon-server as a library. File changes on disk are not picked up until headwater restarts. After deploying siphon, restart headwater on the relevant host(s) using headwater's own deploy script:
+
+```bash
+# from $BC/headwater
+bash scripts/deploy.sh caruana      # restarts headwaterrouter + bywater on caruana
+bash scripts/deploy.sh alphablue    # restarts deepwater on alphablue
+bash scripts/deploy.sh              # both hosts
+```
+
+The headwater deploy script pulls, optionally syncs deps (`--sync-deps`), restarts the systemd services, and waits for `/ping` to confirm they're up.
 
 ---
 
@@ -54,7 +63,7 @@ docker volume rm <project_name>_hf_cache
 - **Deploy before testing.** Local edits do nothing until `deploy.sh` runs.
 - **`uv sync` always runs** — no separate flag needed for dependency changes.
 - **Use `--restart-workers` only when worker code or Dockerfiles changed.** It rebuilds images and waits up to 300s per worker for health — it's slow.
-- **No server restart is ever needed.** Siphon has no standalone server process — headwater imports it as a library and picks up changes after `uv sync`.
+- **After deploying siphon, restart headwater.** Headwater imports siphon as a library and caches it at startup — `uv sync` alone is not enough. Run `bash scripts/deploy.sh caruana` from `$BC/headwater` to restart the relevant services.
 - **If a worker fails to come up**, the script prints the last 50 log lines and exits non-zero. Read logs before retrying.
 
 ---
