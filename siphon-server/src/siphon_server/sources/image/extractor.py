@@ -58,7 +58,7 @@ class ImageExtractor(ExtractorStrategy):
         text_content = TextContent(text=_VISION_PROMPT)
         user_message = UserMessage(content=[image_content, text_content])
         params = GenerationParams.defaults(VLM_MODEL)
-        options = ConduitOptions(project_name="siphon")
+        options = ConduitOptions(project_name="siphon", use_cache=False)
         request = GenerationRequest(
             messages=[user_message],
             params=params,
