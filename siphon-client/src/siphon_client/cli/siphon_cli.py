@@ -1,6 +1,7 @@
 """
 Add a "test" option which uses a sample asset.
 """
+from __future__ import annotations
 
 from siphon_api.api.siphon_request import SiphonRequest, SiphonRequestParams
 from siphon_api.api.to_siphon_request import create_siphon_request
@@ -19,11 +20,18 @@ import click
 import logging
 import json
 import os
+import sys
 from siphon_client.cli.bulk_extract import bulk_extract
 from siphon_client.cli.query import query
 from siphon_client.cli.results import results
 from siphon_client.cli.traverse import traverse
 from siphon_client.cli.sync import sync
+from siphon_client.ephemeral import (
+    EphemeralInputError,
+    build_ephemeral_request,
+    read_clipboard,
+    read_stdin,
+)
 
 # Set up logging
 log_level = int(os.getenv("PYTHON_LOG_LEVEL", "1"))
@@ -32,6 +40,58 @@ logging.basicConfig(
     level=levels.get(log_level, logging.INFO), format="%(levelname)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+CLIPBOARD_SENTINEL = "@clipboard"
+
+
+def resolve_ephemeral(
+    source: str | None,
+    params: SiphonRequestParams,
+    fmt: str | None = None,
+    extra_args: tuple[str, ...] = (),
+) -> SiphonRequest | None:
+    """
+    Resolve @clipboard or piped stdin to a SiphonRequest.
+    Returns None if source is a normal path or URL (caller handles it).
+    Exits with code 1 on conflict or resolution error.
+    """
+    is_clipboard = source == CLIPBOARD_SENTINEL
+
+    if is_clipboard and extra_args:
+        click.echo("error: cannot combine @clipboard with a source argument")
+        raise SystemExit(1)
+
+    has_stdin = not sys.stdin.isatty()
+
+    if not is_clipboard and not has_stdin:
+        return None  # Normal path — caller handles
+
+    if is_clipboard and has_stdin:
+        click.echo("error: cannot combine @clipboard with piped stdin", err=True)
+        raise SystemExit(1)
+
+    if is_clipboard:
+        try:
+            raw, ext = read_clipboard()
+        except EphemeralInputError as e:
+            click.echo(str(e), err=True)
+            raise SystemExit(1)
+        logger.info(f"[EPHEMERAL] clipboard: ext={ext} bytes={len(raw)}")
+        return build_ephemeral_request(raw, ext, "clipboard", params)
+
+    # has_stdin is True
+    if source is not None:
+        click.echo(
+            "error: cannot combine piped input with a source argument", err=True
+        )
+        raise SystemExit(1)
+    try:
+        raw, ext = read_stdin(fmt_override=fmt)
+    except EphemeralInputError as e:
+        click.echo(str(e), err=True)
+        raise SystemExit(1)
+    logger.info(f"[EPHEMERAL] stdin: ext={ext} bytes={len(raw)}")
+    return build_ephemeral_request(raw, ext, "stdin", params)
 
 
 def parse_source(source: str) -> str:
@@ -68,7 +128,8 @@ def siphon():
 
 
 @siphon.command()
-@click.argument("source")
+@click.argument("source", default=None, required=False)
+@click.argument("extra_args", nargs=-1)
 @click.option(
     "--return-type",
     "-r",
@@ -82,24 +143,37 @@ def siphon():
     default=False,
     help="Disable caching for this request",
 )
+@click.option(
+    "--format",
+    "fmt",
+    default=None,
+    help="Override type detection (e.g. mp3, png, txt).",
+)
 def gulp(
-    source: str,
+    source: str | None,
+    extra_args: tuple[str, ...],
     return_type: Literal["st", "u", "c", "m", "t", "d", "s", "id", "json"],
     no_cache: bool,
+    fmt: str | None,
 ):
     """
     Process a source and persist the results (e.g., DB, embeddings).
     This is also an importable function for programmatic use (if you want a ProcessedContent object).
     """
     logger.info(f"Received source: {source}")
-    source = parse_source(source)
     params: SiphonRequestParams = SiphonRequestParams(
         action=ActionType.GULP, use_cache=not no_cache
     )
-    request: SiphonRequest = create_siphon_request(
-        source=source,
-        request_params=params,
-    )  # Note the double negative for no_cache
+    request: SiphonRequest | None = resolve_ephemeral(source, params, fmt, extra_args)
+    if request is None:
+        if source is None:
+            click.echo("error: source is required", err=True)
+            raise SystemExit(1)
+        source = parse_source(source)
+        request = create_siphon_request(
+            source=source,
+            request_params=params,
+        )  # Note the double negative for no_cache
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
@@ -148,7 +222,7 @@ def gulp(
 
 
 @siphon.command()
-@click.argument("source")
+@click.argument("source", default=None, required=False)
 @click.option(
     "--return-type",
     "-r",
@@ -156,19 +230,24 @@ def gulp(
     default="u",
     help="Type to return: [u] URI, [st] source type.",
 )
-def parse(source: str, return_type: Literal["u", "st"]):
+def parse(source: str | None, return_type: Literal["u", "st"]):
     """
     Parse a source and return the resolved URI (ephemeral).
     """
     logger.info(f"Received source for parsing: {source}")
-    source = parse_source(source)
     params: SiphonRequestParams = SiphonRequestParams(
         action=ActionType.PARSE,
     )
-    request: SiphonRequest = create_siphon_request(
-        source=source,
-        request_params=params,
-    )
+    request: SiphonRequest | None = resolve_ephemeral(source, params)
+    if request is None:
+        if source is None:
+            click.echo("error: source is required", err=True)
+            raise SystemExit(1)
+        source = parse_source(source)
+        request = create_siphon_request(
+            source=source,
+            request_params=params,
+        )
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
@@ -189,7 +268,7 @@ def parse(source: str, return_type: Literal["u", "st"]):
 
 
 @siphon.command()
-@click.argument("source")
+@click.argument("source", default=None, required=False)
 @click.option(
     "--return-type",
     "-r",
@@ -203,12 +282,17 @@ def parse(source: str, return_type: Literal["u", "st"]):
     default=False,
     help="Enable speaker diarization (audio sources only).",
 )
-def extract(source: str, return_type: Literal["c", "m", "to"], diarize: bool):
+@click.option(
+    "--format",
+    "fmt",
+    default=None,
+    help="Override type detection (e.g. mp3, png, txt).",
+)
+def extract(source: str | None, return_type: Literal["c", "m", "to"], diarize: bool, fmt: str | None):
     """
     Extract content from a source without persisting (ephemeral).
     """
     logger.info(f"Received source for extraction: {source}")
-    source = parse_source(source)
     # Two possible actions here
     if return_type == "to":
         action = ActionType.TOKENIZE
@@ -216,10 +300,16 @@ def extract(source: str, return_type: Literal["c", "m", "to"], diarize: bool):
         action = ActionType.EXTRACT
     # Build request
     params: SiphonRequestParams = SiphonRequestParams(action=action, diarize=diarize)
-    request: SiphonRequest = create_siphon_request(
-        source=source,
-        request_params=params,
-    )
+    request: SiphonRequest | None = resolve_ephemeral(source, params, fmt)
+    if request is None:
+        if source is None:
+            click.echo("error: source is required", err=True)
+            raise SystemExit(1)
+        source = parse_source(source)
+        request = create_siphon_request(
+            source=source,
+            request_params=params,
+        )
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
@@ -248,7 +338,7 @@ def extract(source: str, return_type: Literal["c", "m", "to"], diarize: bool):
 
 
 @siphon.command()
-@click.argument("source")
+@click.argument("source", default=None, required=False)
 @click.option(
     "--return-type",
     "-r",
@@ -256,19 +346,24 @@ def extract(source: str, return_type: Literal["c", "m", "to"], diarize: bool):
     default="s",
     help="Type to return: [s]ummary, [d]escription, [t]itle.",
 )
-def enrich(source: str, return_type: Literal["s", "d", "t"]):
+def enrich(source: str | None, return_type: Literal["s", "d", "t"]):
     """
     Enrich a source without persisting (ephemeral).
     """
     logger.info(f"Received source for enrichment: {source}")
-    source = parse_source(source)
     params: SiphonRequestParams = SiphonRequestParams(
         action=ActionType.ENRICH,
     )
-    request: SiphonRequest = create_siphon_request(
-        source=source,
-        request_params=params,
-    )
+    request: SiphonRequest | None = resolve_ephemeral(source, params)
+    if request is None:
+        if source is None:
+            click.echo("error: source is required", err=True)
+            raise SystemExit(1)
+        source = parse_source(source)
+        request = create_siphon_request(
+            source=source,
+            request_params=params,
+        )
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 

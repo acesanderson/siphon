@@ -130,3 +130,15 @@ def test_read_clipboard_empty_raises():
         with patch.dict("sys.modules", {"AppKit": mock_appkit}):
             with pytest.raises(EphemeralInputError, match="clipboard is empty"):
                 read_clipboard()
+
+
+from click.testing import CliRunner
+from siphon_client.cli.siphon_cli import gulp
+
+
+def test_gulp_clipboard_with_positional_arg_exits_1():
+    """AC 7: @clipboard combined with positional source arg exits 1."""
+    runner = CliRunner()
+    result = runner.invoke(gulp, ["@clipboard", "/some/path"])
+    assert result.exit_code == 1
+    assert "cannot combine @clipboard with a source argument" in result.output
