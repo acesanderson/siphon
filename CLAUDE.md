@@ -4,10 +4,10 @@ Siphon is a media processing pipeline (audio transcription, diarization, image g
 
 ## Host Map
 
-| Host | Role |
-|---|---|
-| caruana | primary siphon-server host |
-| alphablue | GPU worker host (diarization, whisper, imagegen) |
+| Host | Role | Headwater services |
+|---|---|---|
+| caruana | primary siphon-server host | `headwaterrouter` (8081), `bywater` (8080) |
+| alphablue | GPU worker host (diarization, whisper, imagegen) | `deepwater` (8080) |
 
 ---
 
