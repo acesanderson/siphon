@@ -1,6 +1,7 @@
 import logging
 import os
 import threading
+import time
 import torch
 import numpy as np
 import soundfile as sf
@@ -17,24 +18,32 @@ _error: str | None = None
 
 
 def load_model_background():
-    """Load model in a background thread so the server can start accepting requests immediately."""
+    """Load model in a background thread, retrying on transient HF errors."""
     global _pipeline, _ready, _error
-    try:
-        logger.info("[DIARIZE] Starting model load...")
-        hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-        assert hf_token, "HUGGINGFACEHUB_API_TOKEN environment variable is not set"
-        logger.info("[DIARIZE] Fetching pyannote/speaker-diarization-3.1 from HuggingFace...")
-        _pipeline = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1",
-            token=hf_token,
-        )
-        logger.info("[DIARIZE] Moving pipeline to CUDA...")
-        _pipeline.to(torch.device("cuda"))
-        _ready = True
-        logger.info("[DIARIZE] Model ready.")
-    except Exception as e:
-        _error = str(e)
-        logger.error(f"[DIARIZE] Model load failed: {e}")
+    hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    if not hf_token:
+        _error = "HUGGINGFACEHUB_API_TOKEN environment variable is not set"
+        logger.error(f"[DIARIZE] {_error}")
+        return
+    retry_delays = [5, 15, 30, 60, 120, 300]
+    for attempt, delay in enumerate(retry_delays + [None]):
+        try:
+            logger.info(f"[DIARIZE] Loading model (attempt {attempt + 1})...")
+            _pipeline = Pipeline.from_pretrained(
+                "pyannote/speaker-diarization-3.1",
+                token=hf_token,
+            )
+            _pipeline.to(torch.device("cuda"))
+            _ready = True
+            logger.info("[DIARIZE] Model ready.")
+            return
+        except Exception as e:
+            if delay is None:
+                _error = str(e)
+                logger.error(f"[DIARIZE] Model load failed after all retries: {e}")
+                return
+            logger.warning(f"[DIARIZE] Load attempt {attempt + 1} failed: {e}. Retrying in {delay}s...")
+            time.sleep(delay)
 
 
 def start_loading():
