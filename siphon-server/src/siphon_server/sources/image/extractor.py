@@ -3,7 +3,6 @@ from __future__ import annotations
 # NOTE: Vision extraction currently delegates to conduit with the default model.
 # A dedicated local vision worker is planned for future iterations.
 
-import asyncio
 import base64
 import urllib.request
 from pathlib import Path
@@ -30,12 +29,12 @@ class ImageExtractor(ExtractorStrategy):
     source_type: SourceType = SourceType.IMAGE
 
     @override
-    def extract(self, source: SourceInfo, diarize: bool = False) -> ContentData:
+    async def extract(self, source: SourceInfo, diarize: bool = False) -> ContentData:
         image_bytes = self._read_bytes(source.original_source)
         ext = Path(source.original_source.split("?")[0]).suffix.lower()
         mime = MIME_TYPES.get(ext, "image/jpeg")
         b64 = base64.b64encode(image_bytes).decode()
-        description = asyncio.run(self._describe(b64, mime))
+        description = await self._describe(b64, mime)
         metadata = {
             "file_name": Path(source.original_source).name,
             "extension": ext,

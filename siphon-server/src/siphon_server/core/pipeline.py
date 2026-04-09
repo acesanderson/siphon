@@ -121,7 +121,7 @@ class ContentExtractor:
                 extractors.append(extractor)
         return extractors
 
-    def execute(self, source_info: SourceInfo, diarize: bool = False) -> ContentData:
+    async def execute(self, source_info: SourceInfo, diarize: bool = False) -> ContentData:
         logger.debug(
             f"Executing ContentExtractor for source type: {source_info.source_type}"
         )
@@ -132,7 +132,10 @@ class ContentExtractor:
                     "Using extractor {extractor.__name__} for source type: {source_type}"
                 )
                 extractor_obj = extractor()
-                return extractor_obj.extract(source=source_info, diarize=diarize)
+                if asyncio.iscoroutinefunction(extractor_obj.extract):
+                    return await extractor_obj.extract(source=source_info, diarize=diarize)
+                else:
+                    return await asyncio.to_thread(extractor_obj.extract, source_info, diarize)
 
 
 class ContentEnricher:
@@ -249,7 +252,7 @@ class SiphonPipeline:
         _t0 = time.monotonic()
         _error_occurred = False
         try:
-            content_data = await asyncio.to_thread(self.extractor.execute, source_info, diarize)
+            content_data = await self.extractor.execute(source_info, diarize)
         except Exception:
             _error_occurred = True
             raise
