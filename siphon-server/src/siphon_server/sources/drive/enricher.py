@@ -8,7 +8,9 @@ class DriveEnricher(EnricherStrategy):
     """
     Enrich Drive content with LLM
     """
-    
+
+    source_type: SourceType = SourceType.DRIVE
+
     def __init__(self, llm=None):
         # TODO: Inject LLM client
         self.llm = llm
