@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/bianders/Brian_Code/siphon status --short)",
+      "Bash(git -C /Users/bianders/Brian_Code/siphon diff)",
+      "Bash(git -C /Users/bianders/Brian_Code/siphon add siphon-client/pyproject.toml siphon-client/src/siphon_client/ephemeral.py siphon-server/src/siphon_server/sources/image/extractor.py)",
+      "Bash(git -C /Users/bianders/Brian_Code/siphon commit -m ':*)"
+    ]
+  }
+}

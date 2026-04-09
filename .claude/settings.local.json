@@ -59,7 +59,8 @@
       "Bash(/bin/zsh:*)",
       "Bash(export HOME=/Users/bianders)",
       "Bash(/opt/homebrew/bin/python -m pytest tests/test_ephemeral.py::test_gulp_clipboard_with_positional_arg_exits_1 -v)",
-      "Bash(/opt/homebrew/bin/bash:*)"
+      "Bash(/opt/homebrew/bin/bash:*)",
+      "Bash(script:*)"
     ]
   }
 }
