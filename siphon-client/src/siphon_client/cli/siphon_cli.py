@@ -58,7 +58,7 @@ def resolve_ephemeral(
     is_clipboard = source == CLIPBOARD_SENTINEL
 
     if is_clipboard and extra_args:
-        click.echo("error: cannot combine @clipboard with a source argument")
+        click.echo("error: cannot combine @clipboard with a source argument", err=True)
         raise SystemExit(1)
 
     has_stdin = not sys.stdin.isatty()
