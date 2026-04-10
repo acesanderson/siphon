@@ -19,6 +19,7 @@ from siphon_server.config import load_settings
 from siphon_api.enums import SourceType
 from typing import TYPE_CHECKING
 import asyncio
+import inspect
 import time
 
 if TYPE_CHECKING:
@@ -132,10 +133,12 @@ class ContentExtractor:
                     "Using extractor {extractor.__name__} for source type: {source_type}"
                 )
                 extractor_obj = extractor()
+                sig = inspect.signature(extractor_obj.extract)
+                kwargs = {"diarize": diarize} if "diarize" in sig.parameters else {}
                 if asyncio.iscoroutinefunction(extractor_obj.extract):
-                    return await extractor_obj.extract(source=source_info, diarize=diarize)
+                    return await extractor_obj.extract(source=source_info, **kwargs)
                 else:
-                    return await asyncio.to_thread(extractor_obj.extract, source_info, diarize)
+                    return await asyncio.to_thread(extractor_obj.extract, source_info, **kwargs)
 
 
 class ContentEnricher:
