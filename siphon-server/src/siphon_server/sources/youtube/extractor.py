@@ -9,7 +9,7 @@ from siphon_server.sources.youtube.cache import (
 )
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import WebshareProxyConfig
+from youtube_transcript_api.proxies import GenericProxyConfig
 from functools import lru_cache
 from typing import override, Any
 import os
@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 transcript_cache = YouTubeTranscriptCache()
 metadata_cache = YouTubeMetadataCache()
 
-WEBSHARE_USERNAME = os.getenv("WEBSHARE_USERNAME")
-WEBSHARE_PASS = os.getenv("WEBSHARE_PASS")
-if not WEBSHARE_USERNAME or not WEBSHARE_PASS:
+OXY_NAME = os.getenv("OXY_NAME")
+OXY_PASSWORD = os.getenv("OXY_PASSWORD")
+if not OXY_NAME or not OXY_PASSWORD:
     logger.warning(
-        "Webshare credentials not set in environment variables. Transcript downloads may fail if rate limits are exceeded."
+        "Oxylabs credentials not set in environment variables. Transcript downloads may fail if rate limits are exceeded."
     )
-    raise EnvironmentError("Webshare credentials not set in environment variables.")
+    raise EnvironmentError("Oxylabs credentials not set in environment variables.")
 
 
 class YouTubeExtractor(ExtractorStrategy):
@@ -161,12 +161,10 @@ class YouTubeExtractor(ExtractorStrategy):
         If not cached, download the transcript using youtube-transcript-api.
         """
         logger.debug("Using youtube-transcript-api to download transcript...")
-        logger.debug("Setting up YouTubeTranscriptApi with Webshare proxy...")
+        logger.debug("Setting up YouTubeTranscriptApi with Oxylabs proxy...")
+        proxy_url = f"http://customer-{OXY_NAME}:{OXY_PASSWORD}@pr.oxylabs.io:7777"
         ytt_api = YouTubeTranscriptApi(
-            proxy_config=WebshareProxyConfig(
-                proxy_username=WEBSHARE_USERNAME,
-                proxy_password=WEBSHARE_PASS,
-            )
+            proxy_config=GenericProxyConfig(proxy_url)
         )
 
         # all requests done by ytt_api will now be proxied through Webshare
