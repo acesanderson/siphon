@@ -58,6 +58,10 @@ docker volume rm <project_name>_hf_cache
 
 ---
 
+## Ground Rules for Claude
+
+- **Never SSH directly.** All remote operations go through the approved deploy scripts (`scripts/deploy.sh` in this repo, `scripts/deploy.sh` in `$BC/headwater`).
+
 ## Ground Rules
 
 - **Deploy before testing.** Local edits do nothing until `deploy.sh` runs.
