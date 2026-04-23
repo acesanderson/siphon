@@ -21,6 +21,11 @@ declare -A REMOTE_REPO=(
     [alphablue]="/home/fishhouses/Brian_Code/siphon"
 )
 
+declare -A REMOTE_DBCLIENTS=(
+    [caruana]="/home/bianders/Brian_Code/dbclients-project"
+    [alphablue]="/home/fishhouses/Brian_Code/dbclients-project"
+)
+
 WORKERS_ALPHABLUE=(
     "siphon-server/src/siphon_server/workers/diarization_gpu"
     "siphon-server/src/siphon_server/workers/whisper_gpu"
@@ -57,6 +62,8 @@ remote_pull() {
     local repo="${REMOTE_REPO[$host]}"
     echo "==> [$host] pulling code..."
     ssh "$host" "git -C $repo pull --ff-only https://${GITHUB_PERSONAL_TOKEN}@github.com/acesanderson/siphon.git"
+    echo "==> [$host] pulling dbclients..."
+    ssh -A "$host" "git -C ${REMOTE_DBCLIENTS[$host]} pull --ff-only" || echo "==> [$host] dbclients pull failed (SSH agent not forwarded?) — skipping"
     echo "==> [$host] syncing dependencies..."
     ssh "$host" "cd $repo/siphon-server && uv sync"
 }

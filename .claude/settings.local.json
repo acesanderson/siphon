@@ -61,7 +61,12 @@
       "Bash(/opt/homebrew/bin/python -m pytest tests/test_ephemeral.py::test_gulp_clipboard_with_positional_arg_exits_1 -v)",
       "Bash(/opt/homebrew/bin/bash:*)",
       "Bash(script:*)",
-      "Bash(chmod +x:*)"
+      "Bash(chmod +x:*)",
+      "Bash(curl -s http://172.16.0.4:8081/logs/journal?n=5)",
+      "Bash(curl -s \"http://172.16.0.4:8081/logs/journal?n=5\")",
+      "Bash(curl -s \"http://172.16.0.4:8080/logs/journal?n=5\")",
+      "Bash(curl -s \"http://172.16.0.2:8080/logs/journal?n=5\")",
+      "Bash(curl -s \"http://172.16.0.3:8080/logs/journal?n=5\")"
     ]
   }
 }
