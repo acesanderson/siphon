@@ -66,7 +66,28 @@
       "Bash(curl -s \"http://172.16.0.4:8081/logs/journal?n=5\")",
       "Bash(curl -s \"http://172.16.0.4:8080/logs/journal?n=5\")",
       "Bash(curl -s \"http://172.16.0.2:8080/logs/journal?n=5\")",
-      "Bash(curl -s \"http://172.16.0.3:8080/logs/journal?n=5\")"
+      "Bash(curl -s \"http://172.16.0.3:8080/logs/journal?n=5\")",
+      "Bash(BLACKGLASS_VAULT_PATH=/tmp BLACKGLASS_API_KEY=test uv run --package blackglass-server python -c \"from blackglass_server.config import settings; from blackglass_server.auth import require_api_key; print\\('ok'\\)\")",
+      "Bash(BLACKGLASS_VAULT_PATH=/tmp BLACKGLASS_API_KEY=test uv run *)",
+      "Bash(/bin/bash *)",
+      "Bash(python -m pytest blackglass-server/tests/test_text_utils.py -v --no-header)",
+      "Bash(curl -s http://localhost:8083/health)",
+      "Bash(kill %1)",
+      "Bash(xargs kill *)",
+      "Bash(/opt/homebrew/bin/git add *)",
+      "Bash(/opt/homebrew/bin/git commit *)",
+      "Bash(/opt/homebrew/bin/git -C /Users/bianders/vibe/blackglass add blackglass-server/src/blackglass_server/routes/notes.py)",
+      "Bash(/opt/homebrew/bin/git -C /Users/bianders/vibe/blackglass commit -m \"fix\\(server\\): guard against null key in set_frontmatter patch op\")",
+      "Bash(BLACKGLASS_VAULT_PATH=/Users/bianders/morphy BLACKGLASS_API_KEY=test uv run --package blackglass-server uvicorn blackglass_server.main:app --port 8083)",
+      "Bash(curl -s -H \"X-API-Key: test\" http://localhost:8083/vault/tags)",
+      "Bash(wait %1)",
+      "Bash(BLACKGLASS_VAULT_PATH=/Users/bianders/morphy BLACKGLASS_API_KEY=test /opt/homebrew/bin/uv run --package blackglass-server --directory /Users/bianders/vibe/blackglass uvicorn blackglass_server.main:app --port 8083)",
+      "Bash(pkill -f \"uvicorn.*8083\")",
+      "Bash(BLACKGLASS_VAULT_PATH=/Users/bianders/morphy BLACKGLASS_API_KEY=test uv run --package blackglass-server python3)",
+      "Bash(curl -s -H \"X-API-Key: test\" http://localhost:8083/vault/files)",
+      "Bash(curl -s -H \"X-API-Key: test\" \"http://localhost:8083/vault/search?q=test\")",
+      "Bash(curl -s -H \"X-API-Key: test\" http://localhost:8083/vault/periodic)",
+      "Bash(curl -s -H \"X-API-Key: test\" \"http://localhost:8083/vault/backlinks/test\")"
     ]
   }
 }
