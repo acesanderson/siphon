@@ -87,7 +87,18 @@
       "Bash(curl -s -H \"X-API-Key: test\" http://localhost:8083/vault/files)",
       "Bash(curl -s -H \"X-API-Key: test\" \"http://localhost:8083/vault/search?q=test\")",
       "Bash(curl -s -H \"X-API-Key: test\" http://localhost:8083/vault/periodic)",
-      "Bash(curl -s -H \"X-API-Key: test\" \"http://localhost:8083/vault/backlinks/test\")"
+      "Bash(curl -s -H \"X-API-Key: test\" \"http://localhost:8083/vault/backlinks/test\")",
+      "Read(//Users/bianders/Brian_Code/conduit-project/scripts/**)",
+      "Read(//Users/bianders/Brian_Code/conduit-project/**)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "Bash(bash scripts/worker_logs.sh*)",
+      "Bash(bash scripts/worker_test.sh*)",
+      "Bash(bash scripts/deploy.sh*)"
     ]
   }
 }

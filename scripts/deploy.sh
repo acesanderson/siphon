@@ -29,10 +29,12 @@ declare -A REMOTE_DBCLIENTS=(
 WORKERS_ALPHABLUE=(
     "siphon-server/src/siphon_server/workers/diarization_gpu"
     "siphon-server/src/siphon_server/workers/whisper_gpu"
+    "siphon-server/src/siphon_server/workers/granite_speech_gpu"
 )
 WORKER_PORTS=(
     8000
     8002
+    8003
 )
 
 # Legacy workers to stop before bringing up new ones (port conflicts)
