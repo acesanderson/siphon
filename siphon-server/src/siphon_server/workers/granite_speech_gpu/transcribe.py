@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 MODEL_NAME = "ibm-granite/granite-speech-4.1-2b-plus"
 TARGET_SR = 16000
-MAX_DURATION_SEC = 600  # model trained on ≤10 min for SAA; longer input produces garbage
+MAX_DURATION_SEC = 300  # 5-min window keeps context stable; 10-min limit is theoretical max
 SAA_PROMPT = (
     "<|audio|> Speaker attribution: Transcribe and denote who is speaking by adding "
     "[Speaker 1]: and [Speaker 2]: tags before speaker turns."
@@ -110,8 +110,7 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
     )
     logger.info(f"[GRANITE] prompt_text[:200]={prompt_text[:200]!r}")
 
-    # Drop device= arg; move to cuda via .to() after processing
-    inputs = _processor(prompt_text, audio, return_tensors="pt").to("cuda")
+    inputs = _processor(prompt_text, audio, sampling_rate=TARGET_SR, return_tensors="pt").to("cuda")
     logger.info(f"[GRANITE] input keys={list(inputs.keys())} input_ids shape={inputs['input_ids'].shape}")
 
     outputs = _model.generate(
@@ -119,7 +118,7 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
         max_new_tokens=2000,
         do_sample=False,
         num_beams=1,
-        repetition_penalty=1.3,
+        repetition_penalty=1.5,
     )
     new_tokens = outputs[0, inputs["input_ids"].shape[-1]:]
     raw_text = tokenizer.decode(new_tokens, add_special_tokens=False, skip_special_tokens=True)
