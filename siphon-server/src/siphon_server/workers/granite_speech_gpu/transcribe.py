@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 MODEL_NAME = "ibm-granite/granite-speech-4.1-2b-plus"
 TARGET_SR = 16000
+MAX_DURATION_SEC = 600  # model trained on ≤10 min for SAA; longer input produces garbage
 SAA_PROMPT = (
     "<|audio|> Speaker attribution: Transcribe and denote who is speaking by adding "
     "[Speaker 1]: and [Speaker 2]: tags before speaker turns."
@@ -67,6 +68,10 @@ def _load_audio(audio_path: str) -> np.ndarray:
     if sample_rate != TARGET_SR:
         resampler = torchaudio.transforms.Resample(sample_rate, TARGET_SR)
         waveform = resampler(waveform)
+    max_samples = MAX_DURATION_SEC * TARGET_SR
+    if waveform.shape[-1] > max_samples:
+        logger.warning(f"[GRANITE] audio {waveform.shape[-1]/TARGET_SR:.0f}s exceeds {MAX_DURATION_SEC}s limit — truncating")
+        waveform = waveform[..., :max_samples]
     return waveform.numpy()  # (1, time) float32 numpy array
 
 
