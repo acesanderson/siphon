@@ -114,7 +114,13 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
     inputs = _processor(prompt_text, audio, return_tensors="pt").to("cuda")
     logger.info(f"[GRANITE] input keys={list(inputs.keys())} input_ids shape={inputs['input_ids'].shape}")
 
-    outputs = _model.generate(**inputs, max_new_tokens=4000, do_sample=False, num_beams=1)
+    outputs = _model.generate(
+        **inputs,
+        max_new_tokens=2000,
+        do_sample=False,
+        num_beams=1,
+        repetition_penalty=1.3,
+    )
     new_tokens = outputs[0, inputs["input_ids"].shape[-1]:]
     raw_text = tokenizer.decode(new_tokens, add_special_tokens=False, skip_special_tokens=True)
     logger.info(f"[GRANITE] raw_text[:200]={raw_text[:200]!r}")
