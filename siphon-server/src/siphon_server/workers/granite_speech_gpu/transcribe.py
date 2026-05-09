@@ -67,7 +67,7 @@ def _load_audio(audio_path: str) -> np.ndarray:
     if sample_rate != TARGET_SR:
         resampler = torchaudio.transforms.Resample(sample_rate, TARGET_SR)
         waveform = resampler(waveform)
-    return waveform.squeeze(0).numpy()  # (time,) float32 numpy array
+    return waveform.numpy()  # (1, time) float32 numpy array — keep channel dim
 
 
 def _parse_saa(text: str) -> list[dict]:
