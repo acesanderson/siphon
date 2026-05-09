@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y python3.11 python3-pip ffmpeg && rm -rf
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 RUN uv pip install --system torch torchaudio --index-url https://download.pytorch.org/whl/cu128
-RUN uv pip install --system "transformers>=5.8" accelerate fastapi "uvicorn[standard]" python-multipart
+RUN uv pip install --system "transformers>=5.8" accelerate torchcodec fastapi "uvicorn[standard]" python-multipart
 
 COPY transcribe.py .
 COPY main.py .

@@ -3,14 +3,12 @@ import re
 import threading
 
 import torch
-import torchaudio
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 MODEL_NAME = "ibm-granite/granite-speech-4.1-2b-plus"
-TARGET_SR = 16000
 SAA_PROMPT = (
     "<|audio|> Speaker attribution: Transcribe and denote who is speaking by adding "
     "[Speaker 1]: and [Speaker 2]: tags before speaker turns."
@@ -59,16 +57,6 @@ def get_error() -> str | None:
     return _error
 
 
-def _load_audio(audio_path: str) -> torch.Tensor:
-    waveform, sample_rate = torchaudio.load(audio_path)
-    if waveform.shape[0] > 1:
-        waveform = waveform.mean(dim=0, keepdim=True)
-    if sample_rate != TARGET_SR:
-        resampler = torchaudio.transforms.Resample(sample_rate, TARGET_SR)
-        waveform = resampler(waveform)
-    return waveform.squeeze(0)  # (time,)
-
-
 def _parse_saa(text: str) -> list[dict]:
     parts = re.split(r"(\[Speaker \d+\])", text)
     segments = []
@@ -91,7 +79,6 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
     if not _ready:
         raise RuntimeError("Model not yet loaded")
 
-    audio = _load_audio(audio_path)
     tokenizer = _processor.tokenizer
 
     chat = [
@@ -102,7 +89,8 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
         chat, tokenize=False, add_generation_prompt=True
     )
 
-    inputs = _processor(prompt_text, audio, device="cuda", return_tensors="pt").to("cuda")
+    # Pass file path directly; torchcodec handles decoding and resampling
+    inputs = _processor(prompt_text, audio_path, device="cuda", return_tensors="pt").to("cuda")
     outputs = _model.generate(**inputs, max_new_tokens=4000, do_sample=False, num_beams=1)
     new_tokens = outputs[0, inputs["input_ids"].shape[-1]:]
     raw_text = tokenizer.decode(new_tokens, add_special_tokens=False, skip_special_tokens=True)
