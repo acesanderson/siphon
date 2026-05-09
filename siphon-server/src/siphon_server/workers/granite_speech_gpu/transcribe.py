@@ -37,7 +37,7 @@ def load_model_background():
         _model = AutoModelForSpeechSeq2Seq.from_pretrained(
             MODEL_NAME,
             device_map="cuda",
-            torch_dtype=torch.bfloat16,
+            dtype=torch.bfloat16,
         )
         _model.eval()
         _ready = True
@@ -67,7 +67,7 @@ def _load_audio(audio_path: str) -> np.ndarray:
     if sample_rate != TARGET_SR:
         resampler = torchaudio.transforms.Resample(sample_rate, TARGET_SR)
         waveform = resampler(waveform)
-    return waveform.numpy()  # (1, time) float32 numpy array — keep channel dim
+    return waveform.numpy()  # (1, time) float32 numpy array
 
 
 def _parse_saa(text: str) -> list[dict]:
@@ -93,8 +93,9 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
         raise RuntimeError("Model not yet loaded")
 
     audio = _load_audio(audio_path)
-    tokenizer = _processor.tokenizer
+    logger.info(f"[GRANITE] audio shape={audio.shape} dtype={audio.dtype} sr={TARGET_SR}")
 
+    tokenizer = _processor.tokenizer
     chat = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": SAA_PROMPT},
@@ -102,11 +103,16 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
     prompt_text = tokenizer.apply_chat_template(
         chat, tokenize=False, add_generation_prompt=True
     )
+    logger.info(f"[GRANITE] prompt_text[:200]={prompt_text[:200]!r}")
 
-    inputs = _processor(prompt_text, audio, device="cuda", return_tensors="pt").to("cuda")
+    # Drop device= arg; move to cuda via .to() after processing
+    inputs = _processor(prompt_text, audio, return_tensors="pt").to("cuda")
+    logger.info(f"[GRANITE] input keys={list(inputs.keys())} input_ids shape={inputs['input_ids'].shape}")
+
     outputs = _model.generate(**inputs, max_new_tokens=4000, do_sample=False, num_beams=1)
     new_tokens = outputs[0, inputs["input_ids"].shape[-1]:]
     raw_text = tokenizer.decode(new_tokens, add_special_tokens=False, skip_special_tokens=True)
+    logger.info(f"[GRANITE] raw_text[:200]={raw_text[:200]!r}")
 
     segments = _parse_saa(raw_text)
     return segments, raw_text
