@@ -2,6 +2,33 @@
 
 Siphon is a media processing pipeline (audio transcription, diarization, image generation) that runs on two Linux hosts. This file tells you how to develop, deploy, and debug it as a coding agent.
 
+---
+
+## Active Work — Enrichment + Retrieval Refactor
+
+**Status as of 2026-06-01.**
+
+A multi-session refactor is in progress to (a) delegate summarization to conduit's `RoutingSummarizer` so long-form content gets routed to the right strategy, and (b) reshape Siphon's description artifact into a HyDE-aligned, retrieval-only artifact backed by a better embedding model.
+
+**Phase 3 of conduit-side work is shipped and deployed.**
+- `ArticleEnricher` now delegates summarization to `conduit.RoutingSummarizer` with a per-source `guideline.jinja2` (commit `040cfe3`).
+- All four headwater hosts are running the new code as of 2026-06-01.
+- Article is the only source type migrated so far. 10 others still use the legacy "single-shot model.query against raw text" pattern.
+
+**Pick up here tomorrow:**
+
+1. **Read `siphon-server/dev/summarization.md`** — current enrichment architecture, article = template, migration recipe for the other 10 source types.
+2. **Read `siphon-server/dev/retrieval.md`** — embedding migration plan (all-MiniLM-L6-v2 → nomic-embed-text-v2), description redesign as HyDE-shaped retrieval artifact, query-side HyDE + BM25 + RRF, five-phase rollout (R1–R5).
+3. **Conduit-side context** — `$BC/conduit-project/evals/STRATEGY.md`. The "Published Routing Decision" section explains tier breakpoints, models, hosts. RoutingSummarizer + `PRODUCTION_ROUTING` is in conduit at `src/conduit/strategies/summarize/summarizers/routing.py`.
+
+**Recommended next action: Phase R1 in `retrieval.md`** — redesign Article's description to be HyDE-shaped, generated as a one-shot pass on top of the summary (not raw text). Iterate the prompt against a real article. This unblocks Phase R2 (embedding migration).
+
+**Open follow-ups not on the critical path:**
+- Cronicle event `emothl43a01` (the conduit eval rerun) is timing out at the 4h Cronicle limit and writing 0-byte NAS logs. Worth fixing but doesn't block Siphon work.
+- Other 10 enrichers wait for description redesign to settle before mass-migration.
+
+---
+
 ## Host Map
 
 | Host | Role | Headwater services |
@@ -86,3 +113,36 @@ siphon/
   scripts/deploy.sh
   docs/           feature specs and plans
 ```
+
+---
+
+## Non-Negotiable Behavioral Rules
+
+### Local Models Only — DATA PRIVACY RULE
+
+**Never fall back to cloud models when the user requests local inference.** Content processed here (meeting transcripts, licensing data, internal analysis) must not leave to Anthropic, OpenAI, Google, or any third-party cloud API.
+
+If `gpt-oss:latest` via Headwater is unreachable: STOP. Report the problem. Ask whether to wait or try Bywater (Caruana) as the alternate Headwater host. Never silently switch to haiku, gpt-mini, sonnet, opus, gemini, etc.
+
+### CLI First
+
+Always attempt CLI invocations first. Only fall back to direct server/database/client calls (HeadwaterAsyncClient, psql, etc.) when the CLI hits a genuine technical roadblock.
+
+For Headwater inference, try `conduit query --model gpt-oss` first. If the CLI is misconfigured or routing incorrectly, that counts as a roadblock — escalate to HeadwaterAsyncClient only then.
+
+---
+
+## Nimzo VPS
+
+- IP: 204.168.191.144 / SSH alias: `nimzo` / User: root / Key: `~/.ssh/Petrosian`
+- Purpose: public-facing VPS, running Stalwart Mail Server for newsletter ingestion
+- Stalwart: self-hosted IMAP/JMAP/SMTP; app password auth (no OAuth)
+
+## Newsletter Source (in progress)
+
+- Protocol: IMAP against Stalwart on nimzo
+- Credentials via env: `NEWSLETTER_IMAP_HOST`, `NEWSLETTER_IMAP_USER`, `NEWSLETTER_IMAP_PASSWORD`
+- URI scheme: `newsletter:///<sender_domain>/<message_id>`
+- Extraction: HTML → markdown via readabilipy + markdownify
+- CLI: `siphon fetch newsletters`
+- Checkpoint: timestamp + message-ID set in Postgres (append-only, no automated pruning)

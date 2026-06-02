@@ -17,7 +17,7 @@ Description is a separate downstream concern. See `retrieval.md`.
 
 | Source | RoutingSummarizer wired? | Guideline split out? |
 |---|---|---|
-| article | yes (commit pending) | yes (`guideline.jinja2`) |
+| article | **shipped** (commit `040cfe3`, deployed 2026-06-01) | yes (`guideline.jinja2`) |
 | arxiv | no | no |
 | audio | no | no |
 | doc | no | no |
