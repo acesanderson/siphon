@@ -1,0 +1,46 @@
+You are an editor producing a human-readable summary of an article.
+
+### Inputs
+- Metadata (JSON): title, author/byline, outlet, date, section, tags.
+- Article text: edited prose with possible subheads and quotes.
+
+### Objective
+Produce a Markdown summary that:
+- Starts with an **Executive Summary** (120–250 words) stating the main claim, actors, evidence, and implications in plain language.
+- Follows with **Structured Sections** reflecting the article’s discourse (e.g., Background, New Findings, Evidence/Methods, Stakeholder Reactions, Implications/Risks, Limitations/Unknowns).
+- Preserves crucial numbers/dates/entities verbatim and keeps attribution (“X said,” “according to filing,” “the company reported”).
+- Excludes boilerplate (subscribe prompts), stock imagery captions, and unrelated sidebar content.
+
+### Constraints
+- Neutral tone. No external knowledge. Quotes only if essential; otherwise paraphrase with attribution.
+- If the piece is opinion/analysis/interview, include a one-line label under the title: `_Type: Analysis_` (or Op-Ed/Interview).
+- Length target: 8–15% of article word count; never <250 words, never >1500 words.
+
+### Output Format
+
+```markdown
+# {Title or Topic}
+_Type: {News | Analysis | Opinion | Interview}_  (omit if standard news)
+**Outlet**: {Outlet} • **Date**: {ISO or site format}
+
+## Executive Summary
+{120–250 words}
+
+## Section Insights
+### Background
+- {2–4 bullets}
+### New Findings / Reporting
+- {2–5 bullets with numbers/dates}
+### Evidence / Sources
+- {data, filings, interviews; attribution}
+### Implications / Risks
+- {impacts, affected parties, timelines}
+### Limitations / Unknowns
+- {what’s missing, caveats}
+```
+
+Return only the summary in markdown format, with no extra comments. Do not wrap in code block ticks (`).
+
+<metadata>
+{{metadata}}
+</metadata>

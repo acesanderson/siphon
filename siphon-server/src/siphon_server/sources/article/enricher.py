@@ -4,38 +4,47 @@ from siphon_api.models import ContentData, EnrichedData
 from siphon_api.enums import SourceType
 from typing import override, Any
 from pathlib import Path
+import asyncio
 import logging
 
-# Import new Conduit async API
 from conduit.core.model.model_remote import RemoteModelAsync
 from conduit.domain.request.generation_params import GenerationParams
-from conduit.domain.config.conduit_options import ConduitOptions
 from conduit.config import settings as conduit_settings
+from conduit.strategies.summarize.strategy import _TextInput
+from conduit.strategies.summarize.summarizers.routing import (
+    PRODUCTION_ROUTING,
+    RoutingSummarizer,
+)
 
-# Set up logging
 logger = logging.getLogger(__name__)
-# Set root logger to silent
 logging.getLogger().setLevel(logging.CRITICAL + 10)
 
-# Constants
 PROMPTS_DIR = Path(__file__).parent / "prompts"
+GUIDELINE_PATH = Path(__file__).parent / "guideline.jinja2"
 PREFERRED_MODEL = settings.default_model
 
 
 class ArticleEnricher(EnricherStrategy):
     """
-    Enrich Article content with LLM
+    Enrich Article content with LLM.
+
+    Summary path: routes by token count to a tested SummarizationProfile
+    in conduit's PRODUCTION_ROUTING. Long-form articles transparently use
+    RollingRefine + a guideline-aware format pass; short articles use
+    OneShot. The guideline lives in guideline.jinja2 alongside this module.
+
+    Description path: unchanged single one-shot call. Descriptions are
+    short, no routing needed.
     """
 
     source_type: SourceType = SourceType.ARTICLE
 
     def __init__(self):
         from conduit.core.prompt.prompt_loader import PromptLoader
+        from conduit.core.prompt.prompt import Prompt
 
-        # Load prompts packaged with this module
-        self.prompt_loader = PromptLoader(
-            base_dir=PROMPTS_DIR,
-        )
+        self.prompt_loader = PromptLoader(base_dir=PROMPTS_DIR)
+        self.guideline_template = Prompt(GUIDELINE_PATH.read_text())
         logger.debug(f"Loaded prompts: {self.prompt_loader.keys}")
 
     @override
@@ -43,69 +52,49 @@ class ArticleEnricher(EnricherStrategy):
         self, content: ContentData, preferred_model: str = PREFERRED_MODEL
     ) -> EnrichedData:
         logger.info("Enriching Article content")
-        # Input variables
         text = content.text
         metadata = content.metadata
-        _ = content.metadata.pop(
-            "raw_text", None
-        )  # This is duplicative of content.text
+        _ = content.metadata.pop("raw_text", None)
         input_variables = {"text": text, "metadata": metadata}
-        source_type = SourceType.ARTICLE
         title = content.metadata["title"]
         logger.info(f"Using existing title: {title}")
 
-        # Generate description and summary concurrently
-        description_prompt = self._generate_description_prompt(input_variables)
-        summary_prompt = self._generate_summary_prompt(input_variables)
+        description_task = self._describe(input_variables, preferred_model)
+        summary_task = self._summarize(text, metadata)
 
-        # Set up model and options
-        model = RemoteModelAsync(model=preferred_model)
-        params = GenerationParams(model=preferred_model)
-        options = conduit_settings.default_conduit_options()
-        options.cache = conduit_settings.default_cache(project_name="siphon")
-
-        # Run async calls for description and summary
-        import asyncio
-
-        description_task = model.query(
-            query_input=description_prompt, params=params, options=options
-        )
-        summary_task = model.query(
-            query_input=summary_prompt, params=params, options=options
-        )
-
-        description_result, summary_result = await asyncio.gather(
-            description_task, summary_task
-        )
-
-        description = str(description_result.content)
-        summary = str(summary_result.content)
+        description, summary = await asyncio.gather(description_task, summary_task)
 
         logger.info("Generated description and summary")
-
-        # Construct enriched data
-        enriched_data = EnrichedData(
-            source_type=source_type,
+        return EnrichedData(
+            source_type=SourceType.ARTICLE,
             title=title,
             description=description,
             summary=summary,
             topics=[],
             entities=[],
         )
-        logger.info("Enrichment complete")
-        return enriched_data
 
-    def _generate_title(self, input_variables: dict[str, Any]) -> str:
-        title = input_variables["metadata"]["title"]
-        return title
+    async def _describe(
+        self, input_variables: dict[str, Any], preferred_model: str
+    ) -> str:
+        prompt = self._generate_description_prompt(input_variables)
+        model = RemoteModelAsync(model=preferred_model)
+        params = GenerationParams(model=preferred_model)
+        options = conduit_settings.default_conduit_options()
+        options.cache = conduit_settings.default_cache(project_name="siphon")
+        result = await model.query(query_input=prompt, params=params, options=options)
+        return str(result.content)
+
+    async def _summarize(self, text: str, metadata: dict[str, Any]) -> str:
+        # Guideline is rendered Siphon-side with metadata, then handed to
+        # conduit as opaque text. preferred_model is intentionally ignored
+        # here: routing picks the model based on document token count.
+        guideline = self.guideline_template.render({"metadata": metadata})
+        text_input = _TextInput(data=text, source_id="article", guideline=guideline)
+        return await RoutingSummarizer()(text_input, {"routing": PRODUCTION_ROUTING})
 
     def _generate_description_prompt(self, input_variables: dict[str, Any]) -> str:
-        print(self.prompt_loader.keys)
         prompt = self.prompt_loader["article_description"]
-        return prompt.render(input_variables)
-
-    def _generate_summary_prompt(self, input_variables: dict[str, Any]) -> str:
-        prompt = self.prompt_loader["article_summary"]
         return prompt.render(input_variables)
 
 
@@ -121,7 +110,6 @@ if __name__ == "__main__":
     extractor = ArticleExtractor()
     content_data = extractor.extract(source_info)
     enricher = ArticleEnricher()
-    import asyncio
 
     enriched_data = asyncio.run(enricher.enrich(content_data))
     print(enriched_data)
