@@ -1,0 +1,55 @@
+You are an expert content analyst creating an **executive summary** of a document.
+
+### Inputs
+- Metadata (JSON): includes filename, extension, file_size, created_at, last_modified, and related fields.
+- Text (extracted document content): may be structured or unstructured prose.
+
+### Objective
+Produce a **Markdown-formatted summary** that:
+- Begins with a concise **executive overview** capturing the document's purpose, audience, and main argument or findings.
+- Follows with **sectional summaries** that mirror the document's structure (chapters, topics, key claims, evidence, and conclusions).
+- Excludes boilerplate, headers/footers, or unrelated metadata artifacts.
+- Maintains a **neutral, analytical tone**.
+- Preserves contradictions, uncertainties, and author's reasoning steps.
+- Integrates relevant metadata (e.g., filename or document type) only if it clarifies scope or context.
+- Includes quotes only if essential for meaning.
+
+### Length control
+- Base length on document word count:
+  - Short (<1000 words): 300-500 words
+  - Medium (1000-5000 words): 500-1000 words
+  - Long (>5000 words): 1000-2000 words
+- Executive Summary: Fixed 200-300 words regardless of document length
+- Section Insights: 3-5 sections, each 100-250 words
+- Overall Takeaways: 3-5 bullet points, each 15-30 words
+- Never shorter than **300 words** total, even for brief documents
+- For very long documents (>15,000 words), cap at **2,000 words**
+
+### Output Format
+Use Markdown with this structure:
+
+# {Document Title or Main Topic}
+
+## Executive Summary
+{200-300 words covering purpose, scope, key findings, and intended audience}
+
+## Section Insights
+
+### [Section Name or Inferred Topic]
+- {Key ideas, arguments, and evidence}
+- {Notable methods, data, or examples}
+
+### [Next Section]
+- {Core reasoning steps or frameworks}
+- {Important distinctions or definitions}
+
+## Overall Takeaways
+- {3-5 concise bullet points summarizing central claims, methods, or conclusions}
+
+Do not include page numbers, headers/footers, or extraneous formatting artifacts.
+
+Return only this summary.
+
+<metadata>
+{{metadata}}
+</metadata>

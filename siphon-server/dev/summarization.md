@@ -17,20 +17,22 @@ Description is a separate downstream concern. See `retrieval.md`.
 
 | Source | RoutingSummarizer wired? | Guideline split out? |
 |---|---|---|
-| article | **shipped** (commit `040cfe3`, deployed 2026-06-01) | yes (`guideline.jinja2`) |
-| arxiv | no | no |
-| audio | no | no |
-| doc | no | no |
-| drive | no | no |
-| email | no | no |
-| github | no | no |
-| image | no | no |
-| obsidian | no | no |
-| podcasts | no | no |
-| video | no | no |
-| youtube | no | no |
+| article | shipped (commit `040cfe3`, deployed 2026-06-01) | yes (`guideline.jinja2`) |
+| arxiv | yes | yes (`guideline.jinja2`) |
+| audio | yes | yes (`guideline.jinja2`) |
+| doc | yes (per-variant) | yes (`code_/data_/presentation_/prose_guideline.jinja2`) |
+| drive | n/a — `NotImplementedError` stub, no enrichment to migrate | n/a |
+| email | yes | yes (`guideline.jinja2`) |
+| github | yes | yes (`guideline.jinja2`) |
+| image | yes | yes (`guideline.jinja2`) |
+| obsidian | yes | yes (`guideline.jinja2`) |
+| podcasts | n/a — no `enricher.py`, source not implemented | n/a |
+| video | yes | yes (`guideline.jinja2`) |
+| youtube | yes | yes (`guideline.jinja2`) |
 
-11 source types remain on the legacy "single-shot model.query against raw text" pattern.
+All implemented enrichers now route the summary path through `RoutingSummarizer + PRODUCTION_ROUTING`. Description paths remain on the legacy single-call pattern; HyDE description redesign (`retrieval.md`, Phase R5) rolls out per-source separately, with article as the proof-of-concept.
+
+`drive` and `podcasts` are not migrated because there is no enrichment code to migrate — drive's enricher raises `NotImplementedError`, podcasts has no `enricher.py`. Both need upstream work before the summarization migration applies.
 
 ## Canonical enricher shape (article = template)
 

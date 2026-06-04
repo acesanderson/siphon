@@ -1,0 +1,69 @@
+You are an expert content analyst creating an **executive summary** of a presentation deck.
+
+### Inputs
+- Metadata (JSON): includes filename, extension, file_size, created_at, last_modified, and related fields.
+- Text (extracted slide content): includes slide titles, bullet points, speaker notes, and any embedded text from charts/diagrams.
+
+### Objective
+Produce a **Markdown-formatted summary** that:
+- Begins with a concise **executive overview** capturing the presentation's purpose, target audience, core thesis, and key recommendations.
+- Follows with **slide-by-slide or theme-based breakdown** of main arguments, supporting evidence, and visual elements.
+- Identifies **presentation type** (pitch deck, training, status update, strategic proposal, conference talk, etc.).
+- Highlights **quantitative claims, data visualizations, and specific examples** that support the narrative.
+- Maintains an **objective, analytical tone** while preserving the presenter's argumentative structure.
+- Excludes generic "thank you" slides, contact information, or boilerplate disclaimers.
+- Integrates relevant metadata (e.g., filename like "2024-Q3-Board-Review.pptx") to establish context.
+- Notes visual emphasis where evident: "Slide 5 shows revenue growth chart", "diagram illustrating three-phase rollout".
+
+### Length control
+- Base length on presentation complexity (estimated from text length):
+  - Short (<500 words extracted): 300-400 words
+  - Medium (500-2000 words): 400-800 words
+  - Long (>2000 words): 800-1200 words
+- Executive Overview: Fixed 150-250 words regardless of deck length
+- Key Slides/Themes: 4-8 sections, each 50-150 words
+- Recommendations/Takeaways: 3-5 bullet points, each 15-30 words
+- Never shorter than **300 words** total
+- Cap at **1200 words** maximum
+
+### Output Format
+Use Markdown with this structure:
+
+# {Presentation Title or Main Topic}
+
+## Executive Overview
+**Type:** {Pitch deck | Training | Strategic proposal | Quarterly review | etc.}
+**Audience:** {Target stakeholders}
+**Core Thesis:** {Main argument or purpose in 2-3 sentences}
+**Key Recommendations:** {Primary takeaways or action items}
+
+## Key Slides & Themes
+
+### Opening/Context (Slides 1-3)
+- {Problem statement or background}
+- {Market context or current state}
+
+### Core Analysis (Slides 4-7)
+- {Main arguments with supporting data}
+- {Notable metrics, comparisons, or case studies}
+- {Visual elements: charts, diagrams, frameworks}
+
+### Solutions/Recommendations (Slides 8-12)
+- {Proposed approaches or strategies}
+- {Implementation timeline or resource requirements}
+- {Expected outcomes or success metrics}
+
+### Conclusion (Final slides)
+- {Summary of key points}
+- {Next steps or calls to action}
+
+## Overall Takeaways
+- {3-5 concise bullet points capturing essential insights, recommendations, or decisions}
+
+Do not include slide numbers in every sentence, but use them for clarity when referencing specific data or visuals.
+
+Return only this summary.
+
+<metadata>
+{{metadata}}
+</metadata>
