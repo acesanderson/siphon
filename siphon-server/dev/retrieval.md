@@ -239,11 +239,19 @@ falls back to raw-query embedding (no LLM call).
 - [ ] Add `--semantic-only`, `--bm25-only`, `--no-hyde` flags to the query CLI.
 - [ ] Update the query history schema if it needs to capture the signal mix used.
 
-### Phase R5: rollout to other 10 source types
+### Phase R5: rollout to other source types — DONE
 
-Once Article validates the full description redesign + embedding flow, the other
-10 enrichers migrate per `summarization.md`'s rollout order, each with its own
-`description_guideline.jinja2`.
+Per-source HyDE description guidelines landed for all 9 remaining implemented
+enrichers (arxiv, audio, doc with 4 variants, email, github, image, obsidian,
+video, youtube). Each enricher now runs summary -> description -> title
+sequentially; gpt-oss/bywater handles description over the bounded summary
+input. `drive` (NotImplementedError stub) and `podcasts` (no enricher.py)
+are skipped pending upstream work.
+
+Smoke-tested via obsidian against a synthetic note cluster on RRF: 170-word
+answer-voice description, key entities preserved (RRF, BM25, k=60), minor
+abstractive drift in non-canonical claims — acceptable for retrieval since
+BM25 over the summary will anchor exact-entity queries.
 
 ## Open questions
 

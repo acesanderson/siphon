@@ -15,22 +15,22 @@ Description is a separate downstream concern. See `retrieval.md`.
 
 ## Current state by source type
 
-| Source | RoutingSummarizer wired? | Guideline split out? |
+| Source | Summary (RoutingSummarizer) | Description (HyDE one-shot over summary) |
 |---|---|---|
-| article | shipped (commit `040cfe3`, deployed 2026-06-01) | yes (`guideline.jinja2`) |
-| arxiv | yes | yes (`guideline.jinja2`) |
-| audio | yes | yes (`guideline.jinja2`) |
-| doc | yes (per-variant) | yes (`code_/data_/presentation_/prose_guideline.jinja2`) |
-| drive | n/a — `NotImplementedError` stub, no enrichment to migrate | n/a |
-| email | yes | yes (`guideline.jinja2`) |
-| github | yes | yes (`guideline.jinja2`) |
-| image | yes | yes (`guideline.jinja2`) |
-| obsidian | yes | yes (`guideline.jinja2`) |
-| podcasts | n/a — no `enricher.py`, source not implemented | n/a |
-| video | yes | yes (`guideline.jinja2`) |
-| youtube | yes | yes (`guideline.jinja2`) |
+| article | yes (commit `040cfe3`) | yes (commit `83fbb23`) |
+| arxiv | yes | yes |
+| audio | yes | yes |
+| doc | yes (per-variant) | yes (per-variant) |
+| drive | n/a — `NotImplementedError` stub | n/a |
+| email | yes | yes |
+| github | yes | yes |
+| image | yes | yes |
+| obsidian | yes | yes |
+| podcasts | n/a — no `enricher.py` | n/a |
+| video | yes | yes |
+| youtube | yes | yes |
 
-All implemented enrichers now route the summary path through `RoutingSummarizer + PRODUCTION_ROUTING`. Description paths remain on the legacy single-call pattern; HyDE description redesign (`retrieval.md`, Phase R5) rolls out per-source separately, with article as the proof-of-concept.
+All implemented enrichers now run the full new pipeline: summary via `RoutingSummarizer + PRODUCTION_ROUTING`, then description as a HyDE-shaped gpt-oss/bywater one-shot over the summary, then title (where the title is LLM-derived from description). Per-source description guidelines live at `sources/<source>/description_guideline.jinja2`; doc's per-variant guidelines at `sources/doc/<variant>_description_guideline.jinja2`.
 
 `drive` and `podcasts` are not migrated because there is no enrichment code to migrate — drive's enricher raises `NotImplementedError`, podcasts has no `enricher.py`. Both need upstream work before the summarization migration applies.
 

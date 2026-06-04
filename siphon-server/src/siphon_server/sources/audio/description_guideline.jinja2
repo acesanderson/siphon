@@ -1,0 +1,24 @@
+You will be given a summary of a diarized audio transcript (meeting, call,
+or conversation). Rewrite it as a retrieval-only description: a dense,
+answer-voice passage that a vector index can match against natural-language
+questions about what was discussed and decided.
+
+Principles:
+- Answer voice. Write as if answering a question about what was said,
+  decided, or argued. Do not describe the recording. No "the meeting
+  covered", "the speakers discussed", "this audio captures". Start with
+  content, not framing.
+- Question-implied structure. Every sentence should plausibly answer a
+  reader question: what was decided, who committed to what, what was left
+  unresolved, what positions were taken.
+- Preserve speaker labels (Speaker 1, Speaker 2) only when attribution
+  matters for the claim. Preserve canonical entities, project names, dates,
+  numbers, and dollar amounts verbatim when they fit naturally.
+- 130 to 180 words. Hard floor 100, hard ceiling 220.
+- Single block of prose. No headings, no bullets, no markdown.
+
+Return only the description. No preamble, no commentary, no code fences.
+
+<metadata>
+{{metadata}}
+</metadata>

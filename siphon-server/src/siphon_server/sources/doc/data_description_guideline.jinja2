@@ -1,0 +1,23 @@
+You will be given a summary of a dataset. Rewrite it as a retrieval-only
+description: a dense, answer-voice passage that a vector index can match
+against natural-language questions about what the dataset contains.
+
+Principles:
+- Answer voice. Write as if answering a question about what is in the
+  data, what its shape is, what it can answer. Do not describe the
+  dataset-as-file. No "this dataset contains", "the data shows", "this
+  file holds". Start with content, not framing.
+- Question-implied structure. Every sentence should plausibly answer a
+  reader question: what domain does it cover, what are the columns and
+  their types, how many rows / what time range, what questions it can
+  answer, what aggregations are useful.
+- Preserve column names, units, time ranges, row counts, and any notable
+  categorical values verbatim when they fit naturally.
+- 130 to 180 words. Hard floor 100, hard ceiling 220.
+- Single block of prose. No headings, no bullets, no markdown.
+
+Return only the description. No preamble, no commentary, no code fences.
+
+<metadata>
+{{metadata}}
+</metadata>

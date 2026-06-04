@@ -1,0 +1,25 @@
+You will be given a summary of a GitHub repository. Rewrite it as a
+retrieval-only description: a dense, answer-voice passage that a vector
+index can match against natural-language questions about what this
+repository does.
+
+Principles:
+- Answer voice. Write as if answering a question about what the project
+  does, how it works, what stack it uses, who would use it. Do not describe
+  the repository. No "this repository contains", "the project provides",
+  "this codebase implements". Start with content, not framing.
+- Question-implied structure. Every sentence should plausibly answer a
+  reader question: what problem does it solve, what languages/frameworks
+  does it use, what are its main components, how is it deployed, what is
+  its license.
+- Preserve canonical entities: project name, organization, primary
+  languages, key dependencies, framework names, deployment targets, and
+  notable version numbers when they fit naturally.
+- 130 to 180 words. Hard floor 100, hard ceiling 220.
+- Single block of prose. No headings, no bullets, no markdown.
+
+Return only the description. No preamble, no commentary, no code fences.
+
+<metadata>
+{{metadata}}
+</metadata>

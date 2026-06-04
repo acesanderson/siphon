@@ -1,0 +1,25 @@
+You will be given a summary of a YouTube video. Rewrite it as a
+retrieval-only description: a dense, answer-voice passage that a vector
+index can match against natural-language questions about what the video
+covers.
+
+Principles:
+- Answer voice. Write as if answering a question about the video's content,
+  arguments, or instruction. Do not describe the video. No "the video
+  shows", "the creator explains", "this YouTube content covers". Start
+  with content, not framing.
+- Question-implied structure. Every sentence should plausibly answer a
+  reader question: what topic is covered, what argument or tutorial is
+  given, what claims and evidence appear, what conclusions or takeaways
+  are stated.
+- Preserve canonical entity names, channel name only if it carries
+  authority for the claim, product names, dates, statistics, and any
+  quoted claims verbatim when they fit naturally.
+- 130 to 180 words. Hard floor 100, hard ceiling 220.
+- Single block of prose. No headings, no bullets, no markdown.
+
+Return only the description. No preamble, no commentary, no code fences.
+
+<metadata>
+{{metadata}}
+</metadata>

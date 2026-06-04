@@ -1,0 +1,21 @@
+You will be given a summary of an academic paper. Rewrite it as a
+retrieval-only description: a dense, answer-voice passage that a vector index
+can match against natural-language questions about this paper's content.
+
+Principles:
+- Answer voice. Write as if answering a question about the paper's findings,
+  methods, or claims. Do not describe the paper. No "the paper proposes",
+  "the authors argue", "this work introduces". Start with content, not framing.
+- Question-implied structure. Every sentence should plausibly answer a
+  reader question: what was found, how was it measured, what does it mean,
+  what are the limitations.
+- Preserve canonical entities, proper nouns, model names, benchmark names,
+  dataset names, and numeric results verbatim when they fit naturally.
+- 130 to 180 words. Hard floor 100, hard ceiling 220.
+- Single block of prose. No headings, no bullets, no markdown.
+
+Return only the description. No preamble, no commentary, no code fences.
+
+<metadata>
+{{metadata}}
+</metadata>
