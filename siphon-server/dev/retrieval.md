@@ -206,15 +206,15 @@ falls back to raw-query embedding (no LLM call).
 
 ## Implementation phases
 
-### Phase R1: description redesign (Siphon side)
+### Phase R1: description redesign (Siphon side) — DONE
 
-- [ ] Author `description_guideline.jinja2` for article (HyDE-shaped, answer-voice).
-- [ ] Rewrite `ArticleEnricher._describe()` to call gpt-oss one-shot on
-  `(summary, description_guideline)`, not on raw text.
-- [ ] Update `enrich()` to chain description after summary (sequential), still
-  inside a single async function but without asyncio.gather between them.
-- [ ] Smoke test against same article (`0xsid.com/blog/meta-account-takeover-fiasco`)
-  to confirm answer-voice output.
+- [x] Authored `description_guideline.jinja2` for article (HyDE-shaped, answer-voice, lean principles-only).
+- [x] Rewrote `ArticleEnricher._describe()` to call gpt-oss/bywater one-shot on
+  `(summary, rendered description_guideline)`, not raw text.
+- [x] `enrich()` chains description after summary sequentially; asyncio.gather removed.
+- [x] Smoke-tested against `0xsid.com/blog/meta-account-takeover-fiasco`. Description
+  output is answer-voice, preserves canonical entities (@obamawhitehouse, $1.5T valuation),
+  no meta-framing. Length ~190 words, inside the hard ceiling.
 
 ### Phase R2: embedding model + source artifact swap
 
