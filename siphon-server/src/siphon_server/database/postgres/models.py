@@ -2,12 +2,14 @@
 # ^^^ because of SQLAlchemy dynamic attributes
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, Index, Integer, String, Text, ARRAY
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Computed, Index, Integer, String, Text, ARRAY
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from siphon_server.database.postgres.connection import Base
 
 # Embedding dimension for sentence-transformers/all-MiniLM-L6-v2.
 # Changing this requires a migration + full re-embed of all records.
+# After the v2 migration (retrieval.md Phase R2-R4) lands, this becomes 768
+# for nomic-embed-text-v1.5. Held here until the destructive migration runs.
 EMBED_DIM = 384
 
 
@@ -23,6 +25,9 @@ class ProcessedContentORM(Base):
             postgresql_using="hnsw",
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
+        # GIN index on the generated tsvector for BM25-style lexical retrieval.
+        # Paired with the semantic HNSW above so RRF can fuse the two signals.
+        Index("ix_pc_fts", "fts_doc", postgresql_using="gin"),
     )
 
     # Primary key: integer for internal DB operations
@@ -55,6 +60,18 @@ class ProcessedContentORM(Base):
     # Embedding — NULL until embed-batch runs; reset to NULL on every content update
     embedding = Column(Vector(EMBED_DIM), nullable=True)
     embed_model = Column(String, nullable=True)
+
+    # Generated tsvector over (description, summary) for BM25 lexical retrieval.
+    # Paired with the vector embedding via RRF in repository.search_hybrid().
+    # Populated by Postgres automatically; readers never write to this column.
+    fts_doc = Column(
+        TSVECTOR,
+        Computed(
+            "to_tsvector('english', "
+            "coalesce(description, '') || ' ' || coalesce(summary, ''))",
+            persisted=True,
+        ),
+    )
 
 
 class QueryHistoryORM(Base):

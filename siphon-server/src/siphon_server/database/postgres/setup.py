@@ -47,6 +47,34 @@ def ensure_indexes():
     logger.info("Indexes verified.")
 
 
+def ensure_fts_column():
+    """Add the generated tsvector + GIN index for BM25 retrieval (idempotent).
+
+    Run this once on existing DBs before deploying code that calls
+    `repository.search_fts()` or `repository.search_hybrid()`. The column is
+    a Postgres-side `GENERATED ... STORED` expression over (description,
+    summary), so no application backfill is needed once it exists.
+    """
+    from sqlalchemy import text
+
+    with engine.connect() as conn:
+        conn.execute(text(
+            "ALTER TABLE processed_content "
+            "ADD COLUMN IF NOT EXISTS fts_doc tsvector "
+            "GENERATED ALWAYS AS ("
+            "  to_tsvector('english', "
+            "  coalesce(description, '') || ' ' || coalesce(summary, ''))"
+            ") STORED"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_pc_fts "
+            "ON processed_content USING gin (fts_doc)"
+        ))
+        conn.commit()
+    logger.info("FTS column + index verified.")
+
+
 if __name__ == "__main__":
     create_tables()
     ensure_indexes()
+    ensure_fts_column()
