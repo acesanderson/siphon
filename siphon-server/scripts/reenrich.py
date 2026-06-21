@@ -123,10 +123,18 @@ async def _reenrich_one(
             return uri, False, "uri vanished between list and fetch"
         try:
             enricher = _enricher_for(pc.source.source_type)
+            # Backfill metadata.title from pc.title for legacy rows ingested
+            # before metadata.title was a stored convention. Several enrichers
+            # (article, youtube) read content.metadata["title"] without
+            # fallback. Avoid mutating pc.content.metadata in place since
+            # repo.get returns a fresh object but other callers may not.
+            md = dict(pc.content.metadata)
+            if "title" not in md and pc.enrichment.title:
+                md["title"] = pc.enrichment.title
             content = ContentData(
                 source_type=pc.source.source_type,
                 text=pc.content.text,
-                metadata=pc.content.metadata,
+                metadata=md,
             )
             t0 = time.monotonic()
             async with capture_enrichment(uri=uri):
