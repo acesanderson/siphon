@@ -31,11 +31,11 @@ ENRICHMENT_STATUS_VALUES = (
     "judge_rejected",
 )
 
-# Embedding dimension for sentence-transformers/all-MiniLM-L6-v2.
-# Changing this requires a migration + full re-embed of all records.
-# After the v2 migration (retrieval.md Phase R2-R4) lands, this becomes 768
-# for nomic-embed-text-v1.5. Held here until the destructive migration runs.
-EMBED_DIM = 384
+# Embedding dimension for nomic-ai/nomic-embed-text-v1.5.
+# Flipped from 384 (legacy all-MiniLM-L6-v2) on 2026-06-21 after Phase R2/C
+# DDL migration. Re-embed via embed-batch with SIPHON_EMBED_MODEL_V2 to
+# populate vectors under the new dim.
+EMBED_DIM = 768
 
 
 class ProcessedContentORM(Base):
