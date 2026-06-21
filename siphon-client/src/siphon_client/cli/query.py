@@ -275,9 +275,21 @@ def create_results_table(results: list[ProcessedContent]) -> Table:
 @click.option(
     "--mode",
     "-m",
-    type=click.Choice(["sql", "semantic", "fuzzy"], case_sensitive=False),
-    default="sql",
-    help="Search mode: sql (default), semantic, or fuzzy",
+    type=click.Choice(
+        ["hybrid", "semantic", "fts", "sql", "fuzzy"], case_sensitive=False
+    ),
+    default="hybrid",
+    help="Search mode: hybrid (default, RRF of BM25 + semantic), semantic "
+    "(vector-only), fts (BM25-only), sql (legacy ILIKE), or fuzzy",
+)
+@click.option(
+    "--no-hyde",
+    "no_hyde",
+    is_flag=True,
+    default=False,
+    help="Embed the raw query instead of generating a HyDE hypothetical. "
+    "Faster (no LLM call), lower quality on conversational queries. "
+    "Only affects hybrid and semantic modes.",
 )
 @click.option(
     "--expand",
@@ -321,6 +333,7 @@ def query(
     history: bool,
     date: str | None,
     mode: str,
+    no_hyde: bool,
     expand: bool,
     extension: str | None,
     return_type: str,
@@ -448,7 +461,10 @@ def query(
 
         else:
             # Perform search
-            with printer.status("Searching..."):
+            status_msg = "Searching..."
+            if mode in ("hybrid", "semantic") and not no_hyde:
+                status_msg = "Generating HyDE passage and searching..."
+            with printer.status(status_msg):
                 collection = client.search(
                     query=query_string,
                     mode=mode,  # type: ignore[arg-type]
@@ -456,6 +472,7 @@ def query(
                     date_filter=date_filter,
                     limit=limit,
                     extension=normalized_extension,
+                    use_hyde=not no_hyde,
                 )
 
             # Handle --expand flag
