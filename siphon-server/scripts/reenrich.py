@@ -48,6 +48,7 @@ from pathlib import Path
 from siphon_api.enums import SourceType
 from siphon_api.interfaces import EnricherStrategy
 from siphon_api.models import ContentData, EnrichedData
+from siphon_server.core.enrichment_trace import capture_enrichment
 from siphon_server.database.postgres.repository import ContentRepository
 
 logger = logging.getLogger(__name__)
@@ -128,7 +129,8 @@ async def _reenrich_one(
                 metadata=pc.content.metadata,
             )
             t0 = time.monotonic()
-            enriched: EnrichedData = await enricher.enrich(content)
+            async with capture_enrichment(uri=uri):
+                enriched: EnrichedData = await enricher.enrich(content)
             elapsed = time.monotonic() - t0
             updated = repo.reenrich_row(
                 uri=uri,
