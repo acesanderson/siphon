@@ -22,6 +22,7 @@ import json
 import os
 import sys
 from siphon_client.cli.bulk_extract import bulk_extract
+from siphon_client.cli.inspect import inspect
 from siphon_client.cli.query import query
 from siphon_client.cli.results import results
 from siphon_client.cli.traverse import traverse
@@ -388,6 +389,7 @@ def enrich(source: str | None, return_type: Literal["s", "d", "t"]):
 
 # Register commands
 siphon.add_command(bulk_extract)
+siphon.add_command(inspect)
 siphon.add_command(query)
 siphon.add_command(results)
 siphon.add_command(traverse)

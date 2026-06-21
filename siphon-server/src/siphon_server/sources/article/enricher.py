@@ -1,4 +1,5 @@
 from siphon_server.config import settings
+from siphon_server.core.enrichment_trace import register_guideline
 from siphon_api.interfaces import EnricherStrategy
 from siphon_api.models import ContentData, EnrichedData
 from siphon_api.enums import SourceType
@@ -83,6 +84,7 @@ class ArticleEnricher(EnricherStrategy):
 
     async def _summarize(self, text: str, metadata: dict[str, Any]) -> str:
         guideline = self.guideline_template.render({"metadata": metadata})
+        register_guideline(guideline)
         text_input = _TextInput(data=text, source_id="article", guideline=guideline)
         return await RoutingSummarizer()(text_input, {"routing": PRODUCTION_ROUTING})
 

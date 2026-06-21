@@ -131,6 +131,43 @@ For each non-article enricher:
 5. **drive** — appears to be a thin dispatcher with no enrichment of its own. Verify
    before touching.
 
+## Observability (in design as of 2026-06-21)
+
+Motivating failure: the 32-min video `Kf0rPU7zy7Q` produced no summary, just hallucinated YouTube-outro boilerplate. Suspected root cause is the gpt-oss ECW cliff — quality 0.13 in the 5K–12K band that Tier 1 currently covers up to 12K. The failure was invisible until manual inspection. Goal: make this class of problem trivial to introspect.
+
+### Layer 1 — persist conduit's trace (landed in code, pending deploy as of 2026-06-21)
+
+RoutingSummarizer already emitted a trace; enrichers used to throw it away. Now wired in:
+
+- Table `enrichment_runs` keyed by `(uri, enriched_at)`. Top-level queryable columns: `tier`, `strategy`, `token_count`, `model`, `host`, `status`, `duration_seconds`, `guideline_hash`, `error_message`. Full trace in `trace_json`. CHECK constraint on `status` accepts `success`, `model_error`, `timeout`, `empty_output`, `judge_rejected` (reserved for Layer 3, not emitted by v1).
+- No `ProcessedContent.latest_enrichment_run_id` FK. Dropped during design — single-URI lookup is one shot via `WHERE uri = ? ORDER BY enriched_at DESC LIMIT 1` against the composite index, FK saves no queries. Failed runs may have no PC row at all, so the natural-key uri is the link.
+- `guideline_hash` is `sha256(rendered_summary_guideline)[:16]`. Description guideline not hashed in v1.
+- Conduit was widened with `rendered_prompt` metadata (OneShot's outgoing prompt, RollingRefine's per-chunk refine prompts, and the format-pass prompt) so the trace is forensic-grade, not timing-only.
+- Trace redaction: `_TextInput.data` truncated to 2KB; RoutingSummarizer config `routing` field collapsed to profile names (full `PRODUCTION_ROUTING` is held in code). Outputs and rendered prompts preserved in full.
+- CLI: `siphon inspect <uri>` (pure Postgres read, no headwater hop, no LLM call). Pretty-print default; `--json` for LLM consumption.
+
+Implementation entry points:
+- `siphon-server/src/siphon_server/core/enrichment_trace.py` — `capture_enrichment(uri=...)` async context manager and `register_guideline(rendered)` helper.
+- `siphon-server/src/siphon_server/core/pipeline.py` — wraps `self.enricher.execute(...)` in `SiphonPipeline.process`.
+- All 10 implemented enrichers call `register_guideline(guideline)` after rendering the summary guideline (article, arxiv, audio, doc, email, github, image, obsidian, video, youtube).
+- `siphon-client/src/siphon_client/cli/inspect.py` — CLI subcommand.
+
+Two intended use cases:
+1. Dev loop while iterating on guidelines — diff traces across prompt revisions for the same URI.
+2. Forensic mode — when a weird response surfaces, hand the trace (via `siphon inspect <uri> --json`) to an LLM and ask it to diagnose what happened.
+
+Deploy gates: needs conduit + siphon on both hosts, then `python -m siphon_server.database.postgres.setup` on caruana to provision the table (idempotent `create_all`).
+
+### Layer 2 — structural compliance check (rejected)
+
+Considered and rejected. Deterministic regex over output structure (Executive Summary / Section Insights / Key Takeaways markers) would have caught the `Kf0rPU7zy7Q` failure immediately, but it locks the validator to the current guideline. Guidelines will evolve; the validator would accrue rewrite debt every time a section is renamed or restructured. Not worth it.
+
+### Layer 3 — sampled LLM-judge on production ingests (TBD)
+
+Nightly Cronicle job that samples a fraction of production `enrichment_runs` and re-scores with the Gemini3 judge already used in the conduit eval harness. Output: quality distribution over time, alarm when it drifts. Catches the class of failures Layer 1 can't (well-formed but semantically wrong output — e.g., on-topic-for-channel but wrong-for-this-video).
+
+Not runtime (too heavy). Not in scope yet — defer until Layer 1 lands and there's a steady stream of `enrichment_runs` rows worth sampling.
+
 ## Cross-references
 
 - Conduit eval and routing roadmap: `$BC/conduit-project/evals/STRATEGY.md`

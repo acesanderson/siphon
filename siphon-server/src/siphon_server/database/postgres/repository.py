@@ -10,7 +10,11 @@ from sqlalchemy.exc import IntegrityError
 from siphon_api.enums import SourceType
 from siphon_api.models import ProcessedContent, QueryHistory
 from siphon_server.database.postgres.connection import SessionLocal
-from siphon_server.database.postgres.models import ProcessedContentORM, QueryHistoryORM
+from siphon_server.database.postgres.models import (
+    EnrichmentRunORM,
+    ProcessedContentORM,
+    QueryHistoryORM,
+)
 from siphon_server.database.postgres.converters import (
     to_orm,
     from_orm,
@@ -576,6 +580,74 @@ class ContentRepository:
             results = q.all()
             return [from_orm(orm_obj) for orm_obj in results]
 
+    def insert_enrichment_run(
+        self,
+        *,
+        uri: str,
+        enriched_at: int,
+        tier: str,
+        strategy: str,
+        token_count: int,
+        model: str,
+        host: str,
+        status: str,
+        error_message: str | None,
+        duration_seconds: float | None,
+        guideline_hash: str,
+        trace_json: list[dict],
+    ) -> int:
+        """Append one enrichment_runs row. Returns the inserted row id."""
+        with self._session() as db:
+            row = EnrichmentRunORM(
+                uri=uri,
+                enriched_at=enriched_at,
+                tier=tier,
+                strategy=strategy,
+                token_count=token_count,
+                model=model,
+                host=host,
+                status=status,
+                error_message=error_message,
+                duration_seconds=duration_seconds,
+                guideline_hash=guideline_hash,
+                trace_json=trace_json,
+            )
+            db.add(row)
+            db.commit()
+            db.refresh(row)
+            return row.id
+
+    def get_latest_enrichment_run(self, uri: str) -> dict | None:
+        """Fetch the most recent enrichment_runs row for a URI as a dict.
+
+        Returns None if no run exists. Returned as a plain dict so the CLI
+        can render or JSON-emit without dragging the ORM type across layers.
+        """
+        with self._session() as db:
+            row = (
+                db.query(EnrichmentRunORM)
+                .filter_by(uri=uri)
+                .order_by(EnrichmentRunORM.enriched_at.desc())
+                .first()
+            )
+            if row is None:
+                return None
+            return {
+                "id": row.id,
+                "uri": row.uri,
+                "enriched_at": row.enriched_at,
+                "tier": row.tier,
+                "strategy": row.strategy,
+                "token_count": row.token_count,
+                "model": row.model,
+                "host": row.host,
+                "status": row.status,
+                "error_message": row.error_message,
+                "duration_seconds": row.duration_seconds,
+                "guideline_hash": row.guideline_hash,
+                "trace_json": row.trace_json,
+            }
+
 
 class QueryHistoryRepository:
     """Repository for managing query history with automatic session handling."""
@@ -658,3 +730,6 @@ class QueryHistoryRepository:
                 .all()
             )
             return [query_history_from_orm(orm_obj) for orm_obj in results]
+
+
+REPOSITORY = ContentRepository()

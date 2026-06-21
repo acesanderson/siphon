@@ -18,6 +18,7 @@ from siphon_api.enums import SourceType
 from siphon_api.interfaces import EnricherStrategy
 from siphon_api.models import ContentData, EnrichedData
 from siphon_server.config import settings
+from siphon_server.core.enrichment_trace import register_guideline
 
 logger = logging.getLogger(__name__)
 logging.getLogger().setLevel(logging.CRITICAL + 10)
@@ -84,6 +85,7 @@ class DocEnricher(EnricherStrategy):
         self, variant: str, text: str, metadata: dict[str, Any]
     ) -> str:
         guideline = self.summary_guidelines[variant].render({"metadata": metadata})
+        register_guideline(guideline)
         text_input = _TextInput(
             data=text, source_id=f"doc:{variant}", guideline=guideline
         )

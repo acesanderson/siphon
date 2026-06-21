@@ -2,9 +2,34 @@
 # ^^^ because of SQLAlchemy dynamic attributes
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, Computed, Index, Integer, String, Text, ARRAY
+from sqlalchemy import (
+    ARRAY,
+    CheckConstraint,
+    Column,
+    Computed,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from siphon_server.database.postgres.connection import Base
+
+# Allowed values for EnrichmentRunORM.status. Enforced at the DB layer via
+# CHECK constraint so extension is a one-line edit here + idempotent ALTER.
+# - success: enrichment completed normally
+# - model_error: any exception during model.query
+# - timeout: asyncio.TimeoutError specifically
+# - empty_output: response was empty/whitespace-only after model.query returned
+# - judge_rejected: reserved for Layer 3 (nightly Gemini judge); not emitted by v1
+ENRICHMENT_STATUS_VALUES = (
+    "success",
+    "model_error",
+    "timeout",
+    "empty_output",
+    "judge_rejected",
+)
 
 # Embedding dimension for sentence-transformers/all-MiniLM-L6-v2.
 # Changing this requires a migration + full re-embed of all records.
@@ -72,6 +97,56 @@ class ProcessedContentORM(Base):
             persisted=True,
         ),
     )
+
+
+class EnrichmentRunORM(Base):
+    """One row per enrichment attempt — succeeded or failed.
+
+    Persists conduit's trace for the run plus a redacted forensic payload.
+    Keyed on (uri, enriched_at). Failed runs may have no corresponding
+    ProcessedContentORM row, so this table is intentionally not FK-linked.
+    Lookup pattern is `WHERE uri = ? ORDER BY enriched_at DESC LIMIT 1` via
+    the composite index below.
+    """
+
+    __tablename__ = "enrichment_runs"
+    __table_args__ = (
+        Index("ix_er_uri_enriched_at", "uri", "enriched_at"),
+        Index("ix_er_status", "status"),
+        Index("ix_er_guideline_hash", "guideline_hash"),
+        CheckConstraint(
+            "status IN ("
+            + ", ".join(f"'{v}'" for v in ENRICHMENT_STATUS_VALUES)
+            + ")",
+            name="ck_er_status_valid",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    uri = Column(String, nullable=False, index=True)
+    enriched_at = Column(Integer, nullable=False)
+
+    # Routing decision (from RoutingSummarizer trace metadata)
+    tier = Column(String, nullable=False)
+    strategy = Column(String, nullable=False)
+    token_count = Column(Integer, nullable=False)
+    model = Column(String, nullable=False)
+    host = Column(String, nullable=False)
+
+    # Outcome
+    status = Column(String, nullable=False)
+    error_message = Column(Text, nullable=True)
+
+    # Outer-call wall time. Full per-step durations live in trace_json.
+    duration_seconds = Column(Float, nullable=True)
+
+    # sha256(rendered_guideline)[:16] — lets us group/compare runs by
+    # prompt version without parsing trace contents.
+    guideline_hash = Column(String, nullable=False)
+
+    # Conduit trace list, with inputs.input.data truncated to 2KB.
+    trace_json = Column(JSONB, nullable=False)
 
 
 class QueryHistoryORM(Base):

@@ -19,6 +19,7 @@ from siphon_api.interfaces import EnricherStrategy
 from siphon_api.models import ContentData
 from siphon_api.models import EnrichedData
 from siphon_server.config import settings
+from siphon_server.core.enrichment_trace import register_guideline
 
 logger = logging.getLogger(__name__)
 SOURCE_DIR = Path(__file__).parent
@@ -68,6 +69,7 @@ class GitHubEnricher(EnricherStrategy):
 
     async def _summarize(self, text: str, metadata: dict[str, Any]) -> str:
         guideline = self.guideline_template.render({"metadata": metadata})
+        register_guideline(guideline)
         text_input = _TextInput(data=text, source_id="github", guideline=guideline)
         return await RoutingSummarizer()(text_input, {"routing": PRODUCTION_ROUTING})
 

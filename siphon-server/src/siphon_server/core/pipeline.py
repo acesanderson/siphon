@@ -12,7 +12,8 @@ from siphon_api.interfaces import (
     ExtractorStrategy,
     EnricherStrategy,
 )
-from siphon_server.database.postgres.repository import ContentRepository
+from siphon_server.core.enrichment_trace import capture_enrichment
+from siphon_server.database.postgres.repository import REPOSITORY
 from siphon_server.metrics import extraction_metrics
 from siphon_server.sources.registry import load_registry, generate_registry
 from siphon_server.config import load_settings
@@ -33,7 +34,6 @@ logger = logging.getLogger(__name__)
 # generate_registry()  # We will remove this in production
 
 REGISTRY: list[str] = load_registry()
-REPOSITORY = ContentRepository()
 SETTINGS = load_settings()
 PREFERRED_MODEL = SETTINGS.default_model
 
@@ -277,8 +277,12 @@ class SiphonPipeline:
             content_data.token_count = token_count
             return content_data
 
-        # Step 4: Enrich with LLM
-        enriched_data = await self.enricher.execute(content_data, preferred_model)
+        # Step 4: Enrich with LLM. Wrapped in capture_enrichment so conduit's
+        # @step trace lands in enrichment_runs (success or failure).
+        async with capture_enrichment(uri=source_info.uri):
+            enriched_data = await self.enricher.execute(
+                content_data, preferred_model
+            )
         logger.info(f"Enriched data: {enriched_data}")
         if action == ActionType.ENRICH:
             return enriched_data

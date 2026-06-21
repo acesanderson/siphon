@@ -9,6 +9,7 @@ This is typically invoked during server startup or development environment setup
 # database/postgres/setup.py
 from siphon_server.database.postgres.connection import Base, engine
 from siphon_server.database.postgres.models import (
+    EnrichmentRunORM,  # MUST import!
     ProcessedContentORM,  # MUST import!
     QueryHistoryORM,  # MUST import!
 )
