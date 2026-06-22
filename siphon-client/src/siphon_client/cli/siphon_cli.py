@@ -178,7 +178,10 @@ def gulp(
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient()
+    # /siphon/* endpoints have no `siphon` route in headwater (orchestration
+    # only, no GPU work). Target bywater explicitly per the per-use-case
+    # routing convention.
+    client = HeadwaterClient(host_alias="bywater")
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
@@ -252,7 +255,10 @@ def parse(source: str | None, return_type: Literal["u", "st"]):
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient()
+    # /siphon/* endpoints have no `siphon` route in headwater (orchestration
+    # only, no GPU work). Target bywater explicitly per the per-use-case
+    # routing convention.
+    client = HeadwaterClient(host_alias="bywater")
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
@@ -314,7 +320,10 @@ def extract(source: str | None, return_type: Literal["c", "m", "to"], diarize: b
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient()
+    # /siphon/* endpoints have no `siphon` route in headwater (orchestration
+    # only, no GPU work). Target bywater explicitly per the per-use-case
+    # routing convention.
+    client = HeadwaterClient(host_alias="bywater")
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload
@@ -368,7 +377,10 @@ def enrich(source: str | None, return_type: Literal["s", "d", "t"]):
     logger.debug("Loading HeadwaterClient")
     from headwater_client.client.headwater_client import HeadwaterClient
 
-    client = HeadwaterClient()
+    # /siphon/* endpoints have no `siphon` route in headwater (orchestration
+    # only, no GPU work). Target bywater explicitly per the per-use-case
+    # routing convention.
+    client = HeadwaterClient(host_alias="bywater")
     logger.info("Processing request")
     response: SiphonResponse = client.siphon.process(request)
     payload: PipelineClass = response.payload

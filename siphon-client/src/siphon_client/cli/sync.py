@@ -310,7 +310,12 @@ async def _process_async(
         from headwater_client.client.headwater_client_async import HeadwaterAsyncClient
 
         semaphore = asyncio.Semaphore(concurrency)
-        async with HeadwaterAsyncClient() as client:
+        # /siphon/process targets bywater (caruana, orchestration host).
+        # /siphon/embed-batch needs the embeddings host (backwater on
+        # botvinnik). Two clients because there's no single router route
+        # that lands /siphon/* on the right host any more.
+        async with HeadwaterAsyncClient(host_alias="bywater") as client, \
+                   HeadwaterAsyncClient(host_alias="backwater") as embed_client:
             results = await asyncio.gather(
                 *[
                     _process_note(
@@ -322,7 +327,7 @@ async def _process_async(
             processed_uris = [r for r in results if r is not None]
             if processed_uris:
                 try:
-                    embed_result = await client.siphon.embed_batch(processed_uris)
+                    embed_result = await embed_client.siphon.embed_batch(processed_uris)
                     stats.embed_ok = embed_result.embedded
                 except Exception as e:
                     printer.print_pretty(
