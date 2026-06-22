@@ -1,0 +1,104 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - link "Go to dashboard" [ref=e5] [cursor=pointer]:
+        - /url: /discover
+        - img [ref=e6]
+      - navigation [ref=e8]:
+        - link [ref=e9] [cursor=pointer]:
+          - /url: /discover
+          - img [ref=e11]
+        - link [ref=e13] [cursor=pointer]:
+          - /url: /conversations
+          - img [ref=e15]
+        - link [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - img [ref=e20]
+      - generic [ref=e22]:
+        - button "Create Your Delphi" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+        - button "More" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+    - banner:
+      - link "Go to dashboard" [ref=e30] [cursor=pointer]:
+        - /url: /discover
+        - img [ref=e31]
+      - link "Create Your Delphi" [ref=e34] [cursor=pointer]:
+        - /url: https://studio.delphi.ai/identity
+    - generic [ref=e35]:
+      - generic [ref=e42]:
+        - button "Share" [ref=e44] [cursor=pointer]
+        - img "hamel profile" [ref=e48]
+        - heading "Hamel Husain" [level=1] [ref=e51]
+        - generic [ref=e52]:
+          - img "Verified" [ref=e53]:
+            - img [ref=e54]
+          - generic [ref=e58]: ML Engineer Helping Companies Build AI Products
+          - button "31.4K Mind" [ref=e62] [cursor=pointer]:
+            - generic [ref=e71]: 31.4K Mind
+        - generic [ref=e72]:
+          - generic [ref=e74]:
+            - paragraph [ref=e75]: This is an AI assistant designed to compliment the course "AI Evals For Engineers & PMs" on Maven https://maven.com/parlance-labs/evals
+            - paragraph [ref=e76]: "It has the following information in context:"
+            - paragraph [ref=e77]: 1. Curated questions & answers from past office hours and discord conversations, amounting to ~2k questions 2. Transcripts and notes from each of the 8 lessons. 3. Shreya & Hamel's public writing on AI Evals 4. Private notes and reflections on Evals.
+            - paragraph [ref=e78]: This is an experimental and meant as a reflection / teaching tool.
+            - paragraph [ref=e79]: "Important: if you want to be assured of a correct answer, ask Shreya and Hamel your question in Discord. As a bonus, ask it in both places and compare the answer (and share when it is wrong)."
+            - paragraph [ref=e80]: "If you haven't registered for the Discord yet, you can do so here: https://discord.com/invite/3d9KPUGw3x (you will have to supply your Maven email so we can verify your enrollment status in the course)."
+          - button "Read more" [ref=e83] [cursor=pointer]
+        - generic [ref=e84]:
+          - heading "Ask me about" [level=2] [ref=e86]:
+            - generic [ref=e88]:
+              - img [ref=e89]
+              - text: Ask me about
+          - generic [ref=e91]:
+            - button "How should I version and manage prompts?" [ref=e92] [cursor=pointer]
+            - button "What parts of evals can be automated with LLMs?" [ref=e93] [cursor=pointer]
+            - button "Should I use \"ready-to-use\" evaluation metrics?" [ref=e94] [cursor=pointer]
+            - button "What are LLM Evals?" [ref=e95] [cursor=pointer]
+        - generic [ref=e96]:
+          - heading "Follow Hamel for more..." [level=2] [ref=e97]
+          - generic [ref=e98]:
+            - link "X" [ref=e99] [cursor=pointer]:
+              - /url: https://x.com/HamelHusain
+              - img [ref=e100]
+            - link "LinkedIn" [ref=e102] [cursor=pointer]:
+              - /url: https://www.linkedin.com/in/hamelhusain
+              - img [ref=e103]
+            - link "hamel.dev" [ref=e105] [cursor=pointer]:
+              - /url: https://hamel.dev
+              - img [ref=e106]
+        - contentinfo [ref=e108]:
+          - paragraph [ref=e109]:
+            - text: © 2026 Delphi ·
+            - link "Terms" [ref=e110] [cursor=pointer]:
+              - /url: /terms-of-use
+            - text: ·
+            - link "Privacy" [ref=e111] [cursor=pointer]:
+              - /url: /privacy-policy
+      - generic [ref=e112]:
+        - button "View chat" [ref=e114] [cursor=pointer]:
+          - text: View chat
+          - img [ref=e115]
+        - generic [ref=e120]:
+          - button "Add attachment" [ref=e122] [cursor=pointer]:
+            - img [ref=e123]
+          - generic [ref=e126]:
+            - generic:
+              - paragraph:
+                - generic: How should I design the rationale field to capture useful nuance?
+                - generic:
+                  - generic: TAB
+            - textbox [active] [ref=e127]
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - button "Start voice input" [ref=e130] [cursor=pointer]:
+                - img [ref=e131]
+              - button "Cancel recording" [disabled]
+            - generic [ref=e133]:
+              - button "Call" [ref=e134] [cursor=pointer]:
+                - img [ref=e135]
+                - generic [ref=e137]: Call
+              - button [disabled]
+              - button "Submit recording" [disabled]
+  - region "Notifications alt+T"
+  - alert [ref=e138]

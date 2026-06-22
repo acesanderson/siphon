@@ -1,0 +1,192 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - link "Go to dashboard" [ref=e5] [cursor=pointer]:
+        - /url: /discover
+        - img [ref=e6]
+      - navigation [ref=e8]:
+        - link [ref=e9] [cursor=pointer]:
+          - /url: /discover
+          - img [ref=e11]
+        - link [ref=e13] [cursor=pointer]:
+          - /url: /conversations
+          - img [ref=e15]
+        - link [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - img [ref=e20]
+      - generic [ref=e22]:
+        - button "Create Your Delphi" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+        - button "More" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+    - banner:
+      - button "Go back" [ref=e139] [cursor=pointer]:
+        - img [ref=e141]
+        - img [ref=e143]
+      - generic [ref=e33]:
+        - link "Create Your Delphi" [ref=e34] [cursor=pointer]:
+          - /url: https://studio.delphi.ai/identity
+        - link "New conversation" [ref=e145] [cursor=pointer]:
+          - /url: /hamel/chat
+          - img [ref=e146]
+    - generic [ref=e35]:
+      - generic:
+        - link "Hamel Husain" [ref=e151] [cursor=pointer]:
+          - /url: /hamel
+          - img "Hamel Husain" [ref=e153]
+        - generic [ref=e160] [cursor=pointer]:
+          - generic [ref=e162]: Hamel Husain
+          - button "Enable voice" [ref=e164]:
+            - img [ref=e165]
+      - log [ref=e169]:
+        - generic [ref=e173]:
+          - generic [ref=e174]:
+            - generic [ref=e176]: Apr 19 10:04 PM
+            - generic [ref=e180]: "I'm building test cases for a stateful, session-oriented Claude Code skill. The skill reads persistent state at session start, accumulates context across turns, and writes mutations to multiple files at session end (a \"resolve\" step). A full test case isn't just a prompt — it requires: an initial state (existing files), a simulated session (sequence of user turns), and expected final state (which files changed, how). For stateful agents where correctness means verifying multi-step action sequences and file mutations, what's the right ground truth format — golden traces (exact expected action sequence) or property-based assertions (these files must have been written, in this order, with this content)? What are the tradeoffs, and which do you prefer for an eval suite that needs to stay stable across refactors?"
+          - generic [ref=e181]:
+            - paragraph [ref=e186]: This is a really sharp question, Brian, and it gets at something fundamental about testing stateful systems. Let me think through the tradeoffs with you.
+            - paragraph [ref=e191]: "The core tension is this: golden traces lock you into exact action sequences, which is brittle and becomes a maintenance nightmare when the underlying implementation changes. But property-based assertions without any sequencing information can miss subtle bugs where the right mutations happen but in the wrong order or timing, which matters a lot for file-based state."
+            - paragraph [ref=e196]: "Here's how I'd frame it: you actually want both, but in different proportions depending on what you're protecting against."
+            - generic [ref=e200]:
+              - paragraph [ref=e201]: "Golden traces (exact action sequences) make sense when:"
+              - paragraph [ref=e202]: You're testing a critical invariant that depends on ordering. For instance, if the skill must write to a manifest before writing to pipeline.md (because the manifest establishes a contract that pipeline.md depends on), getting that order wrong breaks downstream logic even if both files end up with the right final content. In that case, the sequence is the spec, not an implementation detail.
+            - paragraph [ref=e207]: But the cost is real. Refactors that change how the skill orchestrates its work, or that introduce new intermediate file writes for consistency checks, will break your traces even if the final state is correct. You're coupling your tests to implementation.
+            - paragraph [ref=e212]: "Property-based assertions (these files must exist with this content, written in this order) are more stable because:"
+            - paragraph [ref=e217]: They separate "what the skill should accomplish" from "how it should accomplish it." If you care that file X contains schema Y and file Z contains data Z, but you don't care whether X is written before or after Z as long as they're written before session end, a property check lets the implementation vary. Refactors that change orchestration don't break the test.
+            - paragraph [ref=e222]: "The tradeoff: if ordering really does matter for correctness, a property-based approach can hide bugs. You need to be very intentional about which properties you're actually asserting."
+            - generic [ref=e226]:
+              - paragraph [ref=e227]: "What I'd recommend for your suite:"
+              - paragraph [ref=e228]: "Start with a hybrid model. For each test case, define:"
+              - list [ref=e229]:
+                - listitem [ref=e230]:
+                  - paragraph [ref=e231]: "Critical invariants (the properties that must hold): \"manifest.json exists and is valid JSON,\" \"partner_notes.md contains all added notes,\" \"pipeline.md sections are in order.\" These are your property checks, and they stay stable across refactors."
+                - listitem [ref=e232]:
+                  - paragraph [ref=e233]: "Known failure modes tied to ordering (if they exist): \"if the skill creates a new partner, the partner name must be written to manifest before any pipeline reference is added.\" Capture these as a minimal set of sequencing assertions, not the full trace."
+                - listitem [ref=e234]:
+                  - paragraph [ref=e235]: "Full traces for edge cases only: Reserve golden traces for scenarios where you've seen real bugs stem from subtle state ordering issues. Document why the sequence matters so future maintainers understand what they're protecting."
+              - paragraph [ref=e236]: For your 25 hooks, I'd guess most of them don't have ordering dependencies that matter to external systems. Stick with property assertions. The ones that do accumulate state across turns or have manifest-level contracts, those are your candidates for sequencing checks.
+            - paragraph [ref=e241]: "One practical thing: when you build your test cases, structure each one so you can inspect the mutations independently. Instead of \"here's the full golden trace,\" capture \"at session end, these files were written with this content\" and separately record \"file X was written before file Y.\" That way you can swap between property checks and sequence checks without rewriting the whole test."
+            - paragraph [ref=e246]: Are you seeing specific ordering dependencies in your skill's behavior, or is this more of a precaution as you're designing the suite?
+          - generic [ref=e251]: "Mostly precaution — I haven't seen ordering bugs yet, so property assertions will be the default. But I have a practical question about test case construction: the initial state for each test is a set of files (pipeline.md, state.md, partners/ directory). Constructing realistic initial states is the hard part — they need to be plausible enough that the skill behaves naturally, but not so specific that every test breaks when the real data changes. What's the right strategy for managing initial state fixtures in stateful agent tests? Should I hand-craft minimal synthetic fixtures, snapshot real production state at a point in time, or something else? And how do you prevent fixture rot — where fixtures become stale and no longer trigger realistic skill behavior?"
+          - generic [ref=e252]:
+            - paragraph [ref=e257]: "This is the hard problem with fixtures, and I'd say most teams get it wrong at first. The tension you're describing is real: fixtures need to be realistic enough that the skill exercises its actual logic, but specific enough that they're maintainable and don't become fragile anchors every time real data changes."
+            - paragraph [ref=e262]: "Here's what I'd avoid: don't snapshot production state. Full stop. That's fixture rot waiting to happen. In six months, your partners have real names, your pipeline has changed, your notes contain specific project details that are now outdated. You end up constantly updating fixtures just to keep them passing, which defeats the purpose of a regression test."
+            - paragraph [ref=e267]: "Instead, start with hand-crafted minimal synthetic fixtures. By minimal, I mean: include just enough detail to make the skill's logic trigger realistically, but keep it abstract and reusable. For a partner-tracking skill, that might look like:"
+            - generic [ref=e271]:
+              - paragraph [ref=e272]: "Initial state fixture:"
+              - list [ref=e273]:
+                - listitem [ref=e274]:
+                  - code [ref=e275]: pipeline.md
+                  - text: ": A skeleton with 2-3 partner sections, each with a few notes to establish state (maybe \"Partner A: contacted, awaiting response\")"
+                - listitem [ref=e276]:
+                  - code [ref=e277]: manifest.json
+                  - text: ": A simple list with those same partners, one marked as active"
+                - listitem [ref=e278]:
+                  - code [ref=e279]: partners/
+                  - text: ": One subdirectory with a minimal partner profile"
+              - paragraph [ref=e280]: That's it. Not production-realistic in detail, but structurally realistic in how the skill will interact with it.
+              - paragraph [ref=e281]: "Why this works:"
+              - list [ref=e282]:
+                - listitem [ref=e283]: It doesn't change when real data changes. If your production manifest grows to 50 partners, your test fixture stays at 3.
+                - listitem [ref=e284]: "It's explicit about what the skill is actually testing. The fixture is now a specification: \"the skill should handle a pipeline with these structural properties.\""
+                - listitem [ref=e285]: It's easy to reason about. When a test fails, you know it's because the skill broke its logic, not because partner names drifted.
+              - paragraph [ref=e286]: "On fixture rot more broadly:"
+            - paragraph [ref=e291]:
+              - text: The real rot happens when you treat fixtures as frozen snapshots instead of specifications. The way to prevent it is to make fixtures
+              - emphasis [ref=e292]: orthogonal to the actual values
+              - text: "they contain. Use placeholder names (Partner A, Partner B), generic notes, dates that don't matter. Make the assertions data-agnostic: \"the skill updated the active partner field correctly\" rather than \"the skill correctly handled Partner X.\""
+            - paragraph [ref=e297]: "One practical thing: consider parameterizing your fixtures so you can swap in different initial states without rewriting the test. A simple YAML or JSON config file where you define the initial state shape, then generate the files at test time, is lighter than hand-editing files for every scenario. Then if you discover a new edge case (e.g., handling a partner with a very long name), you just add a new parameter, not a new fixture snapshot."
+            - paragraph [ref=e302]:
+              - text: The second layer is
+              - emphasis [ref=e303]: monitoring
+              - text: . You can't prevent all fixture rot, so you need to catch it early. In CI, if a test passes consistently but the skill's real behavior on production data diverges from that test, you've got a silent failure. That's why I'd keep a separate set of spot-check assertions on real production data—not as your regression suite, but as a canary. If the canary fails but regression tests pass, your fixtures have drifted and need refreshing.
+            - paragraph [ref=e308]: Are your fixtures going to be version-controlled in the repo, or stored separately so you can update them independently of test code?
+          - generic [ref=e309]:
+            - generic [ref=e311]: Apr 20 9:30 PM
+            - generic [ref=e315]: "\"I'm building an LLM-as-judge binary classifier to label LinkedIn Skills taxonomy entries as TRUE ('is a software product') or FALSE ('is not a software product'). The classifier outputs three fields: a binary judgment, a rationale string, and a confidence measure. I'll use low-confidence outputs to identify edge cases for a human annotation pass, which then feeds back to improve the prompt. Should confidence be a categorical enum (LOW / MEDIUM / HIGH) or a float (0.0–1.0)? My prior is that LLMs are poorly calibrated on floats and a three-tier ordinal is more honest — but I want to know if there's an eval methodology reason to prefer one over the other.\""
+          - generic [ref=e316]:
+            - paragraph [ref=e321]: Your prior is spot on, and I want to validate the reasoning before answering the direct question.
+            - paragraph [ref=e326]:
+              - text: You're right that LLMs are poorly calibrated on floats. If you ask Claude "rate your confidence 0.0 to 1.0," you'll get a distribution heavily skewed toward 0.7-0.9 where the model is essentially just saying "I'm pretty sure." The granularity becomes noise. And you're also right to be suspicious of confidence as a general metric — it doesn't reliably correlate with accuracy.
+              - button "4" [ref=e328] [cursor=pointer]:
+                - generic [ref=e329]: "4"
+            - paragraph [ref=e334]: "But here's the thing: for your specific use case (flagging edge cases for human review), the form you choose matters less than whether confidence actually correlates with your annotation problem."
+            - generic [ref=e338]:
+              - paragraph [ref=e339]: "The categorical approach (LOW/MEDIUM/HIGH) has real practical advantages:"
+              - paragraph [ref=e340]: "It forces the model to make a clearer distinction. Instead of outputting 0.62 (which could mean anything), it has to commit to a tier. That commitment is often more honest because the model isn't pretending to precision it doesn't have. You get cleaner signal for triaging: \"flag anything marked LOW or MEDIUM for human review\" is a clear policy. A threshold of 0.5 on a float feels arbitrary by comparison."
+            - paragraph [ref=e345]: It also reduces cognitive load downstream. Your annotation team sees three buckets, not fine-grained scores. That simplicity matters when you're building feedback loops.
+            - generic [ref=e349]:
+              - paragraph [ref=e350]: "The float approach gives you:"
+              - paragraph [ref=e351]: Flexibility in threshold setting and calibration downstream. If you apply isotonic regression or Platt scaling, you can map raw model scores to true probabilities and threshold based on your actual cost of error. That's powerful if you have enough labeled data to fit a calibrator properly.
+            - generic [ref=e355]:
+              - paragraph [ref=e356]: "What I'd actually recommend:"
+              - paragraph [ref=e357]: Start with categorical (LOW/MEDIUM/HIGH). Run your first annotation pass, measure how well the model's confidence tier predicts which cases humans disagree on or flag as truly ambiguous. If that correlation is strong, you're done — the categorical approach is doing its job and it's maintainable.
+            - paragraph [ref=e362]: Only graduate to floats if you later need the granularity for something specific, like fitting a calibrator because you're doing prevalence correction across a biased sample. That's an optimization you add when you have evidence it's necessary, not upfront.
+            - paragraph [ref=e367]: "The key insight: confidence is most useful when it actually predicts annotation difficulty. If three-tier confidence correlates with \"cases the annotators debated,\" that's your signal that it's working. Check that before you decide on the representation."
+            - paragraph [ref=e372]: Are you planning to validate confidence against inter-annotator disagreement on your LinkedIn Skills taxonomy, or is the human review step more of a quick sanity check?
+          - generic [ref=e377]: i'm guessing precise floats are only meaningful if you are procedurally producing the value from more constrained llm output (i.e. likert data for well-scoped deliberations). yes/no?
+          - generic [ref=e378]:
+            - generic [ref=e382]:
+              - paragraph [ref=e383]: Exactly. You've nailed the distinction.
+              - paragraph [ref=e384]: Floats only become meaningful when you're backing them out of something more constrained. If you ask the model "on a scale of 1 to 5, how confident are you?" and then convert that to a probability (say, 4/5 = 0.8), you've at least anchored the output to a defined scale with explicit reference points. The model has to commit to a tier before you map it to a number.
+            - paragraph [ref=e389]: But if you just ask "output a confidence score from 0.0 to 1.0," the model is operating in an unconstrained space. It's guessing at what the numbers mean. You get 0.73, 0.68, 0.71 — that granularity is illusory. It's noise dressed up as precision.
+            - paragraph [ref=e394]:
+              - text: The Likert approach works because
+              - button "5" [ref=e396] [cursor=pointer]:
+                - generic [ref=e397]: "5"
+              - text: . If those definitions already exist (and the model was trained on them), you're leveraging that prior knowledge. You're not asking it to invent a continuous scale on the fly.
+            - paragraph [ref=e402]: "So your instinct is right: precise floats work if you're deriving them procedurally from discrete judgments. Categorical enum (or bounded Likert with clear definitions) is the honest move when you're asking the model to make a direct judgment."
+            - paragraph [ref=e407]: For your LinkedIn Skills classifier, stick with LOW/MEDIUM/HIGH. It'll give you clearer triage signal, and you won't waste cycles pretending 0.62 and 0.61 mean different things.
+          - generic [ref=e412]: i think you don't like likert scales in general tho?
+          - generic [ref=e413]:
+            - paragraph [ref=e418]: Yeah, you're picking up on something real. I'm skeptical of Likert scales in general for annotation, especially when you're doing evals. Let me be direct about why.
+            - paragraph [ref=e423]:
+              - text: The core problem is that Likert scales — whether 1-5 or 1-7 — introduce noise without giving you the precision they promise. When you ask someone to rate something on a 1-5 scale without a
+              - emphasis [ref=e424]: very detailed rubric
+              - text: ", the difference between a \"3\" and a \"4\" becomes subjective and inconsistent."
+              - button "3" [ref=e426] [cursor=pointer]:
+                - generic [ref=e427]: "3"
+              - text: "You end up with annotators interpreting the middle of the scale as \"neutral\" or \"I'm uncertain,\" which is satisficing — they pick the middle to minimize cognitive effort. And even if you do have detailed rubrics, you've now multiplied the work: you need examples for a 1, a 2, a 3, a 4, and a 5, plus you have to articulate what distinguishes each adjacent pair. That's exhausting to operationalize, and I've never seen teams successfully do it at scale."
+              - button "10" [ref=e429] [cursor=pointer]:
+                - generic [ref=e430]: "10"
+            - paragraph [ref=e435]:
+              - text: Binary decisions sidestep all of that. You define pass and fail clearly, provide examples of each, and you're done.
+              - button "10" [ref=e437] [cursor=pointer]:
+                - generic [ref=e438]: "10"
+              - text: The nuance doesn't disappear — it moves to the critique that explains
+              - emphasis [ref=e439]: why
+              - text: something failed. That's where the real signal lives anyway.
+            - paragraph [ref=e444]:
+              - text: "The business argument also resonates with me: at some point, you're going to have to ship this thing or not. Your eval should reflect that. Do you ship with this output or not? That's a binary."
+              - button "10" [ref=e446] [cursor=pointer]:
+                - generic [ref=e447]: "10"
+            - paragraph [ref=e452]:
+              - text: "Now, the one asterisk: if you're actually fine-tuning a judge model and have preference data with fine-grained ratings, then sure, a Likert scale makes sense because you're training the model on that scale. But off-the-shelf LLM judges using Likert scales without grounding? That's where the problems multiply."
+              - button "10" [ref=e454] [cursor=pointer]:
+                - generic [ref=e455]: "10"
+            - paragraph [ref=e460]: So for your LinkedIn Skills classifier — stick with categorical. You're honest about what the model can reliably distinguish, and you keep your annotation cleaner.
+          - generic [ref=e465]: "I'm building a media-processing pipeline (Siphon) that ingests ~11 source types (articles, YouTube, arxiv, podcasts, etc.) and produces LLM summaries via a token-count-based router (3 tiers, gpt-oss or gemma4, OneShot or RollingRefine). Eval setup: 200-doc mixed-source-type corpus, Gemini3 one-shot summaries as gold-standard references, Gemini3 LLM-as-judge scoring 0-1, run offline as a sweep across strategies x models x token bins. This drove my production routing decision. A production failure just surfaced that the eval data already knew about: gpt-oss collapses from 0.72 quality at <5K tokens to 0.13 at 5K-12K. My Tier 1 routes everything <12K to gpt-oss for latency reasons. A 32-min YouTube transcript hit that dead band and the model emitted hallucinated promotional outro text instead of a summary. I'm adding per-enrichment observability (token count, tier, model, strategy, guideline-version hash, durations stored per-run in a separate table) and considering a nightly job that runs the Gemini judge against a sampled fraction of production ingests for drift monitoring. Three things I want your opinion on: 1. Reference bias. My \"gold standard\" is itself LLM-generated (Gemini3 one-shot), and the judge is the same model family. Is this a sound foundation, or am I building reference bias into the entire eval system from the ground up? If it's unsound, what's the cheapest fix that doesn't require a human-labeled corpus from scratch? 2. Eval-vs-decision gap. The eval correctly measured the quality cliff but the routing decision overrode it for latency. Is that a process failure, a design failure (eval should have surfaced cliffs as hard floors, not means), or normal engineering tradeoffs I should accept? 3. Two eval systems or one? I have a dev-iteration eval (sweep over strategies/models/prompts on the 200-doc set) and a TBD production-monitoring eval (sample real ingests nightly, judge them). Should these be the same system or two? And with per-source-type guidelines I iterate on continuously, should each source type have its own bounded test set instead of one mixed 200-doc corpus? What's the most leveraged change here?"
+          - generic [ref=e470]:
+            - paragraph [ref=e471]: The reference bias problem is real and it's the most leveraged place to start.
+            - paragraph [ref=e472]: "Your gold standard is Gemini3 one-shot, and your judge is also Gemini (same model family). This creates a closed loop: the judge is evaluating outputs against a reference it was essentially trained to produce. You're not measuring \"is this summary good,\" you're measuring \"how similar is this to what Gemini produces,\" which is a different question entirely. When gpt-oss collapses at"
+      - generic [ref=e120]:
+        - button "Add attachment" [disabled] [ref=e122]:
+          - img [ref=e123]
+        - generic [ref=e126]:
+          - generic:
+            - paragraph:
+              - generic: What are LLM Evals?
+              - generic:
+                - generic: TAB
+          - textbox [active] [ref=e127]
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - button "Start voice input" [disabled]
+            - button "Cancel recording" [disabled]
+          - generic [ref=e133]:
+            - button
+            - button [ref=e473] [cursor=pointer]:
+              - img [ref=e474]
+            - button "Submit recording" [disabled]
+  - region "Notifications alt+T"
+  - alert [ref=e138]

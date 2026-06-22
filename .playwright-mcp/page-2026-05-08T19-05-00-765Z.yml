@@ -1,0 +1,1022 @@
+- generic [ref=e2]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "Hugging Face's logo Hugging Face" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img "Hugging Face's logo" [ref=e8]
+          - generic [ref=e9]: Hugging Face
+        - generic [ref=e10]:
+          - textbox "Search models, datasets, users..." [ref=e11]
+          - img [ref=e12]
+      - navigation "Main" [ref=e14]:
+        - list [ref=e15]:
+          - listitem [ref=e16]:
+            - link "Models" [ref=e17] [cursor=pointer]:
+              - /url: /models
+              - img [ref=e18]
+              - text: Models
+          - listitem [ref=e22]:
+            - link "Datasets" [ref=e23] [cursor=pointer]:
+              - /url: /datasets
+              - img [ref=e24]
+              - text: Datasets
+          - listitem [ref=e29]:
+            - link "Spaces" [ref=e30] [cursor=pointer]:
+              - /url: /spaces
+              - img [ref=e31]
+              - text: Spaces
+          - listitem [ref=e35]:
+            - link "Docs" [ref=e36] [cursor=pointer]:
+              - /url: /docs
+              - img [ref=e37]
+              - text: Docs
+          - listitem [ref=e41]:
+            - link "Pricing" [ref=e42] [cursor=pointer]:
+              - /url: /pricing
+          - listitem [ref=e43]:
+            - button [ref=e45] [cursor=pointer]:
+              - img [ref=e46]
+          - listitem [ref=e51]:
+            - separator [ref=e52]
+          - listitem [ref=e53]:
+            - link "Log In" [ref=e54] [cursor=pointer]:
+              - /url: /login
+          - listitem [ref=e55]:
+            - link "Sign Up" [ref=e56] [cursor=pointer]:
+              - /url: /join
+  - main [ref=e57]:
+    - generic [ref=e60]:
+      - heading "ibm-granite / granite-speech-4.1-2b-plus like 47 Follow IBM Granite 4.5k" [level=1] [ref=e61]:
+        - generic [ref=e62]:
+          - link [ref=e66] [cursor=pointer]:
+            - /url: /ibm-granite
+          - link "ibm-granite" [ref=e70] [cursor=pointer]:
+            - /url: /ibm-granite
+          - generic [ref=e71]: /
+        - generic [ref=e72]:
+          - link "granite-speech-4.1-2b-plus" [ref=e73] [cursor=pointer]:
+            - /url: /ibm-granite/granite-speech-4.1-2b-plus
+          - button "Copy model name to clipboard" [ref=e74] [cursor=pointer]:
+            - img [ref=e75]
+        - generic [ref=e79]:
+          - button "like" [ref=e80] [cursor=pointer]:
+            - img [ref=e81]
+            - generic [ref=e83]: like
+          - button "47" [ref=e84] [cursor=pointer]
+        - generic [ref=e86]:
+          - button "Follow IBM Granite" [ref=e87] [cursor=pointer]:
+            - generic [ref=e88]: Follow
+            - generic [ref=e89]: IBM Granite
+          - button "4.5k" [ref=e90] [cursor=pointer]
+      - generic [ref=e91]:
+        - link "Automatic Speech Recognition" [ref=e92] [cursor=pointer]:
+          - /url: /models?pipeline_tag=automatic-speech-recognition
+          - generic [ref=e93]:
+            - img [ref=e95]
+            - generic [ref=e97]: Automatic Speech Recognition
+        - link "Transformers" [ref=e98] [cursor=pointer]:
+          - /url: /models?library=transformers
+          - generic [ref=e99]:
+            - img [ref=e100]
+            - generic [ref=e111]: Transformers
+        - link "Safetensors" [ref=e112] [cursor=pointer]:
+          - /url: /models?library=safetensors
+          - generic [ref=e113]:
+            - img [ref=e114]
+            - generic [ref=e116]: Safetensors
+        - button "6 languages" [ref=e117] [cursor=pointer]:
+          - generic [ref=e118]:
+            - img [ref=e119]
+            - generic [ref=e121]: 6 languages
+        - link "granite_speech_plus" [ref=e122] [cursor=pointer]:
+          - /url: /models?other=granite_speech_plus
+          - generic [ref=e124]: granite_speech_plus
+        - 'button "arxiv: 6 papers" [ref=e125] [cursor=pointer]':
+          - generic [ref=e126]:
+            - img [ref=e127]
+            - generic [ref=e130]: "arxiv:"
+            - generic [ref=e131]: 6 papers
+        - 'button "License: apache-2.0" [ref=e133] [cursor=pointer]':
+          - generic [ref=e135]:
+            - img [ref=e136]
+            - generic [ref=e138]: "License:"
+            - generic [ref=e139]: apache-2.0
+      - generic [ref=e141]:
+        - generic [ref=e142]:
+          - link "Model card" [ref=e143] [cursor=pointer]:
+            - /url: /ibm-granite/granite-speech-4.1-2b-plus
+            - img [ref=e144]
+            - text: Model card
+          - link "Files xet" [ref=e148] [cursor=pointer]:
+            - /url: /ibm-granite/granite-speech-4.1-2b-plus/tree/main
+            - img [ref=e149]
+            - generic [ref=e152]: Files
+            - generic [ref=e155]:
+              - img [ref=e156]
+              - generic [ref=e159]: xet
+          - link "Community 3" [ref=e160] [cursor=pointer]:
+            - /url: /ibm-granite/granite-speech-4.1-2b-plus/discussions
+            - img [ref=e161]
+            - text: Community
+            - generic [ref=e164]: "3"
+        - generic [ref=e165]:
+          - button [ref=e168] [cursor=pointer]:
+            - img [ref=e169]
+          - generic [ref=e173]:
+            - button "Deploy" [ref=e175] [cursor=pointer]:
+              - img [ref=e176]
+              - text: Deploy
+              - img [ref=e179]
+            - dialog
+          - generic [ref=e181]:
+            - button "Use this model" [active] [ref=e182] [cursor=pointer]:
+              - img [ref=e183]
+              - text: Use this model
+              - img [ref=e185]
+            - list [ref=e1105]:
+              - listitem [ref=e1106]: Libraries
+              - listitem [ref=e1107]:
+                - link "Transformers" [ref=e1108] [cursor=pointer]:
+                  - /url: /ibm-granite/granite-speech-4.1-2b-plus?library=transformers
+                  - img [ref=e1109]
+                  - generic [ref=e1120]: Transformers
+              - listitem [ref=e1121]: Notebooks
+              - listitem [ref=e1122]:
+                - link "Google Colab" [ref=e1123] [cursor=pointer]:
+                  - /url: /ibm-granite/granite-speech-4.1-2b-plus/colab
+                  - img [ref=e1124]
+                  - generic [ref=e1130]: Google Colab
+              - listitem [ref=e1131]:
+                - link "Kaggle" [ref=e1132] [cursor=pointer]:
+                  - /url: /ibm-granite/granite-speech-4.1-2b-plus/kaggle
+                  - img [ref=e1133]
+                  - generic [ref=e1136]: Kaggle
+    - generic [ref=e221]:
+      - generic [ref=e223]:
+        - button [ref=e229] [cursor=pointer]:
+          - img [ref=e230]
+        - generic [ref=e232]:
+          - heading "Granite-Speech-4.1-2B-Plus" [level=1] [ref=e233]:
+            - link [ref=e234] [cursor=pointer]:
+              - /url: "#granite-speech-41-2b-plus"
+              - img [ref=e236]
+            - generic [ref=e238]: Granite-Speech-4.1-2B-Plus
+          - heading "Model Summary" [level=2] [ref=e239]:
+            - link [ref=e240] [cursor=pointer]:
+              - /url: "#model-summary"
+              - img [ref=e242]
+            - generic [ref=e244]: Model Summary
+          - paragraph [ref=e245]:
+            - text: Granite-Speech-4.1-2B-Plus has similar capabilities to the
+            - link "Granite-Speech-4.1-2B" [ref=e246] [cursor=pointer]:
+              - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b
+            - text: "model. The plus model adds two new community-requested rich transcription features that can be activated with a simple prompt change: speaker-attributed ASR (speaker labels and word transcripts) and word-level timing information. Unlike the base mode, the plus model doesn't provide punctuation and capitalization."
+          - paragraph [ref=e247]:
+            - text: The model was trained on corpora similar to the
+            - link "Granite-Speech-4.1-2B" [ref=e248] [cursor=pointer]:
+              - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b
+            - text: model which were augmented with speaker turns and word-level timestamp tags. This allows the model to provide different modes of functionality controlled by different prompts.
+          - paragraph [ref=e249]: "Two additional model variants explore different capabilities and inference optimization:"
+          - list [ref=e250]:
+            - listitem [ref=e251]:
+              - link "Granite-Speech-4.1-2B" [ref=e252] [cursor=pointer]:
+                - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b
+              - text: for applications where accuracy is the primary concern with support for punctuated, capitalized transcripts, AST and keyword-biased recognition, and includes Japanese.
+            - listitem [ref=e253]:
+              - link "Granite-Speech-4.1-2B-NAR" [ref=e254] [cursor=pointer]:
+                - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b-nar
+              - text: introduces a novel non-autoregressive architecture for higher throughput
+          - heading "ASR only mode" [level=3] [ref=e255]:
+            - link [ref=e256] [cursor=pointer]:
+              - /url: "#asr-only-mode"
+              - img [ref=e258]
+            - generic [ref=e260]: ASR only mode
+          - paragraph [ref=e261]:
+            - text: In this mode the model generates only the text transcript similar to the
+            - link "Granite-Speech-4.1-2B" [ref=e262] [cursor=pointer]:
+              - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b
+            - text: model.
+          - heading "Speaker attributed ASR (SAA)" [level=3] [ref=e263]:
+            - link [ref=e264] [cursor=pointer]:
+              - /url: "#speaker-attributed-asr-saa"
+              - img [ref=e266]
+            - generic [ref=e268]: Speaker attributed ASR (SAA)
+          - paragraph [ref=e269]:
+            - text: In this mode, the model adds speaker tags in the format of
+            - code [ref=e270]: "[Speaker N]:"
+            - text: where $N$ is the speaker number, before each speaker turn. The speakers are numbered by their order of appearance so the first speaker will always be marked with
+            - code [ref=e271]: "[Speaker 1]:"
+            - text: and the second with
+            - code [ref=e272]: "[Speaker 2]:"
+            - text: ", etc. For example:"
+            - code [ref=e273]: "\"[Speaker 1]: Hello how are you [Speaker 2]: I'm fine and how are you feeling [Speaker 1]: I feel wonderful\""
+            - text: .
+          - paragraph [ref=e274]:
+            - text: See
+            - link "Resources" [ref=e275] [cursor=pointer]:
+              - /url: "#resources"
+            - text: for more information about SAA.
+          - heading "Word-level timestamps" [level=3] [ref=e276]:
+            - link [ref=e277] [cursor=pointer]:
+              - /url: "#word-level-timestamps"
+              - img [ref=e279]
+            - generic [ref=e281]: Word-level timestamps
+          - paragraph [ref=e282]:
+            - text: In this mode, the model adds timestamp tags after each word indicating the end of the word in the audio. Silences are transcribed as
+            - code [ref=e283]: _
+            - text: and a timestamp tag also indicates their end. The format of the tag is
+            - code [ref=e284]: "[T:N]"
+            - text: where $N$ is an integer number indicating the time in centiseconds (1/100th of a second). To reduce the amount of generated tokens, only the last three digits of $N$ are provided. This causes a rollover after 10 seconds.
+          - paragraph [ref=e285]: The conversion from time $t$ in seconds to timestamp is $N = round(t*100) \mod 1000$. To convert back to seconds, use $t = N/100 + 10R$ where $R$ is the rollover counter. See code below for example implementation in Python.
+          - paragraph [ref=e286]:
+            - text: See
+            - link "Resources" [ref=e287] [cursor=pointer]:
+              - /url: "#resources"
+            - text: for more information about timestamps.
+          - heading "Incremental decoding" [level=3] [ref=e288]:
+            - link [ref=e289] [cursor=pointer]:
+              - /url: "#incremental-decoding"
+              - img [ref=e291]
+            - generic [ref=e293]: Incremental decoding
+          - paragraph [ref=e294]:
+            - text: There are cases where we want to transcribe a new audio segment along with previous segments that we've already transcribed. This can be useful for providing longer context for the model in order to improve transcription accuracy or to maintain the speaker numbering in SAA mode. To avoid re-decoding the previous segments, we can provide the previous transcription in the
+            - code [ref=e295]: prefix_text
+            - text: field of the conversation template. The model will decode the parts after that. See the code below for examples.
+          - heading "Keyword list biasing (KWB)" [level=3] [ref=e296]:
+            - link [ref=e297] [cursor=pointer]:
+              - /url: "#keyword-list-biasing-kwb"
+              - img [ref=e299]
+            - generic [ref=e301]: Keyword list biasing (KWB)
+          - paragraph [ref=e302]:
+            - text: "Keyword list biasing capability is available to enhance the recognition of keywords, such as names and technical terms. This is particularly useful in tasks where complex terms may otherwise be misrecognized. Keyword biasing can be applied by including the keywords directly in the prompt; for example, in ASR mode:"
+            - code [ref=e303]: "Can you transcribe the speech into a written format? Keywords: …"
+          - paragraph [ref=e304]: Users may provide either a single keyword or a list of keywords, which may also include terms that do not appear in the input audio, making them well suited for batch processing or recurring domain-specific use cases.
+          - paragraph [ref=e305]:
+            - text: See
+            - link "Resources" [ref=e306] [cursor=pointer]:
+              - /url: "#resources"
+            - text: for more information about keyword list biasing.
+          - heading "Evaluations" [level=2] [ref=e307]:
+            - link [ref=e308] [cursor=pointer]:
+              - /url: "#evaluations"
+              - img [ref=e310]
+            - generic [ref=e312]: Evaluations
+          - paragraph [ref=e313]: Our evaluations showed that this model works well with audio segments up to 9 minutes long for ASR and SAA, and up to 5 minutes for timestamps.
+          - heading "ASR" [level=3] [ref=e314]:
+            - link [ref=e315] [cursor=pointer]:
+              - /url: "#asr"
+              - img [ref=e317]
+            - generic [ref=e319]: ASR
+          - paragraph [ref=e320]:
+            - strong [ref=e321]: Performance on
+            - link "HuggingFace Open ASR leaderboard" [ref=e322] [cursor=pointer]:
+              - /url: https://huggingface.co/spaces/hf-audio/open_asr_leaderboard
+              - strong [ref=e323]: HuggingFace Open ASR leaderboard
+            - strong [ref=e324]: ":"
+          - table [ref=e326]:
+            - rowgroup [ref=e327]:
+              - row "model Average WER AMI Earnings22 Gigaspeech LS Clean LS Other SPGISpeech Tedlium Voxpopuli" [ref=e328]:
+                - columnheader "model" [ref=e329]:
+                  - strong [ref=e330]: model
+                - columnheader "Average WER" [ref=e331]:
+                  - strong [ref=e332]: Average WER
+                - columnheader "AMI" [ref=e333]:
+                  - strong [ref=e334]: AMI
+                - columnheader "Earnings22" [ref=e335]:
+                  - strong [ref=e336]: Earnings22
+                - columnheader "Gigaspeech" [ref=e337]:
+                  - strong [ref=e338]: Gigaspeech
+                - columnheader "LS Clean" [ref=e339]:
+                  - strong [ref=e340]: LS Clean
+                - columnheader "LS Other" [ref=e341]:
+                  - strong [ref=e342]: LS Other
+                - columnheader "SPGISpeech" [ref=e343]:
+                  - strong [ref=e344]: SPGISpeech
+                - columnheader "Tedlium" [ref=e345]:
+                  - strong [ref=e346]: Tedlium
+                - columnheader "Voxpopuli" [ref=e347]:
+                  - strong [ref=e348]: Voxpopuli
+            - rowgroup [ref=e349]:
+              - row "ibm-granite/granite-speech-4.1-2b-plus 5.71 8.63 8.68 10.38 1.44 3.06 3.72 3.89 5.9" [ref=e350]:
+                - cell "ibm-granite/granite-speech-4.1-2b-plus" [ref=e351]:
+                  - strong [ref=e352]: ibm-granite/granite-speech-4.1-2b-plus
+                - cell "5.71" [ref=e353]
+                - cell "8.63" [ref=e354]
+                - cell "8.68" [ref=e355]
+                - cell "10.38" [ref=e356]
+                - cell "1.44" [ref=e357]
+                - cell "3.06" [ref=e358]
+                - cell "3.72" [ref=e359]
+                - cell "3.89" [ref=e360]
+                - cell "5.9" [ref=e361]
+              - row "ibm-granite/granite-speech-4.1-2b 5.33 8.09 8.37 9.8 1.33 2.5 3.78 3.07 5.7" [ref=e362]:
+                - cell "ibm-granite/granite-speech-4.1-2b" [ref=e363]
+                - cell "5.33" [ref=e364]
+                - cell "8.09" [ref=e365]
+                - cell "8.37" [ref=e366]
+                - cell "9.8" [ref=e367]
+                - cell "1.33" [ref=e368]
+                - cell "2.5" [ref=e369]
+                - cell "3.78" [ref=e370]
+                - cell "3.07" [ref=e371]
+                - cell "5.7" [ref=e372]
+              - row "ibm-granite/granite-speech-4.1-2b-nar 5.44 8.03 8.44 10.16 1.28 2.77 3.33 3.62 5.86" [ref=e373]:
+                - cell "ibm-granite/granite-speech-4.1-2b-nar" [ref=e374]
+                - cell "5.44" [ref=e375]
+                - cell "8.03" [ref=e376]
+                - cell "8.44" [ref=e377]
+                - cell "10.16" [ref=e378]
+                - cell "1.28" [ref=e379]
+                - cell "2.77" [ref=e380]
+                - cell "3.33" [ref=e381]
+                - cell "3.62" [ref=e382]
+                - cell "5.86" [ref=e383]
+          - paragraph [ref=e384]:
+            - text: (Using
+            - link "speculative decoding" [ref=e385] [cursor=pointer]:
+              - /url: https://github.com/huggingface/open_asr_leaderboard/blob/main/granite/run_eval_speculative.py
+            - text: )
+          - paragraph [ref=e386]:
+            - strong [ref=e387]: "Keyword list biasing accuracy - Keyword F1 score (%, ↑ higher is better):"
+          - table [ref=e389]:
+            - rowgroup [ref=e390]:
+              - row "Mode Gigaspeech LS-C LS-O SPGISpeech VOX TED_LIUM Earnings22 CV-en CV-de CV-es CV-fr CV-pt" [ref=e391]:
+                - columnheader "Mode" [ref=e392]
+                - columnheader "Gigaspeech" [ref=e393]
+                - columnheader "LS-C" [ref=e394]
+                - columnheader "LS-O" [ref=e395]
+                - columnheader "SPGISpeech" [ref=e396]
+                - columnheader "VOX" [ref=e397]
+                - columnheader "TED_LIUM" [ref=e398]
+                - columnheader "Earnings22" [ref=e399]
+                - columnheader "CV-en" [ref=e400]
+                - columnheader "CV-de" [ref=e401]
+                - columnheader "CV-es" [ref=e402]
+                - columnheader "CV-fr" [ref=e403]
+                - columnheader "CV-pt" [ref=e404]
+            - rowgroup [ref=e405]:
+              - row "Without KWB 74.2 89.1 78.2 80.8 93.9 87.9 68.8 74.6 78.5 83.1 74.5 90.0" [ref=e406]:
+                - cell "Without KWB" [ref=e407]
+                - cell "74.2" [ref=e408]
+                - cell "89.1" [ref=e409]
+                - cell "78.2" [ref=e410]
+                - cell "80.8" [ref=e411]
+                - cell "93.9" [ref=e412]
+                - cell "87.9" [ref=e413]
+                - cell "68.8" [ref=e414]
+                - cell "74.6" [ref=e415]
+                - cell "78.5" [ref=e416]
+                - cell "83.1" [ref=e417]
+                - cell "74.5" [ref=e418]
+                - cell "90.0" [ref=e419]
+              - row "With KWB 84.1 96.1 93.0 92.5 96.3 94.9 81.5 91.5 92.9 93.9 90.6 95.0" [ref=e420]:
+                - cell "With KWB" [ref=e421]
+                - cell "84.1" [ref=e422]:
+                  - strong [ref=e423]: "84.1"
+                - cell "96.1" [ref=e424]:
+                  - strong [ref=e425]: "96.1"
+                - cell "93.0" [ref=e426]:
+                  - strong [ref=e427]: "93.0"
+                - cell "92.5" [ref=e428]:
+                  - strong [ref=e429]: "92.5"
+                - cell "96.3" [ref=e430]:
+                  - strong [ref=e431]: "96.3"
+                - cell "94.9" [ref=e432]:
+                  - strong [ref=e433]: "94.9"
+                - cell "81.5" [ref=e434]:
+                  - strong [ref=e435]: "81.5"
+                - cell "91.5" [ref=e436]:
+                  - strong [ref=e437]: "91.5"
+                - cell "92.9" [ref=e438]:
+                  - strong [ref=e439]: "92.9"
+                - cell "93.9" [ref=e440]:
+                  - strong [ref=e441]: "93.9"
+                - cell "90.6" [ref=e442]:
+                  - strong [ref=e443]: "90.6"
+                - cell "95.0" [ref=e444]:
+                  - strong [ref=e445]: "95.0"
+          - heading "Speaker Attributed ASR" [level=3] [ref=e446]:
+            - link [ref=e447] [cursor=pointer]:
+              - /url: "#speaker-attributed-asr"
+              - img [ref=e449]
+            - generic [ref=e451]: Speaker Attributed ASR
+          - paragraph [ref=e452]:
+            - strong [ref=e453]: "Speaker Attributed ASR performance - WDER (%, ↓ lower is better):"
+          - table [ref=e455]:
+            - rowgroup [ref=e456]:
+              - row "Model FISHER CALLHOME English AMI-SDM GALE" [ref=e457]:
+                - columnheader "Model" [ref=e458]:
+                  - strong [ref=e459]: Model
+                - columnheader "FISHER" [ref=e460]:
+                  - strong [ref=e461]: FISHER
+                - columnheader "CALLHOME English" [ref=e462]:
+                  - strong [ref=e463]: CALLHOME English
+                - columnheader "AMI-SDM" [ref=e464]:
+                  - strong [ref=e465]: AMI-SDM
+                - columnheader "GALE" [ref=e466]:
+                  - strong [ref=e467]: GALE
+            - rowgroup [ref=e468]:
+              - row "VibeVoice ASR [1] 2.8 7.1 27.4 44.8" [ref=e469]:
+                - cell "VibeVoice ASR [1]" [ref=e470]
+                - cell "2.8" [ref=e471]
+                - cell "7.1" [ref=e472]
+                - cell "27.4" [ref=e473]
+                - cell "44.8" [ref=e474]
+              - row "Granite-speech-4.1-2b-plus 0.9 2.2 14.6 30.2" [ref=e475]:
+                - cell "Granite-speech-4.1-2b-plus" [ref=e476]:
+                  - strong [ref=e477]: Granite-speech-4.1-2b-plus
+                - cell "0.9" [ref=e478]:
+                  - strong [ref=e479]: "0.9"
+                - cell "2.2" [ref=e480]:
+                  - strong [ref=e481]: "2.2"
+                - cell "14.6" [ref=e482]:
+                  - strong [ref=e483]: "14.6"
+                - cell "30.2" [ref=e484]:
+                  - strong [ref=e485]: "30.2"
+          - paragraph [ref=e486]: The results are averaged over 2-5 minute speech segments.
+          - paragraph [ref=e487]: "(The evaluation metric: Word Diarization Error Rate [WDER] is the percentage of words attributed to the wrong speaker)"
+          - heading "Timestamps" [level=3] [ref=e488]:
+            - link [ref=e489] [cursor=pointer]:
+              - /url: "#timestamps"
+              - img [ref=e491]
+            - generic [ref=e493]: Timestamps
+          - paragraph [ref=e494]:
+            - strong [ref=e495]: "Word-level timestamp accuracy - AAS (ms, ↓ lower is better):"
+          - table [ref=e497]:
+            - rowgroup [ref=e498]:
+              - row "Model AMI-I AMI-S LS-C LS-O VOX CV MLS TMT En Avg MLS-fr MLS-es MLS-de MLS-pt CV-fr CV-es CV-de CV-pt ML Avg" [ref=e499]:
+                - columnheader "Model" [ref=e500]:
+                  - strong [ref=e501]: Model
+                - columnheader "AMI-I" [ref=e502]:
+                  - strong [ref=e503]: AMI-I
+                - columnheader "AMI-S" [ref=e504]:
+                  - strong [ref=e505]: AMI-S
+                - columnheader "LS-C" [ref=e506]:
+                  - strong [ref=e507]: LS-C
+                - columnheader "LS-O" [ref=e508]:
+                  - strong [ref=e509]: LS-O
+                - columnheader "VOX" [ref=e510]:
+                  - strong [ref=e511]: VOX
+                - columnheader "CV" [ref=e512]:
+                  - strong [ref=e513]: CV
+                - columnheader "MLS" [ref=e514]:
+                  - strong [ref=e515]: MLS
+                - columnheader "TMT" [ref=e516]:
+                  - strong [ref=e517]: TMT
+                - columnheader "En Avg" [ref=e518]:
+                  - strong [ref=e519]: En Avg
+                - columnheader "MLS-fr" [ref=e520]:
+                  - strong [ref=e521]: MLS-fr
+                - columnheader "MLS-es" [ref=e522]:
+                  - strong [ref=e523]: MLS-es
+                - columnheader "MLS-de" [ref=e524]:
+                  - strong [ref=e525]: MLS-de
+                - columnheader "MLS-pt" [ref=e526]:
+                  - strong [ref=e527]: MLS-pt
+                - columnheader "CV-fr" [ref=e528]:
+                  - strong [ref=e529]: CV-fr
+                - columnheader "CV-es" [ref=e530]:
+                  - strong [ref=e531]: CV-es
+                - columnheader "CV-de" [ref=e532]:
+                  - strong [ref=e533]: CV-de
+                - columnheader "CV-pt" [ref=e534]:
+                  - strong [ref=e535]: CV-pt
+                - columnheader "ML Avg" [ref=e536]:
+                  - strong [ref=e537]: ML Avg
+            - rowgroup [ref=e538]:
+              - row "Qwen3-FA [2] 48.1 82.5 27.8 29.3 41.0 48.4 34.3 29.9 42.7 38.1 27.0 31.2 26.3 30.3 40.0 29.4 34.2 33.3" [ref=e539]:
+                - cell "Qwen3-FA [2]" [ref=e540]
+                - cell "48.1" [ref=e541]
+                - cell "82.5" [ref=e542]
+                - cell "27.8" [ref=e543]
+                - cell "29.3" [ref=e544]
+                - cell "41.0" [ref=e545]:
+                  - strong [ref=e546]: "41.0"
+                - cell "48.4" [ref=e547]
+                - cell "34.3" [ref=e548]
+                - cell "29.9" [ref=e549]
+                - cell "42.7" [ref=e550]
+                - cell "38.1" [ref=e551]:
+                  - strong [ref=e552]: "38.1"
+                - cell "27.0" [ref=e553]
+                - cell "31.2" [ref=e554]:
+                  - strong [ref=e555]: "31.2"
+                - cell "26.3" [ref=e556]:
+                  - strong [ref=e557]: "26.3"
+                - cell "30.3" [ref=e558]
+                - cell "40.0" [ref=e559]
+                - cell "29.4" [ref=e560]
+                - cell "34.2" [ref=e561]
+                - cell "33.3" [ref=e562]
+              - row "CrisperWhisper [3] 55.7 64.3 35.9 40.1 47.2 97.4 46.4 42.7 53.7 35.6 28.0 31.2 36.8 62.9 58.9 60.9 83.8 50.1" [ref=e563]:
+                - cell "CrisperWhisper [3]" [ref=e564]
+                - cell "55.7" [ref=e565]
+                - cell "64.3" [ref=e566]:
+                  - strong [ref=e567]: "64.3"
+                - cell "35.9" [ref=e568]
+                - cell "40.1" [ref=e569]
+                - cell "47.2" [ref=e570]
+                - cell "97.4" [ref=e571]
+                - cell "46.4" [ref=e572]
+                - cell "42.7" [ref=e573]
+                - cell "53.7" [ref=e574]
+                - cell "35.6" [ref=e575]
+                - cell "28.0" [ref=e576]
+                - cell "31.2" [ref=e577]:
+                  - strong [ref=e578]: "31.2"
+                - cell "36.8" [ref=e579]
+                - cell "62.9" [ref=e580]
+                - cell "58.9" [ref=e581]
+                - cell "60.9" [ref=e582]
+                - cell "83.8" [ref=e583]
+                - cell "50.1" [ref=e584]
+              - row "Canary-v2 [4] 127.8 129.7 92.5 89.2 109.9 110.3 94.3 86.1 105.0 85.0 81.1 80.2 – 86.8 88.5 91.5 – –" [ref=e585]:
+                - cell "Canary-v2 [4]" [ref=e586]
+                - cell "127.8" [ref=e587]
+                - cell "129.7" [ref=e588]
+                - cell "92.5" [ref=e589]
+                - cell "89.2" [ref=e590]
+                - cell "109.9" [ref=e591]
+                - cell "110.3" [ref=e592]
+                - cell "94.3" [ref=e593]
+                - cell "86.1" [ref=e594]
+                - cell "105.0" [ref=e595]
+                - cell "85.0" [ref=e596]
+                - cell "81.1" [ref=e597]
+                - cell "80.2" [ref=e598]
+                - cell "–" [ref=e599]
+                - cell "86.8" [ref=e600]
+                - cell "88.5" [ref=e601]
+                - cell "91.5" [ref=e602]
+                - cell "–" [ref=e603]
+                - cell "–" [ref=e604]
+              - row "WhisperX [5] 107.1 150.2 71.7 72.0 78.8 91.2 79.2 63.6 89.2 117.3 84.7 132.2 75.0 104.2 88.1 126.8 79.5 101.0" [ref=e605]:
+                - cell "WhisperX [5]" [ref=e606]
+                - cell "107.1" [ref=e607]
+                - cell "150.2" [ref=e608]
+                - cell "71.7" [ref=e609]
+                - cell "72.0" [ref=e610]
+                - cell "78.8" [ref=e611]
+                - cell "91.2" [ref=e612]
+                - cell "79.2" [ref=e613]
+                - cell "63.6" [ref=e614]
+                - cell "89.2" [ref=e615]
+                - cell "117.3" [ref=e616]
+                - cell "84.7" [ref=e617]
+                - cell "132.2" [ref=e618]
+                - cell "75.0" [ref=e619]
+                - cell "104.2" [ref=e620]
+                - cell "88.1" [ref=e621]
+                - cell "126.8" [ref=e622]
+                - cell "79.5" [ref=e623]
+                - cell "101.0" [ref=e624]
+              - row "Granite-speech-4.1-2b-plus 43.4 69.0 11.4 14.6 80.2 43.3 24.3 24.5 38.8 45.4 23.0 41.3 47.1 18.6 19.3 19.5 24.2 29.8" [ref=e625]:
+                - cell "Granite-speech-4.1-2b-plus" [ref=e626]:
+                  - strong [ref=e627]: Granite-speech-4.1-2b-plus
+                - cell "43.4" [ref=e628]:
+                  - strong [ref=e629]: "43.4"
+                - cell "69.0" [ref=e630]
+                - cell "11.4" [ref=e631]:
+                  - strong [ref=e632]: "11.4"
+                - cell "14.6" [ref=e633]:
+                  - strong [ref=e634]: "14.6"
+                - cell "80.2" [ref=e635]
+                - cell "43.3" [ref=e636]:
+                  - strong [ref=e637]: "43.3"
+                - cell "24.3" [ref=e638]:
+                  - strong [ref=e639]: "24.3"
+                - cell "24.5" [ref=e640]:
+                  - strong [ref=e641]: "24.5"
+                - cell "38.8" [ref=e642]:
+                  - strong [ref=e643]: "38.8"
+                - cell "45.4" [ref=e644]
+                - cell "23.0" [ref=e645]:
+                  - strong [ref=e646]: "23.0"
+                - cell "41.3" [ref=e647]
+                - cell "47.1" [ref=e648]
+                - cell "18.6" [ref=e649]:
+                  - strong [ref=e650]: "18.6"
+                - cell "19.3" [ref=e651]:
+                  - strong [ref=e652]: "19.3"
+                - cell "19.5" [ref=e653]:
+                  - strong [ref=e654]: "19.5"
+                - cell "24.2" [ref=e655]:
+                  - strong [ref=e656]: "24.2"
+                - cell "29.8" [ref=e657]:
+                  - strong [ref=e658]: "29.8"
+          - paragraph [ref=e659]: "(The evaluation metric: Accumulated Averaging Shift [AAS] is measuring the average time shift of each word)"
+          - heading "Release Date" [level=2] [ref=e660]:
+            - link [ref=e661] [cursor=pointer]:
+              - /url: "#release-date"
+              - img [ref=e663]
+            - generic [ref=e665]: Release Date
+          - paragraph [ref=e666]: April 28, 2026
+          - heading "License" [level=2] [ref=e667]:
+            - link [ref=e668] [cursor=pointer]:
+              - /url: "#license"
+              - img [ref=e670]
+            - generic [ref=e672]: License
+          - paragraph [ref=e673]:
+            - link "Apache 2.0" [ref=e674] [cursor=pointer]:
+              - /url: https://www.apache.org/licenses/LICENSE-2.0
+          - heading "Supported Languages" [level=2] [ref=e675]:
+            - link [ref=e676] [cursor=pointer]:
+              - /url: "#supported-languages"
+              - img [ref=e678]
+            - generic [ref=e680]: Supported Languages
+          - paragraph [ref=e681]: English, French, German, Spanish, Portuguese
+          - heading "Intended Use" [level=2] [ref=e682]:
+            - link [ref=e683] [cursor=pointer]:
+              - /url: "#intended-use"
+              - img [ref=e685]
+            - generic [ref=e687]: Intended Use
+          - paragraph [ref=e688]: The model is intended to be used in enterprise applications that involve processing of speech input especially when a rich transcript adding speaker turns and time stamps is desired. In particular, the model is well-suited for English, French, German, Spanish, and Portuguese speech-to-text.
+          - heading "Usage" [level=2] [ref=e689]:
+            - link [ref=e690] [cursor=pointer]:
+              - /url: "#usage"
+              - img [ref=e692]
+            - generic [ref=e694]: Usage
+          - paragraph [ref=e695]:
+            - text: The Granite Speech model is supported natively in
+            - code [ref=e696]: transformers>=5.8
+            - text: . Below is a simple example of how to use the different modes of the model.
+          - heading "Usage with transformers" [level=3] [ref=e697]:
+            - link [ref=e698] [cursor=pointer]:
+              - /url: "#usage-with-transformers"
+              - img [ref=e700]
+            - generic [ref=e702]:
+              - text: Usage with
+              - code [ref=e703]: transformers
+          - paragraph [ref=e704]:
+            - text: First
+            - link "install pytorch" [ref=e705] [cursor=pointer]:
+              - /url: https://pytorch.org/get-started/locally/
+            - text: .
+          - paragraph [ref=e706]:
+            - text: Install
+            - link "transformers" [ref=e707] [cursor=pointer]:
+              - /url: https://huggingface.co/docs/transformers/installation
+            - text: . The code for the granite-speech-plus model was added recently so you might need to install from the sources until the PyPI package is updated.
+          - generic [ref=e708]:
+            - code [ref=e710]: pip install torchaudio datasets accelerate torchcodec
+            - button [ref=e711] [cursor=pointer]:
+              - img [ref=e712]
+          - paragraph [ref=e716]:
+            - strong [ref=e717]: Setup
+            - text: "— load the model and a test audio clip:"
+          - generic [ref=e718]:
+            - code [ref=e720]: import re import torch from datasets import Audio, load_dataset from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+            - button [ref=e721] [cursor=pointer]:
+              - img [ref=e722]
+          - paragraph [ref=e726]: "Load the model and define a general function for decoding the audio:"
+          - generic [ref=e727]:
+            - code [ref=e729]:
+              - text: "MODEL_NAME = \"ibm-granite/granite-speech-4.1-2b-plus\" device = \"cuda\" if torch.cuda.is_available() else \"cpu\" processor = AutoProcessor.from_pretrained(MODEL_NAME) tokenizer = processor.tokenizer model = AutoModelForSpeechSeq2Seq.from_pretrained(MODEL_NAME, device_map=device, dtype=torch.bfloat16) model.eval() SYSTEM_PROMPT = \"Knowledge Cutoff Date: April 2024.\\nToday's Date: December 19, 2024.\\nYou are Granite, developed by IBM. You are a helpful AI assistant\" @torch.inference_mode() def transcribe("
+              - generic [ref=e730]: audio, prompt, max_new_tokens=2000, prefix_text=None
+              - text: "): chat = [{\"role\": \"system\", \"content\": SYSTEM_PROMPT}, {\"role\": \"user\", \"content\": prompt}] extra = {\"prefix_text\": prefix_text} if prefix_text is not None else {} prompt_text = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True, **extra) inputs = processor(prompt_text, audio, device=device, return_tensors=\"pt\").to(device) outputs = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False, num_beams=1) new_tokens = outputs[0, inputs[\"input_ids\"].shape[-1]:] output_text = tokenizer.decode(new_tokens, add_special_tokens=False, skip_special_tokens=True) return output_text"
+            - button [ref=e731] [cursor=pointer]:
+              - img [ref=e732]
+          - paragraph [ref=e736]: Load some example audio data from the AMI dataset
+          - generic [ref=e737]:
+            - code [ref=e739]: SAMPLE_RATE = 16000 ds = load_dataset("diarizers-community/ami", "ihm", split="test") ds = ds.cast_column("audio", Audio(sampling_rate=SAMPLE_RATE, num_channels=1)) TEST_SAMPLE = 0 START_TIME, END_TIME = 5 * 60, 6 * 60 audio = ds["audio"][TEST_SAMPLE].get_samples_played_in_range(START_TIME, END_TIME)
+            - button [ref=e740] [cursor=pointer]:
+              - img [ref=e741]
+          - paragraph [ref=e745]:
+            - strong [ref=e746]: "Task 1: ASR"
+            - text: "— plain speech-to-text transcription:"
+          - generic [ref=e747]:
+            - code [ref=e749]: ASR_PROMPT = "<|audio|> can you transcribe the speech into a written format?" asr_text = transcribe(audio.data, ASR_PROMPT) print(asr_text)
+            - button [ref=e750] [cursor=pointer]:
+              - img [ref=e751]
+          - paragraph [ref=e755]:
+            - strong [ref=e756]: "Task 2: Speaker Attributed ASR"
+            - text: "— transcription with speaker labels:"
+          - generic [ref=e757]:
+            - code [ref=e759]: "SAA_PROMPT = \"<|audio|> Speaker attribution: Transcribe and denote who is speaking by adding [Speaker 1]: and [Speaker 2]: tags before speaker turns.\" saa_text = transcribe(audio.data, SAA_PROMPT) for segment in re.split(r\"(\\[Speaker \\d+\\]:)\", saa_text): print(segment.strip())"
+            - button [ref=e760] [cursor=pointer]:
+              - img [ref=e761]
+          - paragraph [ref=e765]:
+            - strong [ref=e766]: "Task 3: Word-level timestamps"
+            - text: "— transcription with per-word timing:"
+          - paragraph [ref=e767]: The timestamps are given in centiseconds and are modulo 1000 (=10 seconds) so we need to unwrap them by adding multiples of 10 seconds.
+          - generic [ref=e768]:
+            - code [ref=e770]:
+              - text: "TS_PROMPT = \"<|audio|> Timestamps: Transcribe the speech. After each word, add a timestamp tag showing the end time in centiseconds, e.g. hello [T:45] world [T:82]\" ts_text = transcribe(audio.data, TS_PROMPT, max_new_tokens=10000) ts_words = re.split(r\"\\[T:(\\d+)\\]\", ts_text) last_word_end_time = 0 offset_time = 0 for word, ts in zip(ts_words[::2], ts_words[1::2]): word_end_time = float(ts) / 100 while word_end_time + offset_time < last_word_end_time: offset_time += 10 last_word_end_time = word_end_time + offset_time print("
+              - generic [ref=e771]:
+                - text: "f\"{word}\\t"
+                - generic [ref=e772]: "{last_word_end_time:.2f}"
+                - text: s"
+              - text: )
+            - button [ref=e773] [cursor=pointer]:
+              - img [ref=e774]
+          - paragraph [ref=e778]:
+            - strong [ref=e779]: "Task 4: Incremental decoding"
+            - text: "— transcribe segments while accumulating audio context:"
+          - generic [ref=e780]:
+            - code [ref=e782]:
+              - text: "NUM_SEGMENTS = 3 previous_transcript = \"\" all_audio = None for k in range(NUM_SEGMENTS): t1 = START_TIME + (END_TIME - START_TIME) * k / NUM_SEGMENTS t2 = START_TIME + (END_TIME - START_TIME) * (k + 1) / NUM_SEGMENTS new_audio = ds[\"audio\"][TEST_SAMPLE].get_samples_played_in_range(t1, t2) all_audio = new_audio.data if all_audio is None else torch.cat([all_audio, new_audio.data], dim=-1) saa_text = transcribe(all_audio, SAA_PROMPT, prefix_text=previous_transcript) print("
+              - generic [ref=e783]:
+                - text: f"
+                - generic [ref=e784]: "{t1:06.2f}"
+                - text: "-"
+                - generic [ref=e785]: "{t2:06.2f}"
+                - text: ":\\t{saa_text}\""
+              - text: ) previous_transcript = (previous_transcript + " " + saa_text).strip()
+            - button [ref=e786] [cursor=pointer]:
+              - img [ref=e787]
+          - heading "Model Architecture" [level=2] [ref=e791]:
+            - link [ref=e792] [cursor=pointer]:
+              - /url: "#model-architecture"
+              - img [ref=e794]
+            - generic [ref=e796]: Model Architecture
+          - paragraph [ref=e797]:
+            - text: The model shares the same architecture as the
+            - link "Granite-Speech-4.1-2B" [ref=e798] [cursor=pointer]:
+              - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b
+            - text: model.
+          - heading "Training Data" [level=2] [ref=e799]:
+            - link [ref=e800] [cursor=pointer]:
+              - /url: "#training-data"
+              - img [ref=e802]
+            - generic [ref=e804]: Training Data
+          - paragraph [ref=e805]:
+            - text: The model was trained on the same datasets as
+            - link "Granite-Speech-4.1-2B" [ref=e806] [cursor=pointer]:
+              - /url: https://huggingface.co/ibm-granite/granite-speech-4.1-2b
+            - text: .
+          - paragraph [ref=e807]: Additional training data for SAA was created using audio segments from datasets that have speaker identification (e.g. Multilingual-Librispeech). Segments with alternating speakers were concatenated to create a long multi-speaker sample.
+          - heading "Training Data for Timestamps" [level=3] [ref=e808]:
+            - link [ref=e809] [cursor=pointer]:
+              - /url: "#training-data-for-timestamps"
+              - img [ref=e811]
+            - generic [ref=e813]: Training Data for Timestamps
+          - paragraph [ref=e814]: "Word-level timestamping capabilities are achieved by using a combination of publicly available speech corpora: LibriSpeech, MLS (en, fr, de, pt, es), CommonVoice (en, fr, de, pt, es), VoxPopuli (en, fr, de, es), AMI-IHM, Switchboard, TIMIT and YODAS. For AMI-IHM, Switchboard and TIMIT, we use the available timestamp annotations. For all other datasets, we obtain word-level alignments using the Montreal Forced Aligner (MFA), a GMM-HMM based forced alignment tool. We also use MFA to insert silence boundaries into the manually annotated datasets."
+          - paragraph [ref=e815]: "To ensure high-quality training data, we validate the MFA-derived alignments using forced alignments with our CTC-based speech encoder. We compute the Accumulated Average Shift (AAS), the mean absolute error between timestamps in milliseconds, for the CTC and MFA alignments and retain only samples with the lowest alignment error: the top 95% for English and top 70% for non-English data. For the larger datasets (YODAS and MLS-en), we cap the training data at 4M and 5M samples, respectively."
+          - paragraph [ref=e816]: Additional training data containing long audio samples with timestamps were generated by concatenation of short segments.
+          - paragraph [ref=e817]: The model was trained on audio samples up to 10 minutes for ASR and SAA, and up to 5 minutes for timestamps.
+          - heading "Infrastructure" [level=2] [ref=e818]:
+            - link [ref=e819] [cursor=pointer]:
+              - /url: "#infrastructure"
+              - img [ref=e821]
+            - generic [ref=e823]: Infrastructure
+          - paragraph [ref=e824]: We train Granite Speech using IBM's supercomputing cluster, Blue Vela, which is outfitted with NVIDIA H100 GPUs. This cluster provides a scalable and efficient infrastructure for training our models over thousands of GPUs. The training of this particular model was completed in about 5 days on 32 H100 GPUs.
+          - heading "Ethical Considerations and Limitations" [level=2] [ref=e825]:
+            - link [ref=e826] [cursor=pointer]:
+              - /url: "#ethical-considerations-and-limitations"
+              - img [ref=e828]
+            - generic [ref=e830]: Ethical Considerations and Limitations
+          - paragraph [ref=e831]: The use of Large Speech and Language Models can trigger certain risks and ethical considerations. Although our alignment processes include safety considerations, the model may in some cases produce inaccurate, biased, offensive or unwanted responses to user prompts. Additionally, whether smaller models may exhibit increased susceptibility to hallucination in generation scenarios due to their reduced sizes, which could limit their ability to generate coherent and contextually accurate responses, remains uncertain. This aspect is currently an active area of research, and we anticipate more rigorous exploration, comprehension, and mitigations in this domain.
+          - paragraph [ref=e832]: IBM recommends using this model for automatic speech recognition and translation tasks. The model's design improves safety by limiting how audio inputs can influence the system. If an unfamiliar or malformed prompt is received, the model simply ignores it and performs transcription, which is the default fallback mode. This minimizes the risk of adversarial inputs, unlike integrated models that directly interpret audio and may be more exposed to such attacks. Note that more general speech tasks may pose higher inherent risks of triggering unwanted outputs.
+          - paragraph [ref=e833]: To enhance safety, we recommend using Granite-Speech-4.1-2B-Plus alongside Granite Guardian. Granite Guardian is a fine-tuned instruct model designed to detect and flag risks in prompts and responses across key dimensions outlined in the IBM AI Risk Atlas.
+          - heading "Resources" [level=2] [ref=e834]:
+            - link [ref=e835] [cursor=pointer]:
+              - /url: "#resources"
+              - img [ref=e837]
+            - generic [ref=e839]: Resources
+          - list [ref=e840]:
+            - listitem [ref=e841]:
+              - text: "📄 Read the papers:"
+              - list [ref=e842]:
+                - listitem [ref=e843]:
+                  - link "Speaker Attributed Automatic Speech Recognition Using Speech Aware LLMS" [ref=e844] [cursor=pointer]:
+                    - /url: https://arxiv.org/abs/2604.11269
+                - listitem [ref=e845]:
+                  - 'link "In-Sync: Adaptation of Speech Aware Large Language Models for ASR with Word Level Timestamp Predictions" [ref=e846] [cursor=pointer]':
+                    - /url: https://arxiv.org/abs/2604.22817
+                - listitem [ref=e847]:
+                  - link "Contextual Biasing for ASR in Speech LLM with Common Word Cues and Bias Word Position Prediction" [ref=e848] [cursor=pointer]:
+                    - /url: https://arxiv.org/abs/2604.12398
+                - listitem [ref=e849]:
+                  - 'link "Granite-speech: open-source speech-aware LLMs with strong English ASR capabilities" [ref=e850] [cursor=pointer]':
+                    - /url: https://arxiv.org/abs/2505.08699
+                - listitem [ref=e851]:
+                  - link "Self-Speculative Decoding for LLM-based ASR with CTC Encoder Drafts" [ref=e852] [cursor=pointer]:
+                    - /url: https://arxiv.org/abs/2603.11243
+                - listitem [ref=e853]:
+                  - 'link "NLE: Non-autoregressive LLM-based ASR by Transcript Editing" [ref=e854] [cursor=pointer]':
+                    - /url: https://arxiv.org/abs/2603.08397
+            - listitem [ref=e855]:
+              - text: "⭐️ Learn about the latest updates with Granite:"
+              - link "https://www.ibm.com/granite" [ref=e856] [cursor=pointer]:
+                - /url: https://www.ibm.com/granite
+            - listitem [ref=e857]:
+              - text: "🚀 Get started with tutorials, best practices, and prompt engineering advice:"
+              - link "https://www.ibm.com/granite/docs/" [ref=e858] [cursor=pointer]:
+                - /url: https://www.ibm.com/granite/docs/
+            - listitem [ref=e859]:
+              - text: "💡 Learn about the latest Granite learning resources:"
+              - link "https://ibm.biz/granite-learning-resources" [ref=e860] [cursor=pointer]:
+                - /url: https://ibm.biz/granite-learning-resources
+          - heading "References" [level=2] [ref=e861]:
+            - link [ref=e862] [cursor=pointer]:
+              - /url: "#references"
+              - img [ref=e864]
+            - generic [ref=e866]: References
+          - paragraph [ref=e867]:
+            - text: "[1] VibeVoice-ASR (Transformers-compatible version). Available online:"
+            - link "https://huggingface.co/microsoft/VibeVoice-ASR-HF" [ref=e868] [cursor=pointer]:
+              - /url: https://huggingface.co/microsoft/VibeVoice-ASR-HF
+            - text: .
+          - paragraph [ref=e869]: "[2] X. Shi et al., \"Qwen3-ASR technical report,\" 2026. arXiv"
+          - paragraph [ref=e870]: "[3] M. Zusag, L. Wagner, and B. Thallinger, \"CrisperWhisper: Accurate timestamps on verbatim speech transcriptions,\" in Proc. Interspeech, 2024."
+          - paragraph [ref=e871]: "[4] M. Sekoyan, N. R. Koluguri, N. Tadevosyan, P. Zelasko, T. Bartley, N. Karpov, J. Balam, and B. Ginsburg, \"Canary-1B-v2 & Parakeet-TDT-0.6B-v3: Efficient and high-performance models for multilingual ASR and AST,\" 2025. arXiv"
+          - paragraph [ref=e872]: "[5] M. Bain, J. Huh, T. Han, and A. Zisserman, \"WhisperX: Time-accurate speech transcription of long-form audio,\" 2023. arXiv"
+      - generic [ref=e873]:
+        - generic [ref=e874]:
+          - generic [ref=e875]:
+            - term [ref=e876]: Downloads last month
+            - definition [ref=e877]: 7,679
+          - img [ref=e879]
+        - generic [ref=e884]:
+          - generic [ref=e885]:
+            - img [ref=e886]
+            - text: Safetensors
+            - link [ref=e888] [cursor=pointer]:
+              - /url: https://huggingface.co/docs/safetensors
+              - img [ref=e889]
+          - generic [ref=e893]:
+            - generic [ref=e894]:
+              - generic [ref=e895]: Model size
+              - generic [ref=e896]: 2B params
+            - generic [ref=e897]:
+              - generic [ref=e898]: Tensor type
+              - generic [ref=e899]: BF16
+            - button "Chat template" [ref=e900] [cursor=pointer]:
+              - img [ref=e901]
+              - paragraph [ref=e903]: Chat template
+            - button "Files info" [ref=e905] [cursor=pointer]:
+              - img [ref=e906]
+              - paragraph [ref=e908]: Files info
+        - generic [ref=e912]:
+          - generic [ref=e914]:
+            - img [ref=e915]
+            - generic [ref=e917]: Inference Providers
+            - link "NEW" [ref=e918] [cursor=pointer]:
+              - /url: https://huggingface.co/docs/inference-providers
+          - link "Automatic Speech Recognition" [ref=e921] [cursor=pointer]:
+            - /url: /tasks/automatic-speech-recognition
+            - generic [ref=e922]:
+              - img [ref=e923]
+              - generic [ref=e925]: Automatic Speech Recognition
+          - generic [ref=e926]:
+            - generic [ref=e927]: This model isn't deployed by any Inference Provider.
+            - link "🙋 Ask for provider support" [ref=e928] [cursor=pointer]:
+              - /url: /spaces/huggingface/InferenceSupport/discussions/new?title=ibm-granite/granite-speech-4.1-2b-plus&description=React%20to%20this%20comment%20with%20an%20emoji%20to%20vote%20for%20%5Bibm-granite%2Fgranite-speech-4.1-2b-plus%5D(%2Fibm-granite%2Fgranite-speech-4.1-2b-plus)%20to%20be%20supported%20by%20Inference%20Providers.%0A%0A(optional)%20Which%20providers%20are%20you%20interested%20in%3F%20(Novita%2C%20Hyperbolic%2C%20Together%E2%80%A6)%0A
+              - generic [ref=e930]: 🙋
+              - generic [ref=e931]: Ask for provider support
+        - heading "Model tree for ibm-granite/granite-speech-4.1-2b-plus" [level=2] [ref=e933]:
+          - img [ref=e934]
+          - text: Model tree for
+          - generic [ref=e937]: ibm-granite/granite-speech-4.1-2b-plus
+        - generic [ref=e938]:
+          - generic [ref=e939]:
+            - paragraph [ref=e940]: Base model
+            - link "ibm-granite/granite-4.0-1b-base" [ref=e942] [cursor=pointer]:
+              - /url: /ibm-granite/granite-4.0-1b-base
+          - generic [ref=e943]:
+            - img [ref=e945]
+            - generic [ref=e947]:
+              - img [ref=e948]
+              - text: Finetuned
+            - generic [ref=e955]:
+              - text: (
+              - link "14" [ref=e956] [cursor=pointer]:
+                - /url: /models?other=base_model:finetune:ibm-granite/granite-4.0-1b-base
+              - text: )
+            - generic "ibm-granite/granite-speech-4.1-2b-plus" [ref=e958]: this model
+          - generic [ref=e960]:
+            - img [ref=e963]
+            - generic [ref=e965]: Quantizations
+            - link "2 models" [ref=e967] [cursor=pointer]:
+              - /url: /models?other=base_model:quantized:ibm-granite/granite-speech-4.1-2b-plus
+        - heading "Collection including ibm-granite/granite-speech-4.1-2b-plus" [level=2] [ref=e969]:
+          - img [ref=e970]
+          - text: Collection including
+          - generic [ref=e974]: ibm-granite/granite-speech-4.1-2b-plus
+        - article [ref=e977]:
+          - link "Granite Experiments Collection Experimental projects under consideration for the Granite family. • 11 items • Updated 7 days ago • 18" [ref=e978] [cursor=pointer]:
+            - /url: /collections/ibm-granite/granite-experiments
+            - generic "Granite Experiments" [ref=e979]:
+              - heading "Granite Experiments" [level=4] [ref=e980]
+              - generic [ref=e981]:
+                - img [ref=e982]
+                - text: Collection
+            - generic [ref=e986]:
+              - generic [ref=e987]: Experimental projects under consideration for the Granite family.
+              - generic [ref=e988]: •
+              - generic [ref=e989]: 11 items
+              - generic [ref=e990]: •
+              - generic [ref=e991]:
+                - text: Updated
+                - time [ref=e992]: 7 days ago
+              - generic [ref=e993]: •
+              - img [ref=e994]
+              - text: "18"
+        - heading "Papers for ibm-granite/granite-speech-4.1-2b-plus" [level=2] [ref=e998]:
+          - img [ref=e999]
+          - text: Papers for
+          - generic [ref=e1002]: ibm-granite/granite-speech-4.1-2b-plus
+        - generic [ref=e1003]:
+          - article [ref=e1004]:
+            - 'link "In-Sync: Adaptation of Speech Aware Large Language Models for ASR with Word Level Timestamp Predictions Paper • 2604.22817 • Published 25 days ago" [ref=e1005] [cursor=pointer]':
+              - /url: /papers/2604.22817
+              - generic "arxiv:2604.22817" [ref=e1006]:
+                - 'heading "In-Sync: Adaptation of Speech Aware Large Language Models for ASR with Word Level Timestamp Predictions" [level=4] [ref=e1007]'
+              - generic [ref=e1008]:
+                - img [ref=e1009]
+                - text: Paper
+                - generic [ref=e1012]: •
+                - text: "2604.22817"
+                - generic [ref=e1013]: •
+                - generic [ref=e1014]:
+                  - text: Published
+                  - time [ref=e1015]: 25 days ago
+          - article [ref=e1016]:
+            - link "Contextual Biasing for ASR in Speech LLM with Common Word Cues and Bias Word Position Prediction Paper • 2604.12398 • Published 25 days ago" [ref=e1017] [cursor=pointer]:
+              - /url: /papers/2604.12398
+              - generic "arxiv:2604.12398" [ref=e1018]:
+                - heading "Contextual Biasing for ASR in Speech LLM with Common Word Cues and Bias Word Position Prediction" [level=4] [ref=e1019]
+              - generic [ref=e1020]:
+                - img [ref=e1021]
+                - text: Paper
+                - generic [ref=e1024]: •
+                - text: "2604.12398"
+                - generic [ref=e1025]: •
+                - generic [ref=e1026]:
+                  - text: Published
+                  - time [ref=e1027]: 25 days ago
+          - article [ref=e1028]:
+            - link "Speaker Attributed Automatic Speech Recognition Using Speech Aware LLMS Paper • 2604.11269 • Published 26 days ago • 1" [ref=e1029] [cursor=pointer]:
+              - /url: /papers/2604.11269
+              - generic "arxiv:2604.11269" [ref=e1030]:
+                - heading "Speaker Attributed Automatic Speech Recognition Using Speech Aware LLMS" [level=4] [ref=e1031]
+              - generic [ref=e1032]:
+                - img [ref=e1033]
+                - text: Paper
+                - generic [ref=e1036]: •
+                - text: "2604.11269"
+                - generic [ref=e1037]: •
+                - generic [ref=e1038]:
+                  - text: Published
+                  - time [ref=e1039]: 26 days ago
+                - generic [ref=e1040]: •
+                - img [ref=e1041]
+                - text: "1"
+          - article [ref=e1043]:
+            - link "Self-Speculative Decoding for LLM-based ASR with CTC Encoder Drafts Paper • 2603.11243 • Published Mar 11" [ref=e1044] [cursor=pointer]:
+              - /url: /papers/2603.11243
+              - generic "arxiv:2603.11243" [ref=e1045]:
+                - heading "Self-Speculative Decoding for LLM-based ASR with CTC Encoder Drafts" [level=4] [ref=e1046]
+              - generic [ref=e1047]:
+                - img [ref=e1048]
+                - text: Paper
+                - generic [ref=e1051]: •
+                - text: "2603.11243"
+                - generic [ref=e1052]: •
+                - generic [ref=e1053]:
+                  - text: Published
+                  - time [ref=e1054]: Mar 11
+          - article [ref=e1055]:
+            - 'link "NLE: Non-autoregressive LLM-based ASR by Transcript Editing Paper • 2603.08397 • Published Mar 9 • 22" [ref=e1056] [cursor=pointer]':
+              - /url: /papers/2603.08397
+              - generic "arxiv:2603.08397" [ref=e1057]:
+                - 'heading "NLE: Non-autoregressive LLM-based ASR by Transcript Editing" [level=4] [ref=e1058]'
+              - generic [ref=e1059]:
+                - img [ref=e1060]
+                - text: Paper
+                - generic [ref=e1063]: •
+                - text: "2603.08397"
+                - generic [ref=e1064]: •
+                - generic [ref=e1065]:
+                  - text: Published
+                  - time [ref=e1066]: Mar 9
+                - generic [ref=e1067]: •
+                - img [ref=e1068]
+                - text: "22"
+  - contentinfo [ref=e1070]:
+    - navigation [ref=e1071]:
+      - button "System theme" [ref=e1074] [cursor=pointer]:
+        - img [ref=e1075]
+        - text: System theme
+      - link "TOS" [ref=e1080] [cursor=pointer]:
+        - /url: /terms-of-service
+      - link "Privacy" [ref=e1081] [cursor=pointer]:
+        - /url: /privacy
+      - link "About" [ref=e1082] [cursor=pointer]:
+        - /url: /huggingface
+      - link "Careers" [ref=e1083] [cursor=pointer]:
+        - /url: https://apply.workable.com/huggingface/
+      - link "Hugging Face" [ref=e1084] [cursor=pointer]:
+        - /url: /
+        - img [ref=e1085]
+      - link "Models" [ref=e1099] [cursor=pointer]:
+        - /url: /models
+      - link "Datasets" [ref=e1100] [cursor=pointer]:
+        - /url: /datasets
+      - link "Spaces" [ref=e1101] [cursor=pointer]:
+        - /url: /spaces
+      - link "Pricing" [ref=e1102] [cursor=pointer]:
+        - /url: /pricing
+      - link "Docs" [ref=e1103] [cursor=pointer]:
+        - /url: /docs

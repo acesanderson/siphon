@@ -98,7 +98,10 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
         raise RuntimeError("Model not yet loaded")
 
     audio = _load_audio(audio_path)
-    logger.info(f"[GRANITE] audio shape={audio.shape} dtype={audio.dtype} sr={TARGET_SR}")
+    audio_duration_sec = audio.shape[-1] / TARGET_SR
+    # ~3 tokens/second of speech, 20% headroom, hard ceiling of 2000
+    max_new_tokens = min(2000, int(audio_duration_sec * 3 * 1.2))
+    logger.info(f"[GRANITE] audio shape={audio.shape} duration={audio_duration_sec:.1f}s max_new_tokens={max_new_tokens}")
 
     tokenizer = _processor.tokenizer
     chat = [
@@ -115,7 +118,7 @@ def run_transcription(audio_path: str) -> tuple[list[dict], str]:
 
     outputs = _model.generate(
         **inputs,
-        max_new_tokens=2000,
+        max_new_tokens=max_new_tokens,
         do_sample=False,
         num_beams=1,
         repetition_penalty=1.5,

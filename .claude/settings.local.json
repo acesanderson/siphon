@@ -98,7 +98,13 @@
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "Bash(bash scripts/worker_logs.sh*)",
       "Bash(bash scripts/worker_test.sh*)",
-      "Bash(bash scripts/deploy.sh*)"
+      "Bash(bash scripts/deploy.sh*)",
+      "Bash(curl -s http://localhost:9222/json/version)",
+      "Skill(hamel)",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Bash(env)"
     ]
   }
 }

@@ -9,7 +9,6 @@ from siphon_server.sources.youtube.cache import (
 )
 import yt_dlp
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import GenericProxyConfig
 from functools import lru_cache
 from typing import override, Any
 import os
@@ -19,13 +18,42 @@ logger = logging.getLogger(__name__)
 transcript_cache = YouTubeTranscriptCache()
 metadata_cache = YouTubeMetadataCache()
 
-OXY_NAME = os.getenv("OXY_NAME")
-OXY_PASSWORD = os.getenv("OXY_PASSWORD")
-if not OXY_NAME or not OXY_PASSWORD:
+
+def _build_proxy_config():
+    """
+    Pick a proxy provider for youtube-transcript-api.
+
+    Preference order:
+      1. Webshare (purpose-built for YouTube by the library author)
+      2. Oxylabs (generic residential proxy)
+      3. None (direct, likely to be IP-blocked)
+    """
+    webshare_user = os.getenv("WEBSHARE_USERNAME")
+    webshare_pass = os.getenv("WEBSHARE_PASS")
+    if webshare_user and webshare_pass:
+        from youtube_transcript_api.proxies import WebshareProxyConfig
+
+        logger.debug("YouTube transcript proxy: Webshare")
+        return WebshareProxyConfig(
+            proxy_username=webshare_user,
+            proxy_password=webshare_pass,
+        )
+
+    oxy_name = os.getenv("OXY_NAME")
+    oxy_password = os.getenv("OXY_PASSWORD")
+    if oxy_name and oxy_password:
+        from youtube_transcript_api.proxies import GenericProxyConfig
+
+        logger.debug("YouTube transcript proxy: Oxylabs (generic)")
+        proxy_url = f"http://customer-{oxy_name}:{oxy_password}@pr.oxylabs.io:7777"
+        return GenericProxyConfig(proxy_url)
+
     logger.warning(
-        "Oxylabs credentials not set in environment variables. Transcript downloads may fail if rate limits are exceeded."
+        "No proxy credentials found (WEBSHARE_USERNAME/WEBSHARE_PASS or "
+        "OXY_NAME/OXY_PASSWORD). YouTube transcript downloads will use the host "
+        "IP and are likely to be IP-blocked."
     )
-    raise EnvironmentError("Oxylabs credentials not set in environment variables.")
+    return None
 
 
 class YouTubeExtractor(ExtractorStrategy):
@@ -161,13 +189,8 @@ class YouTubeExtractor(ExtractorStrategy):
         If not cached, download the transcript using youtube-transcript-api.
         """
         logger.debug("Using youtube-transcript-api to download transcript...")
-        logger.debug("Setting up YouTubeTranscriptApi with Oxylabs proxy...")
-        proxy_url = f"http://customer-{OXY_NAME}:{OXY_PASSWORD}@pr.oxylabs.io:7777"
-        ytt_api = YouTubeTranscriptApi(
-            proxy_config=GenericProxyConfig(proxy_url)
-        )
+        ytt_api = YouTubeTranscriptApi(proxy_config=_build_proxy_config())
 
-        # all requests done by ytt_api will now be proxied through Webshare
         logger.debug("Fetching transcript...")
         fetched_transcript = ytt_api.fetch(video_id)
         t = fetched_transcript.to_raw_data()

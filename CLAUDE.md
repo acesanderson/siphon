@@ -6,26 +6,35 @@ Siphon is a media processing pipeline (audio transcription, diarization, image g
 
 ## Active Work — Enrichment + Retrieval Refactor
 
-**Status as of 2026-06-01.**
+**Status as of 2026-06-21.**
 
-A multi-session refactor is in progress to (a) delegate summarization to conduit's `RoutingSummarizer` so long-form content gets routed to the right strategy, and (b) reshape Siphon's description artifact into a HyDE-aligned, retrieval-only artifact backed by a better embedding model.
+**Shipped to date:**
+- Phase 3 conduit-side: `RoutingSummarizer` + `SummarizationProfile` + `_TextInput.guideline` (`b3f3157`, deployed 2026-06-01).
+- Article migrated to the new pattern (`040cfe3`). All 9 other implemented enrichers followed (`2b39ca9`).
+- Phase R1 article HyDE description (`83fbb23`). Phase R5 HyDE description rollout to all 9 other sources (`11cbab6`).
+- Phase R2-R4 scaffolding (`56a47a7`) but not run.
+- Layer 1 observability shipped 2026-06-21 (`8e7194a` siphon, `b1cdfe6` + `0578342` conduit). `enrichment_runs` table, `siphon inspect <uri>` CLI, conduit `rendered_prompt` metadata for forensic-grade traces.
+- Routing fix 2026-06-21 (`0578342`): Tier 1 upper bound dropped 12K → 5K after empirical confirmation via the new trace that the gpt-oss ECW cliff was causing hallucinated CTA boilerplate on 5K-12K inputs (`youtube:///Kf0rPU7zy7Q` was the canary).
 
-**Phase 3 of conduit-side work is shipped and deployed.**
-- `ArticleEnricher` now delegates summarization to `conduit.RoutingSummarizer` with a per-source `guideline.jinja2` (commit `040cfe3`).
-- All four headwater hosts are running the new code as of 2026-06-01.
-- Article is the only source type migrated so far. 10 others still use the legacy "single-shot model.query against raw text" pattern.
+**Pick up here next session:**
 
-**Pick up here tomorrow:**
+1. **Read `siphon-server/dev/summarization.md`** — enrichment architecture, observability design (Layers 1/2/3), canonical enricher shape.
+2. **Read `siphon-server/dev/retrieval.md`** — embedding migration plan, HyDE description design, RRF query pipeline.
+3. **Conduit-side context** — `$BC/conduit-project/evals/STRATEGY.md` for routing decision rationale and the dropped models (qwen3.6 latency, MapDedupeReduce no quality niche).
 
-1. **Read `siphon-server/dev/summarization.md`** — current enrichment architecture, article = template, migration recipe for the other 10 source types.
-2. **Read `siphon-server/dev/retrieval.md`** — embedding migration plan (all-MiniLM-L6-v2 → nomic-embed-text-v2), description redesign as HyDE-shaped retrieval artifact, query-side HyDE + BM25 + RRF, five-phase rollout (R1–R5).
-3. **Conduit-side context** — `$BC/conduit-project/evals/STRATEGY.md`. The "Published Routing Decision" section explains tier breakpoints, models, hosts. RoutingSummarizer + `PRODUCTION_ROUTING` is in conduit at `src/conduit/strategies/summarize/summarizers/routing.py`.
+**Recommended next action: Phase R2-R4 in `retrieval.md`.** The embedding migration is the largest unblocked item on the roadmap. New HyDE-shaped descriptions are currently being truncated at 256 tokens by the legacy `all-MiniLM-L6-v2` encoder, so the R5 rollout is partly cosmetic until R2-R4 lands. Sequence: confirm `nomic-embed-text-v2` reachable on backwater, flip `EMBED_DIM` to 768, rewrite `get_embed_texts()` to return description only, drop+rebuild HNSW, NULL existing embeddings, then re-embed all rows after regenerating descriptions.
 
-**Recommended next action: Phase R1 in `retrieval.md`** — redesign Article's description to be HyDE-shaped, generated as a one-shot pass on top of the summary (not raw text). Iterate the prompt against a real article. This unblocks Phase R2 (embedding migration).
+**Smaller follow-ups worth queuing:**
 
-**Open follow-ups not on the critical path:**
-- Cronicle event `emothl43a01` (the conduit eval rerun) is timing out at the 4h Cronicle limit and writing 0-byte NAS logs. Worth fixing but doesn't block Siphon work.
-- Other 10 enrichers wait for description redesign to settle before mass-migration.
+- **Re-enrich stale rows in the 5K-12K dead band.** URIs enriched before today's routing fix still hold the bad summaries in `processed_content`. Once enough new `enrichment_runs` rows accumulate, a query like `WHERE tier = 'tier1_oneshot_gpt_oss' AND token_count BETWEEN 5000 AND 12000` identifies candidates. Trace data only exists going forward, so this is opportunistic cleanup, not bulk.
+- **Layer 3 observability TBD.** Nightly Cronicle job that samples production `enrichment_runs` and re-scores with the Gemini3 judge. Defer until there's a steady stream of rows to sample.
+- **Description guideline hash.** Currently only summary guideline is hashed into `enrichment_runs.guideline_hash`. Description guideline isn't tracked. When R2-R4 lands and description iteration picks up, worth adding a second hash field.
+- **Drive enricher (`NotImplementedError` stub) and podcasts enricher (no `enricher.py`).** Both need upstream work before they join the migration. Not blocking anything.
+
+**Operational follow-ups (not roadmap, but worth not losing):**
+
+- **Alphablue `uv` not on non-interactive PATH.** Every conduit/siphon deploy hits "uv: command not found" during the remote `uv sync` step on alphablue. Pulls succeed, sync fails. Today this is harmless (no new deps), but the next `pyproject.toml` change will need this fixed first. Likely a `.bashrc` vs `.bash_profile` issue.
+- **Cronicle event `emothl43a01`** (conduit eval rerun) still times out at the 4h Cronicle limit and writes 0-byte NAS logs. Tier 3 routing settles on whatever wins this rerun (`PRODUCTION_ROUTING` swap is one line post-rerun).
 
 ---
 
