@@ -344,15 +344,34 @@ def query(
     """
     Search and retrieve ingested content from Siphon.
 
-    Examples:
-        siphon query "AI Agents"
+    Default mode is "hybrid" — RRF fusion of BM25 (over description +
+    summary) and semantic similarity (over the description embedding).
+    HyDE is on by default: gpt-oss generates a hypothetical answer to
+    the query, and that answer is embedded instead of the raw query,
+    which lands in better semantic territory.
+
+    \b
+    Retrieval examples:
+        siphon query "claude code subagents"
+        siphon query "ECW cliff routing" --mode semantic
+        siphon query "RoutingSummarizer" --mode fts
+        siphon query "react useState" --no-hyde -n 3
+        siphon query "RAG eval" --mode hybrid --type youtube
+        siphon query "hyde retrieval" -r d  # show descriptions only
+
+    \b
+    Filtering / browsing:
         siphon query --type youtube --limit 5
         siphon query --latest --return-type c
         siphon query --history --limit 20
         siphon query "machine learning" --date ">2024-01-01"
         siphon query --type doc --extension pdf
         siphon query --history -e .docx --limit 10
-        siphon query --get 2 -r s  # Get item #2 from last query
+        siphon query --get 2 -r s  # Item #2 from last query
+
+    \b
+    Legacy mode:
+        siphon query "anthropic" --mode sql  # ILIKE on title + description
     """
     printer = Printer(raw=raw)
     client = SiphonClient()

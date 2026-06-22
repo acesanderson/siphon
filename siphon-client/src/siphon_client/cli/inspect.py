@@ -35,8 +35,26 @@ def inspect(uri: str, json_output: bool) -> None:
     """Show the most recent enrichment run for URI.
 
     Looks up enrichment_runs by URI and prints routing decision, status,
-    timing, and the full conduit trace. Useful for diagnosing weird
-    summaries or comparing across prompt revisions.
+    timing, and the full conduit trace.
+
+    Two intended use cases:
+
+    \b
+    Dev loop while iterating on guidelines or routing config:
+        siphon inspect "youtube:///abc123XYZ"
+        # See which tier and model ran. Diff against earlier runs to
+        # confirm a prompt change is doing what you think.
+
+    \b
+    Forensic mode when a summary looks wrong:
+        siphon inspect "youtube:///abc123XYZ" --json | jq .
+        # Pipe the JSON trace (rendered prompts + redacted inputs) to
+        # an LLM and ask "why is this output bad?"
+
+    The first form pretty-prints a summary panel + a trace step table.
+    The --json form emits the full trace_json (including rendered
+    prompts and the redacted input echo). Pure Postgres read; no LLM
+    call, no headwater hop.
     """
     from siphon_server.database.postgres.repository import REPOSITORY
 

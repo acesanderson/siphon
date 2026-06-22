@@ -41,10 +41,19 @@ siphon gulp "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
 ### Retrieval
-Search for ingested content using the SQL-based text search:
+Search for ingested content. The default search path is hybrid retrieval (RRF fusion of BM25 over the description-plus-summary tsvector, and semantic search over the nomic-embed-text-v1.5 vector index) with HyDE query expansion:
 
 ```bash
-siphon query "Rick Astley" --limit 5
+siphon query "claude code subagents"
+```
+
+Common variants:
+
+```bash
+siphon query "ECW cliff routing" --mode semantic   # vector only
+siphon query "RoutingSummarizer"  --mode fts       # BM25 only
+siphon query "react useState"     --no-hyde -n 3   # skip HyDE, embed raw query
+siphon query "RAG eval"           --type youtube   # filter by source type
 ```
 
 ## Core Pipeline Architecture
@@ -112,10 +121,28 @@ siphon sync --vault ~/my-obsidian-vault --concurrency 10
 ### Retrieval Commands
 
 #### query
-Search the content database. Supports filtering by type, date, and file extension.
+Search the content database. Supports five modes:
+
+| Mode | Description | When to use |
+| :--- | :--- | :--- |
+| `hybrid` (default) | RRF fusion of BM25 and semantic (vector) rankings | Most natural-language queries |
+| `semantic` | Vector-only retrieval | Conceptual queries where lexical noise hurts |
+| `fts` | BM25-only over the `fts_doc` tsvector | Exact-entity / quote / number lookups |
+| `sql` | Legacy ILIKE over title and description | Quick title-substring matches |
+| `fuzzy` | Reserved | Not yet implemented |
+
+The `hybrid` and `semantic` modes run HyDE by default: gpt-oss generates a hypothetical answer to the query, and that answer is embedded instead of the raw query. Disable with `--no-hyde` for faster, lower-quality retrieval on conversational queries.
+
 ```bash
-siphon query "machine learning" --type doc --extension pdf
+siphon query "claude code subagents"                         # hybrid (default) + HyDE
+siphon query "ECW cliff routing"          --mode semantic    # vector only
+siphon query "RoutingSummarizer"          --mode fts         # BM25 only
+siphon query "react useState"             --no-hyde -n 3     # embed raw query
+siphon query "machine learning" --type doc --extension pdf   # source filter
+siphon query "anthropic"                  --mode sql         # legacy ILIKE
 ```
+
+Date filters (`--date ">2024-01-01"`), extension filters (`--extension pdf`), and source-type filters (`--type youtube`) are post-applied for the new modes, so they over-fetch internally and may undercount if the filter is restrictive.
 
 #### traverse
 Walk the wikilink graph from a specific node (primarily for Obsidian).
@@ -129,6 +156,20 @@ Access query history and retrieve specific items by their index from previous se
 siphon results --history
 siphon query --get 2 --return-type c
 ```
+
+### Diagnostics
+
+#### inspect
+Show the most recent enrichment run for a URI: routing decision (tier, model, host), timing, status, and the full conduit trace (rendered prompts plus redacted input echo). Pure Postgres read.
+
+```bash
+siphon inspect "youtube:///abc123XYZ"          # pretty-print
+siphon inspect "article:///sha256/..." --json  # raw JSON for LLM forensics
+```
+
+Two intended use cases:
+1. **Dev loop while iterating on guidelines or routing config** — diff traces across prompt revisions to confirm a change is doing what you expect.
+2. **Forensic mode when a summary looks wrong** — pipe `--json` to an LLM and ask it to diagnose what went wrong (the trace carries the actual rendered prompt that hit the model).
 
 ## Supported Source Types
 
