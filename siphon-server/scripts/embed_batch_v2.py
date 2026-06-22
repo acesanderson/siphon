@@ -39,6 +39,10 @@ from siphon_server.database.postgres.repository import ContentRepository
 
 logger = logging.getLogger(__name__)
 
+# HTTP-payload chunk size. Picked for network efficiency, NOT GPU memory.
+# Backwater's per-model handler caps the actual GPU batch size internally
+# (see headwater-server/docs/backwater_limits.md). Callers do not need to
+# know about the embeddings host's VRAM envelope.
 _CHUNK_SIZE = 128
 
 
@@ -64,15 +68,22 @@ def list_uris_to_embed(
     return [r[0] for r in rows]
 
 
-def embed_batch(uris: list[str], *, force: bool, model: str) -> tuple[int, int]:
-    """Chunk and embed. Returns (embedded_count, skipped_count)."""
+def embed_batch(
+    uris: list[str], *, force: bool, model: str, host_alias: str = "headwater"
+) -> tuple[int, int]:
+    """Chunk and embed. Returns (embedded_count, skipped_count).
+
+    host_alias selects which headwater host receives the embeddings POST.
+    Default "headwater" lets the router pick (per routes.yaml). Override to
+    "deepwater" / "backwater" / "bywater" to bypass routing.
+    """
     repo = ContentRepository()
     descriptions = repo.get_embed_descriptions(uris, skip_existing=not force)
     items = [(uri, descriptions[uri]) for uri in uris if uri in descriptions and descriptions[uri]]
     if not items:
         return 0, len(uris)
 
-    client = HeadwaterClient()
+    client = HeadwaterClient(host_alias=host_alias)
     embedded_total = 0
     n_chunks = (len(items) + _CHUNK_SIZE - 1) // _CHUNK_SIZE
 
@@ -116,6 +127,12 @@ def main() -> None:
     p.add_argument("--source-type", help="Filter by SourceType value (e.g. YouTube, Article).")
     p.add_argument("--force", action="store_true", help="Re-embed even if vector exists.")
     p.add_argument("--model", default=SIPHON_EMBED_MODEL_V2, help="Embedding model to use.")
+    p.add_argument(
+        "--host",
+        default="headwater",
+        choices=["headwater", "bywater", "backwater", "deepwater", "stillwater"],
+        help="Which headwater host to POST to. Default goes through the router.",
+    )
     p.add_argument("--dry-run", action="store_true", help="Count matching URIs and exit.")
     args = p.parse_args()
 
@@ -134,7 +151,9 @@ def main() -> None:
     if args.dry_run:
         return
 
-    embedded, skipped = embed_batch(uris, force=args.force, model=args.model)
+    embedded, skipped = embed_batch(
+        uris, force=args.force, model=args.model, host_alias=args.host
+    )
     logger.info("DONE embedded=%d skipped=%d total=%d", embedded, skipped, len(uris))
 
 
