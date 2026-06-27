@@ -1,5 +1,7 @@
 # Siphon
 
+_Semantic bookmarking for the agentic era_
+
 Siphon is a multi-source content ingestion and retrieval pipeline designed to transform heterogeneous data—YouTube videos, web articles, local documents, Obsidian vaults, and emails—into structured, searchable, and LLM-enriched knowledge.
 
 ## Two Modes of Ingestion
